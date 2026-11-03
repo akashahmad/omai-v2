@@ -13,7 +13,7 @@ import { EnvironmentUnavailable } from "../../../environment/unavailable.js"
 import { Location } from "../../../location.js"
 import type { PluginInternal } from "../../internal.js"
 
-export const ID = "opencode.provider.claude-agent"
+export const ID = "omai.provider.claude-agent"
 
 // Tests pass a fake ClaudeIO here. The registry lives outside setup's scope, so a reload can adopt its processes.
 // Restart tests pass their own and close it, as an exiting opencode would.

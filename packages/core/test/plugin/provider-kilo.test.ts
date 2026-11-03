@@ -18,7 +18,7 @@ const addPlugin = Effect.fn(function* () {
 
 describe("KiloPlugin", () => {
   test("is registered so legacy referer headers can be applied", () => {
-    expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.kilo")
+    expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.kilo")
   })
 
   it.effect("applies legacy referer headers only to Kilo endpoints", () =>
@@ -35,8 +35,7 @@ describe("KiloPlugin", () => {
       yield* addPlugin()
       expect((yield* catalog.get(Provider.ID.make("kilo")))?.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
+        "X-Title": "omai",
       })
       expect((yield* catalog.get(Provider.ID.openrouter))?.headers).toBeUndefined()
     }),
@@ -54,8 +53,7 @@ describe("KiloPlugin", () => {
       yield* addPlugin()
 
       expect((yield* catalog.get(Provider.ID.make("kilo")))?.headers).toEqual({
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
+        "X-Title": "omai",
       })
       expect((yield* catalog.get(Provider.ID.make("kilo")))?.headers).not.toHaveProperty("http-referer")
       expect((yield* catalog.get(Provider.ID.make("kilo")))?.headers).not.toHaveProperty("x-title")
@@ -79,8 +77,7 @@ describe("KiloPlugin", () => {
 
       expect((yield* catalog.get(Provider.ID.make("kilo")))?.headers).toBeUndefined()
       expect((yield* catalog.get(Provider.ID.make("custom-kilo")))?.headers).toEqual({
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
+        "X-Title": "omai",
       })
     }),
   )

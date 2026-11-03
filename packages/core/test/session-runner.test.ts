@@ -19,7 +19,6 @@ import {
 import { OpenAIChat } from "@opencode/ai/protocols/openai-chat"
 import { AnthropicMessages, OpenAIResponses } from "@opencode/ai/protocols"
 import { TestLLM, compileRequest } from "@opencode/ai/testing"
-import { RequestExecutor } from "@opencode/ai/route"
 import type { SessionHooks } from "@opencode/plugin/effect/session"
 import { Database } from "@opencode/core/database/database"
 import { makeLocationNode } from "@opencode/util/effect/app-node"
@@ -5071,13 +5070,13 @@ describe("SessionRunnerLLM", () => {
     yield* s.runPrompt("Run correlated request")
 
     expect(s.requests[0]?.http?.headers).toEqual({
-      "x-opencode-session-id": sessionID,
+      "x-omai-session-id": sessionID,
       "x-session-affinity": sessionID,
       "X-Session-Id": sessionID,
       "User-Agent": App.useragent(App.make()),
-      "x-opencode-project": Project.ID.global,
-      "x-opencode-session": sessionID,
-      "x-opencode-client": "opencode",
+      "x-omai-project": Project.ID.global,
+      "x-omai-session": sessionID,
+      "x-omai-client": "omai",
     })
   })
 
@@ -5093,12 +5092,12 @@ describe("SessionRunnerLLM", () => {
     yield* s.runPrompt("Run child request")
 
     expect(s.requests[0]?.http?.headers).toMatchObject({
-      "x-opencode-session-id": sessionID,
-      "x-opencode-parent-session-id": parentID,
+      "x-omai-session-id": sessionID,
+      "x-omai-parent-session-id": parentID,
       "x-session-affinity": parentID,
       "X-Session-Id": parentID,
       "x-parent-session-id": parentID,
-      "x-opencode-session": parentID,
+      "x-omai-session": parentID,
     })
     expect(s.requests[0]?.promptCacheKey).toBe(parentID)
   })
@@ -6507,44 +6506,6 @@ describe("SessionRunnerLLM", () => {
     expect(yield* s.runPrompt("Do not retry").pipe(Effect.flip)).toBe(failure)
     expect(s.requests).toHaveLength(1)
     expect(yield* recordedEventTypes(sessionID)).not.toContain("session.retry.scheduled.1")
-  })
-
-  scenario("records OpenCode Console's Go usage limit 429 as a typed step failure without retrying", function* (s) {
-    // The exact refusal Console sends a Go subscriber at a limit.
-    const body = JSON.stringify({
-      type: "error",
-      error: { type: "GoUsageLimitError", message: "Go usage limit exceeded" },
-      metadata: { workspace: "wrk_go_limit", limitName: "5 hour" },
-    })
-    const failure = RequestExecutor.httpFailure({
-      message: "Go usage limit exceeded",
-      url: "https://opencode.ai/inference/go/openai/v1/chat/completions",
-      status: 429,
-      responseHeaders: { "retry-after": "3600" },
-      responseBody: body,
-    })
-    yield* s.llm.push(Stream.fail(failure))
-
-    expect(yield* s.runPrompt("Hit the Go limit").pipe(Effect.flip)).toBe(failure)
-    expect(s.requests).toHaveLength(1)
-    expect(yield* recordedEventTypes(sessionID)).not.toContain("session.retry.scheduled.1")
-    const assistant = requireAssistant(yield* s.context)
-    expect(yield* recordedStepSettlementEvents(sessionID, assistant.id)).toMatchObject([
-      { type: "session.step.started.1" },
-      {
-        type: "session.step.failed.1",
-        data: {
-          error: {
-            type: "provider.go-limit",
-            message:
-              "OpenCode Go 5 hour usage limit reached. Switch to a free model, or turn on Extra Usage on the Go page in OpenCode Console to keep going.",
-            status: 429,
-            response: { body },
-            retryAfterMs: 3_600_000,
-          },
-        },
-      },
-    ])
   })
 
   scenario("settles malformed streamed tool input before the provider failure", function* (s) {

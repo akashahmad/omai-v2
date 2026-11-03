@@ -41,7 +41,7 @@ test("recently closed shows ten sessions and searches older closures in close or
       servers: [SERVER],
       tabs: [sessions[0]!.id],
       storage: {
-        "opencode.window.browser.dat:tabs.closed": sessions.slice(1).map((session, index) => ({
+        "omai.window.browser.dat:tabs.closed": sessions.slice(1).map((session, index) => ({
           tab: { type: "session", server: SERVER, sessionId: session.id },
           index,
           info: { title: session.title, directory: "C:/OpenCode/ClosedTabs", prompted: true },
@@ -100,7 +100,7 @@ test("recently closed fills remaining slots in Home order without open or duplic
       servers: [SERVER],
       tabs: [sessions[0]!.id, sessions[2]!.id],
       storage: {
-        "opencode.window.browser.dat:tabs.closed": sessions.slice(10).map((session, index) => ({
+        "omai.window.browser.dat:tabs.closed": sessions.slice(10).map((session, index) => ({
           tab: { type: "session", server: SERVER, sessionId: session.id },
           index,
           info: { title: session.title, directory: "C:/OpenCode/OtherTabs", prompted: true },
@@ -1443,7 +1443,7 @@ test("opening a session from the inbox keeps the list's scroll position and rows
       settings: { appearance: { tabLayout: "inbox" } },
       tabs: [],
       // Every seeded session finished a run after the inbox was first used, so Recent lists them all.
-      storage: { "opencode.global.dat:sidebar.inbox": { workingExpanded: true, since: 0 } },
+      storage: { "omai.global.dat:sidebar.inbox": { workingExpanded: true, since: 0 } },
     },
   })
   await page.goto("/")

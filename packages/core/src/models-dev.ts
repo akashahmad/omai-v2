@@ -170,12 +170,15 @@ const BUILDS_OWN_URL = new Set([
   "aisdk:watsonx-ai-provider",
 ])
 
+// The upstream catalog lists the upstream project's own hosted model services; this product does not offer them.
+const hostedProviders = new Set(["opencode", "opencode-go"])
+
 const normalize = Effect.fnUntraced(function* (catalog: Record<string, unknown>) {
   const failed: { readonly model: string; readonly issue: unknown }[] = []
   const unknown = new Set<string>()
   const snapshots = Object.values(isV1(catalog) ? toV2(catalog) : catalog).flatMap((value) => {
     const item = Option.getOrUndefined(decodeProvider(value))
-    if (!item) return []
+    if (!item || hostedProviders.has(item.id)) return []
     const providerID = Provider.ID.make(item.id)
     const sources = Object.entries(item.models).flatMap(([key, value]) => {
       const decoded = decodeModel(value)
@@ -491,7 +494,7 @@ const CacheMeta = Schema.Struct({
   digest: Schema.optional(Schema.String),
   etag: Schema.optional(Schema.String),
 })
-const defaultSource = "https://models.opencode.ai"
+const defaultSource = "https://models.dev"
 
 // The experimental v2 API, limited to the model types opencode keeps.
 export const catalogPath = `/experimental/v2.0/api.json?type=${TYPES.join(",")}`

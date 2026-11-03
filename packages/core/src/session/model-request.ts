@@ -292,15 +292,15 @@ export const layer = Layer.effect(
         model: model.model,
         http: {
           headers: {
-            "x-opencode-session-id": session.id,
-            ...(session.parentID ? { "x-opencode-parent-session-id": session.parentID } : {}),
+            "x-omai-session-id": session.id,
+            ...(session.parentID ? { "x-omai-parent-session-id": session.parentID } : {}),
             "x-session-affinity": affinity,
             "X-Session-Id": affinity,
             ...(session.parentID ? { "x-parent-session-id": session.parentID } : {}),
             "User-Agent": App.useragent(app),
-            "x-opencode-project": session.projectID,
-            "x-opencode-session": affinity,
-            "x-opencode-client": app.name,
+            "x-omai-project": session.projectID,
+            "x-omai-session": affinity,
+            "x-omai-client": app.name,
           },
         },
         // TODO: Persist cache lineage so nested forks reuse the root session's cache key.

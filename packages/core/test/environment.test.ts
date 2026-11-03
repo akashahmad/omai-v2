@@ -61,7 +61,7 @@ environmentConformance("memory environment", () =>
 environmentConformance("local environment", () =>
   Effect.gen(function* () {
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-    const tmp = yield* Effect.promise(() => tmpdir("opencode-local-environment-"))
+    const tmp = yield* Effect.promise(() => tmpdir("omai-local-environment-"))
     return {
       files: makeFiles(makeLocalDriver(spawner)),
       root: tmp.path,
@@ -84,7 +84,7 @@ environmentConformance(
   () =>
     Effect.gen(function* () {
       const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-      const tmp = yield* Effect.promise(() => tmpdir("opencode-environment-"))
+      const tmp = yield* Effect.promise(() => tmpdir("omai-environment-"))
       return {
         files: execDefaults(spawner),
         root: tmp.path,

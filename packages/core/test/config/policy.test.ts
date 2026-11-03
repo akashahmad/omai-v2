@@ -196,7 +196,7 @@ describe("ConfigPolicyPlugin.Plugin", () => {
       yield* catalog.transform((catalog) => {
         catalog.update(Provider.ID.openai, () => {})
         catalog.update(Provider.ID.anthropic, () => {})
-        catalog.update(Provider.ID.opencode, () => {})
+        catalog.update(Provider.ID.make("opencode"), () => {})
       })
       yield* addPlugin([
         organizationPolicy([provider("deny", "*"), provider("allow", "opencode")]),
@@ -205,7 +205,7 @@ describe("ConfigPolicyPlugin.Plugin", () => {
 
       expect(yield* catalog.get(Provider.ID.anthropic)).toBeUndefined()
       expect(yield* catalog.get(Provider.ID.openai)).toBeUndefined()
-      expect(yield* catalog.get(Provider.ID.opencode)).toBeDefined()
+      expect(yield* catalog.get(Provider.ID.make("opencode"))).toBeDefined()
     }),
   )
 
@@ -271,14 +271,14 @@ describe("integration policy", () => {
       })
       yield* catalog.transform((catalog) => {
         // The signed-out free tier enables OpenCode without any connection.
-        catalog.update(Provider.ID.opencode, (provider) => {
+        catalog.update(Provider.ID.make("opencode"), (provider) => {
           provider.activation = "enabled"
         })
         // An env API key: Anthropic's integration with no account.
         catalog.update(Provider.ID.anthropic, (provider) => {
           provider.activation = "enabled"
         })
-        // A provider authored in opencode.json.
+        // A provider authored in omai.json.
         catalog.update(Provider.ID.make("my-llm"), (provider) => {
           provider.activation = "enabled"
         })
@@ -330,7 +330,7 @@ describe("integration policy", () => {
         value: consoleCredential("org_other"),
       })
       yield* catalog.transform((catalog) => {
-        catalog.update(Provider.ID.opencode, () => {})
+        catalog.update(Provider.ID.make("opencode"), () => {})
         catalog.update(Provider.ID.anthropic, () => {})
       })
       yield* addPlugin([
@@ -342,7 +342,7 @@ describe("integration policy", () => {
       ])
       expect(yield* catalog.get(Provider.ID.anthropic)).toBeDefined()
       // `opencode` names only account-less use; a connected account needs `opencode#*` or its own ID.
-      expect(yield* catalog.get(Provider.ID.opencode)).toBeUndefined()
+      expect(yield* catalog.get(Provider.ID.make("opencode"))).toBeUndefined()
     }),
   )
 

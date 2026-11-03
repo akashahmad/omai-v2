@@ -58,7 +58,7 @@ scenarios.forEach((scenario) => {
         ...result,
         messageRequestsDuringSwitch: requests.length - requestsBefore,
         rendererMemory:
-          process.env.OPENCODE_PERFORMANCE_MEMORY === "1" ? await retainedRendererMemory(page) : undefined,
+          process.env.OMAI_PERFORMANCE_MEMORY === "1" ? await retainedRendererMemory(page) : undefined,
       },
       {
         ...scenario,
@@ -68,7 +68,7 @@ scenarios.forEach((scenario) => {
         serviceWorkers: "blocked",
         reviewFiles: scenario.review === "closed" ? 0 : reviewDiffs.length,
         data: scenario.cache === "cold" ? "on-demand" : "cached",
-        transport: process.env.OPENCODE_PERFORMANCE_HTTP_FIXTURE === "1" ? "http" : "playwright-route",
+        transport: process.env.OMAI_PERFORMANCE_HTTP_FIXTURE === "1" ? "http" : "playwright-route",
         inputEvent: "mousedown",
         requireReadyAnswer: true,
       },
@@ -90,7 +90,7 @@ async function prepareSessionTabs(page: Page) {
     if (match) requests.push(decodeURIComponent(match[1]))
   })
 
-  if (process.env.OPENCODE_PERFORMANCE_HTTP_FIXTURE !== "1")
+  if (process.env.OMAI_PERFORMANCE_HTTP_FIXTURE !== "1")
     await mockOpenCodeServer(page, {
       sessions: fixture.sessions,
       provider: fixture.provider,

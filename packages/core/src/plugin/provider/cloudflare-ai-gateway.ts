@@ -25,7 +25,7 @@ const gatewayIdField = Form.StringField.make({
 })
 
 export const CloudflareAIGatewayPlugin = define({
-  id: "opencode.provider.cloudflare.ai.gateway",
+  id: "omai.provider.cloudflare.ai.gateway",
   effect: Effect.fn(function* (ctx) {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
     const gatewayId = process.env.CLOUDFLARE_GATEWAY_ID

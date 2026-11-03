@@ -149,7 +149,7 @@ const MODIFIER_LABEL = {
 } as const
 
 /**
- * Dev builds only, behind `opencode.dev.closedTabsModifier`: the tab strip's "+". Holding the modifier while pointing at it turns it into a chevron whose click lists the
+ * Dev builds only, behind `omai.dev.closedTabsModifier`: the tab strip's "+". Holding the modifier while pointing at it turns it into a chevron whose click lists the
  * recently closed tabs; a plain click still opens a new tab. Right-click and ↓ on the focused button open the list too.
  */
 export function NewTabButton(props: {

@@ -16,14 +16,13 @@ function modelKey(model: ModelKey) {
   return `${model.providerID}:${model.modelID}`
 }
 
-export const isFreeModel = (model: { provider: { id: string }; cost?: { input: number } }) =>
-  model.provider.id === "opencode" && (!model.cost || model.cost.input === 0)
+export const isFreeModel = (model: { cost?: { input: number } }) => model.cost?.input === 0
 
 // The newest release of each family per provider. A free model shares its family and release date with its paid twin,
 // so the two are grouped apart. A tie keeps the first model listed.
-export function latestModels<T extends { id: string; provider: { id: string }; family?: string; release_date: string }>(
-  models: T[],
-) {
+export function latestModels<
+  T extends { id: string; provider: { id: string }; family?: string; release_date: string; cost?: { input: number } },
+>(models: T[]) {
   return [...Map.groupBy(models, (x) => x.provider.id).values()].flatMap((provider) =>
     [...Map.groupBy(provider, (x) => `${x.family}:${isFreeModel(x)}`).values()].map((group) => {
       const first = group.reduce((best, x) => (x.release_date > best.release_date ? x : best))
@@ -84,17 +83,6 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
 
   const latestSet = createMemo(() => new Set(latest().map((x) => modelKey(x))))
 
-  // OpenCode's free models (Big Pickle) stay on offer long after release, so they are listed regardless of age or a
-  // newer free model in the same family.
-  const freeSet = createMemo(
-    () =>
-      new Set(
-        available()
-          .filter(isFreeModel)
-          .map((x) => modelKey({ providerID: x.provider.id, modelID: x.id })),
-      ),
-  )
-
   const visibility = createMemo(() => {
     const map = new Map<string, Visibility>()
 
@@ -133,7 +121,7 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
 
     if (state === "show") return true
 
-    if (latestSet().has(key) || freeSet().has(key)) return true
+    if (latestSet().has(key)) return true
 
     // Models without a parseable release date stay visible.
     return !Number.isFinite(release().get(key) ?? NaN)

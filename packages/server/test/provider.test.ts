@@ -11,7 +11,7 @@ it.live(
   "agent and provider lists wait for plugins while single provider reads stay nonblocking",
   () =>
     Effect.gen(function* () {
-      const tmp = yield* tmpdirScoped("opencode-provider-endpoints-")
+      const tmp = yield* tmpdirScoped("omai-provider-endpoints-")
       const started = yield* Deferred.make<void>()
       const release = yield* Deferred.make<void>()
       const context = yield* Layer.build(
@@ -58,7 +58,7 @@ it.live(
           return handler(
             new Request(url, {
               method,
-              headers: { authorization: `Basic ${btoa("opencode:secret")}` },
+              headers: { authorization: `Basic ${btoa("omai:secret")}` },
               signal,
             }),
           )
@@ -95,7 +95,7 @@ it.live(
       const discovered = yield* Fiber.join(integrations)
       expect(discovered.status).toBe(200)
       expect(yield* Effect.promise(() => discovered.json())).toMatchObject({
-        data: expect.arrayContaining([expect.objectContaining({ id: "opencode" })]),
+        data: expect.arrayContaining([expect.objectContaining({ id: "openai" })]),
       })
     }),
   15_000,

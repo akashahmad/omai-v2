@@ -10,7 +10,6 @@ export const ID = Schema.String.pipe(
   Schema.brand("Provider.ID"),
   Schema.annotate({ identifier: "Provider.ID" }),
   statics((schema) => ({
-    opencode: schema.make("opencode"),
     anthropic: schema.make("anthropic"),
     openai: schema.make("openai"),
     google: schema.make("google"),
@@ -79,7 +78,7 @@ export type Encoding = typeof Encoding.Type
 
 const Timeout = Schema.Union([Schema.Finite, Schema.Literal(false)]).pipe(optional)
 
-// The named fields are the settings OpenCode reads itself; every other key is a provider option for the provider package.
+// The named fields are the settings O M A I + reads itself; every other key is a provider option for the provider package.
 export const Settings = Schema.StructWithRest(
   Schema.Struct({
     timeout: Timeout,

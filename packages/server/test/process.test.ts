@@ -44,7 +44,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
     const status = yield* Effect.promise(() =>
       fetch(new URL("/api/info", HttpServer.formatAddress(server.address)), {
         headers: {
-          authorization: `Basic ${btoa("opencode:secret")}`,
+          authorization: `Basic ${btoa("omai:secret")}`,
           origin: "http://localhost:3000",
         },
       }),
@@ -74,7 +74,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
 
           const status = yield* Effect.promise(() =>
             fetch(new URL("/api/info", HttpServer.formatAddress(server.address)), {
-              headers: { origin, authorization: `Basic ${btoa("opencode:secret")}` },
+              headers: { origin, authorization: `Basic ${btoa("omai:secret")}` },
             }),
           )
           expect(status.status).toBe(200)
@@ -94,7 +94,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
       fetch(new URL("/api/event", HttpServer.formatAddress(server.address)), {
         headers: {
           "accept-encoding": "br",
-          authorization: `Basic ${btoa("opencode:secret")}`,
+          authorization: `Basic ${btoa("omai:secret")}`,
         },
       }),
     )
@@ -114,7 +114,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
       fetch(new URL("/missing", HttpServer.formatAddress(server.address)), {
         headers: {
           "accept-encoding": "br",
-          authorization: `Basic ${btoa("opencode:secret")}`,
+          authorization: `Basic ${btoa("omai:secret")}`,
         },
       }),
     )
@@ -139,7 +139,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
       Effect.gen(function* () {
         yield* Effect.forEach(["GET", "HEAD"], (method) =>
           Effect.gen(function* () {
-            yield* Effect.forEach([undefined, `Basic ${btoa("opencode:wrong")}`], (authorization) =>
+            yield* Effect.forEach([undefined, `Basic ${btoa("omai:wrong")}`], (authorization) =>
               Effect.gen(function* () {
                 const response = yield* Effect.promise(() =>
                   fetch(new URL(pathname, HttpServer.formatAddress(server.address)), {
@@ -155,7 +155,7 @@ it.live("authenticates API requests behind the frontend transform while allowing
             const response = yield* Effect.promise(() =>
               fetch(new URL(pathname, HttpServer.formatAddress(server.address)), {
                 method,
-                headers: { authorization: `Basic ${btoa("opencode:secret")}` },
+                headers: { authorization: `Basic ${btoa("omai:secret")}` },
               }),
             )
             expect(response.status).toBe(200)
@@ -182,7 +182,7 @@ it.live("pairing links sign in browsers with a cookie and API clients with a tok
     const pair = Effect.gen(function* () {
       const response = yield* request("/api/pair", {
         method: "POST",
-        headers: { authorization: `Basic ${btoa("opencode:secret")}` },
+        headers: { authorization: `Basic ${btoa("omai:secret")}` },
       })
       expect(response.status).toBe(200)
       return (yield* Effect.promise(() => response.json())) as { code: string; expires_in: number }
@@ -202,14 +202,14 @@ it.live("pairing links sign in browsers with a cookie and API clients with a tok
     expect(redirect.status).toBe(302)
     expect(redirect.headers.get("location")).toBe("/")
     const setCookie = redirect.headers.get("set-cookie") ?? ""
-    expect(setCookie).toContain(`opencode_session_${new URL(base).port}=`)
+    expect(setCookie).toContain(`omai_session_${new URL(base).port}=`)
     expect(setCookie).toContain("HttpOnly")
     expect(setCookie).toContain("SameSite=Lax")
     const cookie = setCookie.split(";")[0]
 
     const reused = yield* request(`/auth/connect/${browser.code}`, { headers: { accept: "text/html" } })
     expect(reused.status).toBe(401)
-    expect(yield* Effect.promise(() => reused.text())).toContain("opencode pair")
+    expect(yield* Effect.promise(() => reused.text())).toContain("omai pair")
 
     expect((yield* request("/api/info", { headers: { cookie } })).status).toBe(200)
     expect((yield* request("/api/info", { headers: { cookie, origin: base } })).status).toBe(200)
@@ -221,7 +221,7 @@ it.live("pairing links sign in browsers with a cookie and API clients with a tok
     expect(redeemed.status).toBe(200)
     const session = (yield* Effect.promise(() => redeemed.json())) as { token: string }
     expect(
-      (yield* request("/api/info", { headers: { authorization: `Basic ${btoa(`opencode:${session.token}`)}` } }))
+      (yield* request("/api/info", { headers: { authorization: `Basic ${btoa(`omai:${session.token}`)}` } }))
         .status,
     ).toBe(200)
     expect((yield* request(`/auth/connect/${client.code}`)).status).toBe(401)
@@ -249,7 +249,7 @@ it.live("server info lists remote URLs alongside local addresses while they are 
     const base = HttpServer.formatAddress(server.address)
     const info = () =>
       Effect.promise(() =>
-        fetch(new URL("/api/info", base), { headers: { authorization: `Basic ${btoa("opencode:secret")}` } }).then(
+        fetch(new URL("/api/info", base), { headers: { authorization: `Basic ${btoa("omai:secret")}` } }).then(
           (response) => response.json() as Promise<{ urls: ReadonlyArray<string> }>,
         ),
       )

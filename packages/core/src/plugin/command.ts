@@ -9,7 +9,7 @@ import PROMPT_INITIALIZE from "./command/initialize.txt"
 import PROMPT_REVIEW from "./command/review.txt"
 
 export const Plugin = define({
-  id: "opencode.command",
+  id: "omai.command",
   effect: Effect.fn(function* (ctx) {
     const location = yield* Location.Service
     const mcp = yield* Mcp.Service

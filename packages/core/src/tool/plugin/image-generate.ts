@@ -73,7 +73,7 @@ export const Output = Schema.Struct({
 })
 
 export const Plugin = {
-  id: "opencode.tool.image-generate",
+  id: "omai.tool.image-generate",
   effect: Effect.fn("ImageGenerateTool.Plugin")(function* (ctx: Context) {
     const access = yield* FileAccess.Service
     const environment = yield* Environment.Service

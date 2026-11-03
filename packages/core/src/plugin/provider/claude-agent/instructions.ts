@@ -14,7 +14,7 @@ const InstructionsMetadata = Schema.Struct({
   }),
 })
 
-// Claude Code writes its own date and environment, so OpenCode's would repeat them.
+// Claude Code writes its own date and environment, so O M A I +'s would repeat them.
 const SUPPLIED_BY_CLAUDE = new Set(["core/date", "core/environment"])
 
 export const register = Effect.fn("ClaudeInstructions.register")(function* (ctx: Context) {
@@ -36,7 +36,7 @@ export const register = Effect.fn("ClaudeInstructions.register")(function* (ctx:
   )
 })
 
-// The first part is OpenCode's own prompt, which Claude Code's prompt replaces.
+// The first part is O M A I +'s own prompt, which Claude Code's prompt replaces.
 function instructions(system: ReadonlyArray<SystemPart>) {
   const texts: string[] = []
   for (const part of system.slice(1)) {

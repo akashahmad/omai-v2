@@ -205,7 +205,7 @@ test("mobile changes summarize expanded diffs, stage comments, wrap by setting, 
   const wrapControl = settings.locator('[data-action="settings-mobile-diff-wrap"] [data-slot="switch-control"]')
 
   const storedWrap = () =>
-    page.evaluate(() => JSON.parse(localStorage.getItem("opencode.global.dat:plugin.review.mobileDiff") ?? "{}").wrap)
+    page.evaluate(() => JSON.parse(localStorage.getItem("omai.global.dat:plugin.review.mobileDiff") ?? "{}").wrap)
 
   await expect(wrap).toBeChecked()
   await wrapControl.click()

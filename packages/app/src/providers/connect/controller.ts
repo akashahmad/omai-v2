@@ -28,10 +28,6 @@ type Polling = {
   attempt?: { type: "oauth"; attemptID: string } | { type: "command"; attemptID: string }
 }
 
-// The OpenCode Console account is the `opencode` integration. OpenCode Go is its own integration
-// and connects with its own methods, the same as the TUI.
-export const CONSOLE_INTEGRATION = "opencode"
-
 export const CLAUDE_AGENT_INTEGRATION = "claude-agent"
 
 // Same order as the TUI: browser and command sign-ins first, API keys last.
@@ -81,8 +77,6 @@ export function createProviderConnectionController(options: {
 
     return directory ? { directory } : undefined
   }
-
-  const isConsole = () => options.provider() === CONSOLE_INTEGRATION
 
   // Not createResource: the dialog is owned by whichever page opened it, so reading a pending
   // resource here would suspend that page's <Suspense> and blank the screen behind the dialog.
@@ -301,9 +295,7 @@ export function createProviderConnectionController(options: {
       setStore("statusFailed", true)
       dispatch({
         type: "auth.error",
-        error: isConsole()
-          ? language.t("provider.connect.console.statusFailed")
-          : formatServerError(result.error, language.t),
+        error: formatServerError(result.error, language.t),
       })
 
       return
@@ -320,12 +312,7 @@ export function createProviderConnectionController(options: {
       const message = result.status.message
       dispatch({
         type: "auth.error",
-        error:
-          isConsole() && message.includes("expired_token")
-            ? language.t("provider.connect.console.expired")
-            : isConsole() && message.includes("access_denied")
-              ? language.t("provider.connect.console.denied")
-              : message,
+        error: message,
       })
 
       return
@@ -335,7 +322,7 @@ export function createProviderConnectionController(options: {
       polling.attempt = undefined
       dispatch({
         type: "auth.error",
-        error: language.t(isConsole() ? "provider.connect.console.expired" : "provider.connect.oauth.expired"),
+        error: language.t("provider.connect.oauth.expired"),
       })
 
       return
@@ -483,17 +470,7 @@ export function createProviderConnectionController(options: {
         answer: Object.keys(merged).length ? merged : undefined,
         location: location(),
       })
-      .then((response) => {
-        if (isConsole() && platform.platform === "desktop") {
-          const url = new URL(response.data.url)
-          url.searchParams.set("client_id", "opencode-desktop")
-          // Lets the Console return link focus the window that started the sign-in.
-          url.searchParams.set("return_window", platform.windowID)
-          response.data.url = url.href
-        }
-
-        return { ok: true as const, authorization: response.data }
-      })
+      .then((response) => ({ ok: true as const, authorization: response.data }))
       .catch((error) => ({ ok: false as const, error }))
 
     if (polling.disposed || generation !== polling.generation) {
@@ -512,9 +489,7 @@ export function createProviderConnectionController(options: {
     if (!result.ok) {
       dispatch({
         type: "auth.error",
-        error: isConsole()
-          ? language.t("provider.connect.console.startFailed")
-          : formatServerError(result.error, language.t),
+        error: formatServerError(result.error, language.t),
       })
 
       return

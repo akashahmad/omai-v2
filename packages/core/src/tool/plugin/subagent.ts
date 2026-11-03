@@ -62,7 +62,7 @@ export const description = [
 ].join("\n")
 
 export const Plugin = {
-  id: "opencode.tool.subagent",
+  id: "omai.tool.subagent",
   effect: Effect.fn("SubagentTool.Plugin")(function* (ctx: Context) {
     const sessions = yield* Session.Service
     const jobs = yield* Job.Service

@@ -15,7 +15,7 @@ import { testEffect } from "../lib/effect"
 const it = testEffect(LayerNode.compile(AppProcess.node))
 
 const NODE = process.execPath
-const MISSING_CWD = path.join(tmpdir(), `opencode-missing-cwd-${randomUUID()}`)
+const MISSING_CWD = path.join(tmpdir(), `omai-missing-cwd-${randomUUID()}`)
 const cmd = (...args: string[]) => ChildProcess.make(NODE, args)
 
 // The child registers its SIGTERM handler before it announces readiness, and publishes the pid with a rename, so a
@@ -163,7 +163,7 @@ describe("AppProcess", () => {
       it.live(
         "timeout cleans up the scoped child process",
         Effect.acquireUseRelease(
-          Effect.promise(() => fs.mkdtemp(path.join(tmpdir(), "opencode-process-timeout-"))),
+          Effect.promise(() => fs.mkdtemp(path.join(tmpdir(), "omai-process-timeout-"))),
           (directory) => {
             const ready = path.join(directory, "ready")
             const settled = path.join(directory, "settled")
@@ -184,7 +184,7 @@ describe("AppProcess", () => {
       it.live(
         "fiber interruption cleans up the scoped child process after readiness",
         Effect.acquireUseRelease(
-          Effect.promise(() => fs.mkdtemp(path.join(tmpdir(), "opencode-process-interrupt-"))),
+          Effect.promise(() => fs.mkdtemp(path.join(tmpdir(), "omai-process-interrupt-"))),
           (directory) => {
             const ready = path.join(directory, "ready")
             const settled = path.join(directory, "settled")

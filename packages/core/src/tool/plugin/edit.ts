@@ -258,7 +258,7 @@ const countBefore = (positions: number[], offset: number) => {
 // TODO: Add LSP notification and diagnostics after LSP runtime exists.
 
 export const Plugin = {
-  id: "opencode.tool.edit",
+  id: "omai.tool.edit",
   effect: Effect.fn("EditTool.Plugin")(function* (ctx: Context) {
     const fileMutation = yield* FileMutation.Service
     const fileWrite = yield* FileWrite.Service

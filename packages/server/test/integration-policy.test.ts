@@ -7,7 +7,7 @@ import { createRoutes } from "../src/routes"
 
 it.live("integration policy filters /connect and blocks denied integrations and providers", () =>
   Effect.gen(function* () {
-    const tmp = yield* tmpdirScoped("opencode-integration-policy-")
+    const tmp = yield* tmpdirScoped("omai-integration-policy-")
     const context = yield* Layer.build(
       createRoutes({
         password: "secret",
@@ -29,9 +29,9 @@ it.live("integration policy filters /connect and blocks denied integrations and 
             mcp: { servers: { wiki: { type: "remote", url: "http://127.0.0.1:9/mcp" } } },
             policies: [
               { action: "integration.connect", resource: "*", effect: "deny" },
-              { action: "integration.connect", resource: "opencode", effect: "allow" },
+              { action: "integration.connect", resource: "openai", effect: "allow" },
               { action: "integration.use", resource: "*", effect: "deny" },
-              { action: "integration.use", resource: "opencode#org_01M3CAP8H43Z49CER6NT0Y3ZF1", effect: "allow" },
+              { action: "integration.use", resource: "openai#org_01M3CAP8H43Z49CER6NT0Y3ZF1", effect: "allow" },
             ],
           }),
         },
@@ -48,7 +48,7 @@ it.live("integration policy filters /connect and blocks denied integrations and 
           new Request(url, {
             method,
             headers: {
-              authorization: `Basic ${btoa("opencode:secret")}`,
+              authorization: `Basic ${btoa("omai:secret")}`,
               ...(body === undefined ? {} : { "content-type": "application/json" }),
             },
             body: body === undefined ? undefined : JSON.stringify(body),
@@ -63,7 +63,7 @@ it.live("integration policy filters /connect and blocks denied integrations and 
     // MCP sign-ins are outside integration policy; `mcp.use` governs MCP servers.
     const listed: { id: string; metadata?: { source?: string } }[] = integrations.body.data
     expect(listed.filter((integration) => integration.metadata?.source !== "mcp").map((item) => item.id)).toEqual([
-      "opencode",
+      "openai",
     ])
     const mcp = listed.find((integration) => integration.metadata?.source === "mcp")
     expect(mcp?.id).toStartWith("mcp_")
@@ -85,7 +85,7 @@ it.live("integration policy filters /connect and blocks denied integrations and 
     const wellknown = yield* request("POST", "/api/experimental/integration/wellknown", { url: "https://ai.acme.com" })
     expect(wellknown.body).toMatchObject({ kind: "integration_policy" })
 
-    // The signed-out free tier and the authored provider are both denied.
+    // The authored provider is denied.
     expect((yield* request("GET", "/api/provider")).body.data).toEqual([])
   }),
 )

@@ -41,7 +41,7 @@ export function decision(policies: readonly ConfigPolicy.Info[], action: ConfigP
 /**
  * The `integration.use` resource for what an integration supplies: `<integration>#<account>` when a connection with
  * a known account backs it, otherwise the bare integration ID (env keys, local config, the signed-out free tier).
- * A bare-ID pattern such as `opencode` therefore matches only connectionless use, never an org account. `#`
+ * A bare-ID pattern such as `omai` therefore matches only connectionless use, never an org account. `#`
  * separates the two because integration IDs can be URLs.
  */
 export function integrationResource(integrationID: string, account?: string) {

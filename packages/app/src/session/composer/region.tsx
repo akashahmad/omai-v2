@@ -37,7 +37,6 @@ import { useSessionFork } from "../fork"
 import { SessionComposerRegion } from "./session-composer-region"
 import { createSessionComposerController, type SessionComposerController } from "./controller"
 import { SessionQueuePanel } from "./queue-panel"
-import { SessionGoLimitTray } from "./go-limit-tray"
 import { SessionActivityChips, type SessionActivityItem } from "./activity-chips"
 import { SessionComposerLane, useComposerLaneAlignment } from "./composer-lane"
 import { SessionTodoPill } from "./todo-pill"
@@ -530,11 +529,7 @@ export function ActiveSessionComposerRegion(props: {
     return {
       provider: label
         ? label.provider
-        : composerProviderName(
-            ref.providerID,
-            providers.all(),
-            providers.connected().map((provider) => provider.id),
-          ),
+        : composerProviderName(ref.providerID, providers.all()),
       name: label?.model ?? ref.id,
       variant: ref.variant,
     }
@@ -580,10 +575,6 @@ export function ActiveSessionComposerRegion(props: {
             <SessionPluginPills session={props.view()} screen={props.screen} alignment={alignment} />
           </SessionComposerLane>
           <SessionQueuePanel queue={props.model.queue} hidden={props.model.region.state.blocked()} />
-          <SessionGoLimitTray
-            sessionID={props.session.identity.params.id}
-            selection={() => props.model.composer.model.selection}
-          />
         </Show>
       }
       composer={

@@ -350,7 +350,7 @@ describe("plugin primitives", () => {
   ])("store writes: $name becomes the whole stored value", (row) => {
     const key = `plugin-update-${crypto.randomUUID()}`
 
-    localStorage.setItem(`opencode.global.dat:${key}`, JSON.stringify({ items: ["a"], note: "kept" }))
+    localStorage.setItem(`omai.global.dat:${key}`, JSON.stringify({ items: ["a"], note: "kept" }))
 
     const root = createRoot((dispose) => {
       const pair = persisted(Persist.global(key), Noted, { items: [] }, web)
@@ -362,7 +362,7 @@ describe("plugin primitives", () => {
     flushPersisted()
     expect({
       value: root.handle.value,
-      stored: JSON.parse(localStorage.getItem(`opencode.global.dat:${key}`) ?? "null"),
+      stored: JSON.parse(localStorage.getItem(`omai.global.dat:${key}`) ?? "null"),
     }).toEqual({ value: row.expected, stored: row.expected })
     root.dispose()
   })

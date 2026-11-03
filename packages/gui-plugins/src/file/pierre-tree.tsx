@@ -332,7 +332,7 @@ export default function PierreFileTree(props: {
 
     if (!isLive && initialAllowed) applyAllowedCollapsed(initialAllowed)
     tree.render({ containerWrapper: wrapper })
-    tree.getFileTreeContainer()?.classList.add("opencode-pierre-file-tree")
+    tree.getFileTreeContainer()?.classList.add("omai-pierre-file-tree")
     widthHost = tree.getFileTreeContainer()
     const list = widthHost?.shadowRoot?.querySelector<HTMLElement>("[data-file-tree-virtualized-list]")
     const scroller = list?.closest<HTMLElement>("[data-file-tree-virtualized-scroll]")

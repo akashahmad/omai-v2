@@ -105,9 +105,6 @@ export const dict = {
   "ui.sessionTurn.error.freeUsageExceeded": "Gränsen för kostnadsfri användning har överskridits",
   "ui.sessionTurn.error.addCredits": "Lägg till krediter",
   "dialog.usageExceeded.freeTier.title": "Gratisgränsen nådd",
-  "dialog.usageExceeded.freeTier.description":
-    "Prenumerera på OpenCode Go för 10 USD/månad och få pålitlig tillgång till de bästa modellerna med öppen källkod.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Prenumerera",
   "ui.sessionTurn.status.delegating": "Delegerar arbete",
   "ui.sessionTurn.status.planning": "Planerar nästa steg",
   "ui.sessionTurn.status.gatheringContext": "Utforskar",

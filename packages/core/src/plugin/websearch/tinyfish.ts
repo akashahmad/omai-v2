@@ -48,7 +48,7 @@ const InitializedNotification = Schema.Struct({
 })
 
 export const Plugin = define<HttpClient.HttpClient | Scope.Scope>({
-  id: "opencode.websearch.tinyfish",
+  id: "omai.websearch.tinyfish",
   effect: Effect.fn("WebSearchTinyFish.Plugin")(function* (ctx) {
     const http = yield* HttpClient.HttpClient
     yield* WebSearchProvider.register(ctx, {
@@ -99,7 +99,7 @@ const initialize = (http: HttpClient.HttpClient, headers: Record<string, string>
         params: {
           protocolVersion: "2025-06-18",
           capabilities: {},
-          clientInfo: { name: "opencode", version: "1.0" },
+          clientInfo: { name: "omai", version: "1.0" },
         },
       }),
     )

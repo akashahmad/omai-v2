@@ -944,7 +944,7 @@ describe("V1Migration database workflow", () => {
 
   test("imports previous V2 sessions and messages containing apostrophes", async () => {
     await using tmp = await tmpdir()
-    const filename = path.join(tmp.path, "opencode-next.db")
+    const filename = path.join(tmp.path, "omai-next.db")
     const sqlite = await import("bun:sqlite")
     const source = new sqlite.Database(filename)
     source.run(`
@@ -1062,7 +1062,7 @@ describe("V1Migration database workflow", () => {
 
   test("imports previous V2 databases missing newer nullable columns", async () => {
     await using tmp = await tmpdir()
-    const filename = path.join(tmp.path, "opencode-next.db")
+    const filename = path.join(tmp.path, "omai-next.db")
     const sqlite = await import("bun:sqlite")
     const source = new sqlite.Database(filename)
     source.run(`

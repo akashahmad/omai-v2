@@ -4,7 +4,7 @@ import solidPlugin from "vite-plugin-solid"
 import tailwindcss from "@tailwindcss/vite"
 import { fileURLToPath } from "url"
 
-const theme = fileURLToPath(new URL("./public/oc-theme-preload.js", import.meta.url))
+const theme = fileURLToPath(new URL("./public/theme-preload.js", import.meta.url))
 
 const themeScript = readFileSync(theme, "utf8")
 
@@ -37,7 +37,7 @@ const officeEmitted = /^(?:docx_\w+_bg|ooxml_opc_bg|pptx_wasm_bg|xlsx_wasm_bg|re
 
 /** @type {import("vite").Plugin} */
 const dropUnloadedOfficeFiles = {
-  name: "opencode-desktop:drop-unloaded-office-files",
+  name: "omai-desktop:drop-unloaded-office-files",
   apply: "build",
   generateBundle: {
     order: "post",
@@ -59,7 +59,7 @@ const dropUnloadedOfficeFiles = {
 
 /** @type {import("rolldown").Plugin} */
 const bundleNestedWorkerDeps = {
-  name: "opencode-desktop:bundle-nested-worker-deps",
+  name: "omai-desktop:bundle-nested-worker-deps",
   resolveId(id, importer) {
     if (!importer || !importer.includes("node_modules")) return
     if (!workerDeps.some((dep) => id === dep || id.startsWith(`${dep}/`))) return
@@ -73,11 +73,11 @@ const bundleNestedWorkerDeps = {
 }
 
 export const channel = (() => {
-  const raw = process.env.OPENCODE_CHANNEL
+  const raw = process.env.OMAI_CHANNEL
 
   if (raw === "local" || raw === "dev" || raw === "beta" || raw === "prod") return raw
 
-  if (process.env.OPENCODE_CHANNEL === "latest") return "prod"
+  if (process.env.OMAI_CHANNEL === "latest") return "prod"
 
   return "dev"
 })()
@@ -87,7 +87,7 @@ export const channel = (() => {
  */
 export default [
   {
-    name: "opencode-desktop:config",
+    name: "omai-desktop:config",
     config() {
       return {
         resolve: {
@@ -100,7 +100,7 @@ export default [
           },
         },
         define: {
-          "import.meta.env.VITE_OPENCODE_CHANNEL": JSON.stringify(channel),
+          "import.meta.env.VITE_OMAI_CHANNEL": JSON.stringify(channel),
         },
         worker: {
           format: "es",
@@ -114,7 +114,7 @@ export default [
   },
   dropUnloadedOfficeFiles,
   {
-    name: "opencode-desktop:theme-preload",
+    name: "omai-desktop:theme-preload",
     transformIndexHtml: {
       order: "pre",
       handler: inlineThemePreload,
@@ -125,7 +125,7 @@ export default [
   {
     // The Solid plugin keeps JSX for its own compiler, but Vite's dependency scan reads a file that uses
     // import.meta.glob as plain JavaScript once transformed, so the scan alone compiles JSX away. It only collects imports.
-    name: "opencode-desktop:scan-jsx",
+    name: "omai-desktop:scan-jsx",
     enforce: "post",
     config: () => ({ optimizeDeps: { rolldownOptions: { transform: { jsx: { runtime: "classic" } } } } }),
   },
@@ -133,7 +133,7 @@ export default [
 
 export function inlineThemePreload(html) {
   return html.replace(
-    /<script id="oc-theme-preload-script" src="(?:\.\/|\/)oc-theme-preload\.js"><\/script>/,
-    `<script id="oc-theme-preload-script">${themeScript}</script>`,
+    /<script id="theme-preload-script" src="(?:\.\/|\/)theme-preload\.js"><\/script>/,
+    `<script id="theme-preload-script">${themeScript}</script>`,
   )
 }

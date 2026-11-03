@@ -25,7 +25,7 @@ import {
 import type { Patch } from "../../vcs/patch.js"
 
 export const Plugin = define({
-  id: "opencode.vcs.git",
+  id: "omai.vcs.git",
   effect: Effect.fn("VcsGitPlugin")(function* (ctx) {
     const location = yield* Location.Service
     // Markerless locations need this definition to initialize their first repository.
@@ -548,7 +548,7 @@ const untrackedBatch = Effect.fnUntraced(function* (
 
   return yield* Effect.acquireUseRelease(
     Effect.promise(async () => {
-      const base = path.join(os.tmpdir(), `opencode-untracked-${randomUUID()}`)
+      const base = path.join(os.tmpdir(), `omai-untracked-${randomUUID()}`)
       await fs.writeFile(`${base}.list`, eligible.map((file) => `${file}\0`).join(""))
       return base
     }),

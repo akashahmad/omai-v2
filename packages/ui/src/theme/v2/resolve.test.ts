@@ -3,7 +3,7 @@ import { contrastRatio } from "../color"
 import type { DesktopTheme, HexColor, ResolvedV2Theme } from "../types"
 import { resolveThemeV2, resolveThemeVariantV2, themeV2ToCss } from "./resolve"
 
-const theme: DesktopTheme = await Bun.file(new URL("../themes/oc-2.json", import.meta.url)).json()
+const theme: DesktopTheme = await Bun.file(new URL("../themes/omai.json", import.meta.url)).json()
 
 describe("icon emphasis", () => {
   test.each(["light", "dark"] as const)("OC-2 %s icons increase in contrast from faint to base", (mode) => {

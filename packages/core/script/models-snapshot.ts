@@ -8,7 +8,7 @@ const MINIMUM_PROVIDERS = 100
 export const committedSnapshot = new URL("../src/models-dev/snapshot.txt", import.meta.url)
 
 export async function fetchModelsSnapshot() {
-  const source = process.env.OPENCODE_MODELS_URL || "https://models.opencode.ai"
+  const source = process.env.OMAI_MODELS_URL || "https://models.dev"
   const url = `${source}${ModelsDev.catalogPath}`
   const response = await fetch(url, { signal: AbortSignal.timeout(30_000) })
   if (!response.ok) throw new Error(`${url} returned ${response.status} ${response.statusText}`)
@@ -27,6 +27,9 @@ const UNUSED_MODEL_FIELDS = new Set([
   "metadata",
 ])
 
+// The hosted upstream gateways are not offered, so they are not bundled either.
+const HOSTED_PROVIDERS = new Set(["opencode", "opencode-go"])
+
 const Catalog = Schema.fromJsonString(
   Schema.Record(
     Schema.String,
@@ -41,7 +44,9 @@ function trim(text: string) {
   const catalog = Schema.decodeUnknownSync(Catalog)(text)
   return JSON.stringify(
     Object.fromEntries(
-      Object.entries(catalog).map(([id, provider]) => [
+      Object.entries(catalog)
+        .filter(([id]) => !HOSTED_PROVIDERS.has(id))
+        .map(([id, provider]) => [
         id,
         {
           ...provider,
@@ -65,7 +70,7 @@ async function validateModelsSnapshot(text: string) {
 }
 
 export async function bundledModelsSnapshot() {
-  const file = process.env.OPENCODE_MODELS_SNAPSHOT
+  const file = process.env.OMAI_MODELS_SNAPSHOT
   if (!file) return Bun.file(committedSnapshot).text()
   const snapshot = await validateModelsSnapshot(await Bun.file(file).text())
   console.log(`bundling models.dev catalog from ${file} (${snapshot.providers} providers)`)
@@ -74,7 +79,7 @@ export async function bundledModelsSnapshot() {
 
 export function modelsSnapshotPlugin(text: string): BunPlugin {
   return {
-    name: "opencode-models-snapshot",
+    name: "omai-models-snapshot",
     setup(build) {
       build.onLoad({ filter: /models-dev[/\\]snapshot\.txt$/ }, () => ({ contents: text, loader: "text" }))
     },

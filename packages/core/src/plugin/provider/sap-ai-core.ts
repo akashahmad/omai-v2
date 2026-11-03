@@ -5,7 +5,7 @@ import { Provider } from "../../provider.js"
 import { loadSDKFactory } from "./sdk-factory.js"
 
 export const SapAICorePlugin = define({
-  id: "opencode.provider.sap.ai.core",
+  id: "omai.provider.sap.ai.core",
   effect: Effect.fn(function* (ctx) {
     const npm = yield* Npm.Service
     yield* ctx.aisdk.hook(

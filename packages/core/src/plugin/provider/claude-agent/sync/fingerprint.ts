@@ -70,7 +70,7 @@ function visible(message: Exclude<LanguageModelV3Message, { role: "system" }>) {
   return parts
 }
 
-// OpenCode lowers tool attachments into this separate user message.
+// O M A I + lowers tool attachments into this separate user message.
 function isToolMedia(message: LanguageModelV3Message) {
   return (
     message.role === "user" &&

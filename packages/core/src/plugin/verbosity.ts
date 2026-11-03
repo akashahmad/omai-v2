@@ -20,7 +20,7 @@ const gateways = new Set([
 ])
 
 export const Plugin = define({
-  id: "opencode.prompt.verbosity",
+  id: "omai.prompt.verbosity",
   effect: Effect.fn("VerbosityPlugin")(function* (ctx) {
     const models = yield* Model.Service
     const hook = (event: SessionRequest) =>

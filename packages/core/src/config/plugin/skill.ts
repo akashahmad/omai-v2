@@ -18,7 +18,7 @@ import { SkillScan } from "./skill-scan.js"
 type Source = Skill.DirectorySource | Skill.UrlSource
 
 export const Plugin = define({
-  id: "opencode.config.skill",
+  id: "omai.config.skill",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const discovery = yield* SkillDiscovery.Service

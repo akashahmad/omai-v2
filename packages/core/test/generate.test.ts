@@ -228,7 +228,7 @@ testEffect(Layer.empty).effect("attributes each stateless completion without cre
       HttpClient.HttpClient,
       HttpClient.make((request) =>
         Effect.sync(() => {
-          const session = request.headers["x-opencode-session"]
+          const session = request.headers["x-omai-session"]
           if (!session)
             return HttpClientResponse.fromWeb(
               request,
@@ -283,7 +283,7 @@ describe("image and decision generation", () => {
       package: "@opencode/ai/providers/openai/images",
     }),
     Info.make({
-      ...Info.default(Provider.ID.opencode, ID.make("gpt-image-2.5-sunburst")),
+      ...Info.default(Provider.ID.make("opencode"), ID.make("gpt-image-2.5-sunburst")),
       type: "image",
       package: "@opencode/ai/providers/openai/images",
     }),

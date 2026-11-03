@@ -27,7 +27,7 @@ function open(page: Page, input: Partial<WorkspaceInput> = {}) {
     project: { icon: { color: "orange", override }, commands: { start: "echo setup" }, sandboxes },
     provider: NO_PROVIDER,
     configEntries: [
-      { type: "document", path: "/home/test/.config/opencode/opencode.jsonc", info: { shell: "/bin/zsh" } },
+      { type: "document", path: "/home/test/.config/opencode/omai.jsonc", info: { shell: "/bin/zsh" } },
       { type: "directory", path: "/home/test/.config/opencode" },
     ],
     shells: [
@@ -1149,12 +1149,12 @@ test.describe("worktrees prefetch", () => {
 const lsp: ConfigEntry[] = [
   {
     type: "document",
-    path: "/config/opencode.json",
+    path: "/config/omai.json",
     info: { lsp: { typescript: { command: ["typescript-language-server", "--stdio"], extensions: [".ts", ".tsx"] } } },
   },
   {
     type: "document",
-    path: `${directory}/opencode.jsonc`,
+    path: `${directory}/omai.jsonc`,
     info: { lsp: { typescript: { disabled: true }, rust: { command: ["rust-analyzer"], extensions: [".rs"] } } },
   },
 ]
@@ -1249,7 +1249,7 @@ for (const row of [
           ],
           connections: row.connections,
         },
-        { id: "opencode-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
+        { id: "omai-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
         { id: "anthropic", name: "Anthropic", methods: [{ type: "key" }], connections: [] },
       ],
     })
@@ -1277,7 +1277,7 @@ const consoleIntegrations = [
     ],
     connections: [],
   },
-  { id: "opencode-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
+  { id: "omai-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
 ]
 
 test("providers: OpenCode Console signs in from its method list", async ({ page, context }) => {
@@ -1463,9 +1463,9 @@ test("providers: adding an account starts a lone method once", async ({ page, co
 
   const { settings } = await open(page, {
     integrations: [
-      ...consoleIntegrations.filter((integration) => integration.id !== "opencode-go"),
+      ...consoleIntegrations.filter((integration) => integration.id !== "omai-go"),
       {
-        id: "opencode-go",
+        id: "omai-go",
         name: "OpenCode Go",
         methods: [{ type: "key" }],
         connections: [{ type: "credential", id: "cred_go", label: "Go key", method: "key" }],
@@ -1487,7 +1487,7 @@ test("providers: adding an account starts a lone method once", async ({ page, co
   await settings.getByRole("tab", { name: "Providers", exact: true }).click()
   await settings.getByRole("button", { name: "Show more providers", exact: true }).click()
   const dialog = page.getByRole("dialog")
-  await dialog.locator('[data-provider-id="opencode-go"]').click()
+  await dialog.locator('[data-provider-id="omai-go"]').click()
   await dialog.getByRole("button", { name: "Add account", exact: true }).click()
   await expect(dialog.getByPlaceholder("API key")).toBeVisible()
   expect(attempts).toEqual([])
@@ -1666,7 +1666,7 @@ test("providers: adding a Console account keeps the Console row in place", async
           ...(state.authorized ? [{ type: "credential", id: "cred_clara", label: "Clara", method: "oauth" }] : []),
         ],
       },
-      { id: "opencode-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
+      { id: "omai-go", name: "OpenCode Go", methods: [{ type: "key" }], connections: [] },
     ],
     onIntegrationOAuth: () => ({ url: "https://auth.example.test/device?user_code=GOGO-1234" }),
     onIntegrationOAuthStatus: () => {

@@ -20,7 +20,7 @@ import { ProviderRefresh } from "./refresh.js"
 
 // First-time sign-in registers a user-owned client; OpenAI returns its issued client ID on the callback.
 const registrationClientID = "dynamic_agent_client"
-const agentName = "OpenCode"
+const agentName = "O M A I +"
 const issuer = "https://auth.openai.com"
 const tokenURL = `${issuer}/api/accounts/oauth/token`
 const resource = "https://api.openai.com/v1"
@@ -209,7 +209,7 @@ function listen(server: Server) {
 }
 
 export const ChatGPTPlugin = define({
-  id: "opencode.provider.chatgpt",
+  id: "omai.provider.chatgpt",
   effect: Effect.fn(function* (ctx) {
     const credentials = yield* Credential.Service
     const loading = Semaphore.makeUnsafe(1)

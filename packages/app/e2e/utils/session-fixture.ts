@@ -449,7 +449,7 @@ export async function installStressSessionTabs(page: Page, input?: { draftID?: s
   await page.addInitScript(
     ({ directory, sessionIDs, dirBase64, server, draftID }) => {
       localStorage.setItem(
-        "opencode.window.browser.dat:tabs",
+        "omai.window.browser.dat:tabs",
         JSON.stringify([
           ...sessionIDs.map((sessionId) => ({
             type: "session",

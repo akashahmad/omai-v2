@@ -27,7 +27,7 @@ test("withMediaRefs asks for media refs on message and inbox reads only", async 
   expect(
     requests.map((request) => [
       request.path,
-      request.headers.get("x-opencode-capabilities"),
+      request.headers.get("x-omai-capabilities"),
       request.headers.get("authorization"),
     ]),
   ).toEqual([

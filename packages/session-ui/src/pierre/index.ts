@@ -30,7 +30,7 @@ export type DiffProps<T = {}> = FileDiffOptions<T, undefined> & {
 
 const unsafeCSS = `
 :host {
-  --diffs-bg: var(--opencode-diffs-bg, var(--color-background-stronger));
+  --diffs-bg: var(--omai-diffs-bg, var(--color-background-stronger));
   /* Pierre mixes 15% in dark mode, which makes collapsed rows read as highlighted. */
   --diffs-bg-separator-override: light-dark(
     color-mix(in lab, var(--diffs-bg) 98%, var(--diffs-mixer)),
@@ -78,7 +78,7 @@ const unsafeCSS = `
     background-color: var(--timeline-quote-background);
   }
 
-  :host::highlight(opencode-find) {
+  :host::highlight(omai-find) {
     background-color: rgb(from var(--surface-warning-base) r g b / 0.35);
   }
 
@@ -89,7 +89,7 @@ const unsafeCSS = `
     background-color: var(--timeline-quote-background);
   }
 
-  :host::highlight(opencode-find-current) {
+  :host::highlight(omai-find-current) {
     background-color: rgb(from var(--surface-warning-strong) r g b / 0.55);
   }
 }
@@ -100,7 +100,7 @@ const unsafeCSS = `
     background-color: var(--timeline-quote-background);
   }
 
-  ::highlight(opencode-find) {
+  ::highlight(omai-find) {
     background-color: rgb(from var(--surface-warning-base) r g b / 0.35);
   }
 
@@ -111,7 +111,7 @@ const unsafeCSS = `
     background-color: var(--timeline-quote-background);
   }
 
-  ::highlight(opencode-find-current) {
+  ::highlight(omai-find-current) {
     background-color: rgb(from var(--surface-warning-strong) r g b / 0.55);
   }
 }
@@ -268,7 +268,7 @@ const unsafeCSS = `
 
 /* Pierre insets line numbers by 2ch to leave room for diff change bars; compact file viewers can tighten it. */
 [data-file]:not([data-disable-line-numbers]) :is([data-column-number], [data-gutter-buffer]) {
-  padding-left: var(--opencode-diffs-number-inset, 2ch);
+  padding-left: var(--omai-diffs-number-inset, 2ch);
 }
 
 [data-diff-header],

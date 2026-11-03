@@ -20,13 +20,13 @@ function command(password: string, options: Options) {
   return ChildProcess.make(executable, [...args, "--stdio", "--port", "0"], {
     cwd: startupDirectory,
     // Explicit entry wins over anything inherited, so a user-exported
-    // OPENCODE_PASSWORD cannot shadow the child's lease credential.
-    env: { OPENCODE_PASSWORD: password },
+    // OMAI_PASSWORD cannot shadow the child's lease credential.
+    env: { OMAI_PASSWORD: password },
     extendEnv: true,
     // The server treats EOF on this pipe as the end of its ownership lease.
     // The OS closes it even when the TUI is killed before Effect finalizers run.
     stdin: "pipe",
-    stderr: process.env.OPENCODE_PRINT_LOGS === "1" ? "inherit" : "ignore",
+    stderr: process.env.OMAI_PRINT_LOGS === "1" ? "inherit" : "ignore",
     killSignal: "SIGTERM",
     forceKillAfter: "3 seconds",
   })
@@ -50,7 +50,7 @@ const makeEndpoint = Effect.fn("cli.standalone.endpoint")(
     const ready = yield* Effect.tryPromise(() => decodeReady(output))
     return {
       url: ready.url,
-      auth: { type: "basic" as const, username: "opencode", password },
+      auth: { type: "basic" as const, username: "omai", password },
       pid: proc.pid,
       exited: proc.exitCode,
     }

@@ -62,7 +62,7 @@ describe("connectClientMcp", () => {
       { name: "fail", inputSchema: { type: "object" } },
     ])
     expect(
-      await peer.client.callTool({ name: "whoami", arguments: {}, _meta: { "ai.opencode/sessionID": "ses_1" } }),
+      await peer.client.callTool({ name: "whoami", arguments: {}, _meta: { "ai.omai/sessionID": "ses_1" } }),
     ).toMatchObject({ content: [{ type: "text", text: "ses_1" }] })
     expect(await peer.client.callTool({ name: "whoami", arguments: {} })).toMatchObject({
       content: [{ type: "text", text: "none" }],
@@ -196,7 +196,7 @@ function serve() {
       open(socket) {
         const transport = socketTransport(socket)
         transports.set(socket.data.id, transport)
-        const client = new Client({ name: "opencode", version: "1.0.0" })
+        const client = new Client({ name: "omai", version: "1.0.0" })
         const closed = new Promise<void>((resolve) => {
           client.onclose = resolve
         })

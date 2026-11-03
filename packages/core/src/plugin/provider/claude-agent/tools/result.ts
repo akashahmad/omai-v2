@@ -96,7 +96,7 @@ export function collect(prompt: LanguageModelV3Prompt, start: number) {
         }
       }
     }
-    // OpenCode puts the group's media in a following user message; attach it to the group's last result.
+    // O M A I + puts the group's media in a following user message; attach it to the group's last result.
     for (let i = 0; i < tools.length; i++) {
       const tool = tools[i]!
       const flags = tool.providerOptions?.[Provider.ID.claudeAgent]

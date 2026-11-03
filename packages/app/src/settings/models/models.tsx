@@ -1,6 +1,6 @@
 import { useFilteredList } from "@opencode/ui/hooks"
 import { Switch } from "@opencode/ui/switch"
-import { type Component, createEffect, createMemo, For, type JSX, Show } from "solid-js"
+import { type Component, createEffect, For, type JSX, Show } from "solid-js"
 
 import { Schema } from "effect"
 import { Persistence } from "@/runtime/persistence/schema"
@@ -11,7 +11,7 @@ import { popularProviders } from "@/providers/catalog/providers"
 import { Persist, persisted } from "@/runtime/persistence/storage"
 import { SettingsList } from "@/settings/list"
 import { SettingsRow } from "@/settings/row"
-import { CONSOLE_GROUP_KEY, consoleModelGroup, ProviderModelSections } from "@/providers/models/provider-group"
+import { ProviderModelSections } from "@/providers/models/provider-group"
 import { SettingsSearchEmpty } from "@/settings/search-empty"
 import { SettingsSearchField } from "@/settings/search-field"
 import { settingsScroller } from "@/settings/scroller"
@@ -67,7 +67,6 @@ export const SettingsModels: Component<{
     },
   })
 
-  const managed = createMemo(() => consoleModelGroup(models.list()))
   const searching = () => list.filter().length > 0
   const expanded = (key: string) => searching() || !store.collapsed[key]
 
@@ -119,7 +118,6 @@ export const SettingsModels: Component<{
     if (!section?.isConnected) return
 
     // Expand only the path to the target so the saved layout of other providers is kept.
-    if (managed()?.providers.some((item) => item.id === provider)) setStore("collapsed", CONSOLE_GROUP_KEY, false)
     setStore("collapsed", provider, false)
     requestAnimationFrame(() => {
       const panel = section.closest<HTMLElement>(".settings-panel")
@@ -183,7 +181,6 @@ export const SettingsModels: Component<{
           >
             <ProviderModelSections
               groups={list.grouped.latest}
-              managed={managed()}
               expanded={expanded}
               disabled={searching()}
               onExpandedChange={(key, value) => setStore("collapsed", key, !value)}

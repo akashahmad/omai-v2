@@ -544,7 +544,7 @@ export const executeCodeDocument = document([
         name: "execute",
         offset: 52_300,
         args: {
-          code: 'const tab = await tools.browser.tabs.open({ url: "http://localhost:4399" })\nconst usage = await tools.opencode_console.get_usage({ range: "24h" })\nreturn { tab: tab.id, cost: usage.cost_usd }',
+          code: 'const tab = await tools.browser.tabs.open({ url: "http://localhost:4399" })\nconst usage = await tools.omai_console.get_usage({ range: "24h" })\nreturn { tab: tab.id, cost: usage.cost_usd }',
         },
         output: '{\n  "tab": "tab_4f1c",\n  "cost": 0.42\n}',
         metadata: {

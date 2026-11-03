@@ -19,7 +19,7 @@ const addPlugin = Effect.fn(function* () {
 
 describe("OpenRouterPlugin", () => {
   test("is registered so legacy OpenRouter behavior can be applied", () => {
-    expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.openrouter")
+    expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.openrouter")
   })
 
   it.effect("applies legacy referer headers only to openrouter", () =>
@@ -36,8 +36,7 @@ describe("OpenRouterPlugin", () => {
 
       expect((yield* catalog.get(Provider.ID.openrouter))?.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
+        "X-Title": "omai",
       })
       expect((yield* catalog.get(Provider.ID.make("nvidia")))?.headers).toBeUndefined()
     }),

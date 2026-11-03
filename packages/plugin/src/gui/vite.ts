@@ -36,7 +36,7 @@ export function gui(options: GuiOptions = {}): Plugin[] {
   return [
     solid(),
     {
-      name: "opencode-gui",
+      name: "omai-gui",
       enforce: "pre",
       config: () => ({
         build: {
@@ -54,7 +54,7 @@ export function gui(options: GuiOptions = {}): Plugin[] {
         if (provided.has(source) || source === "electron" || isBuiltin(source)) return { id: source, external: true }
 
         if (/^(effect|solid-js|@opencode)\//.test(source))
-          this.error(`${source} is not a module the OpenCode app provides to plugin GUIs: ${[...provided].join(", ")}`)
+          this.error(`${source} is not a module the O M A I + app provides to plugin GUIs: ${[...provided].join(", ")}`)
       },
     },
   ]

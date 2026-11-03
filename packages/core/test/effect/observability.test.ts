@@ -31,25 +31,25 @@ describe("resource", () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES = "service.namespace=anomalyco,broken"
 
     expect(resource().attributes["service.namespace"]).toBeUndefined()
-    expect(resource().attributes["opencode.client"]).toBeDefined()
+    expect(resource().attributes["omai.client"]).toBeDefined()
   })
 
   test("keeps built-in attributes when env values conflict", () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES =
-      "opencode.client=web,service.instance.id=override,service.namespace=anomalyco"
+      "omai.client=web,service.instance.id=override,service.namespace=anomalyco"
 
     const app = { client: "cli", version: "1.2.3", channel: "beta" }
     expect(resource(app).attributes).toMatchObject({
-      "opencode.client": "cli",
+      "omai.client": "cli",
       "service.namespace": "anomalyco",
     })
     expect(resource(app).attributes["service.instance.id"]).not.toBe("override")
-    expect(resource(app).attributes["opencode.run"]).toMatch(/^[0-9a-f]{8}$/)
+    expect(resource(app).attributes["omai.run"]).toMatch(/^[0-9a-f]{8}$/)
   })
 })
 
 test("falls back to local logging when OTLP initialization fails", async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-observability-test-"))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "omai-observability-test-"))
   await using _ = {
     async [Symbol.asyncDispose]() {
       await fs.rm(dir, { recursive: true, force: true })
@@ -85,13 +85,13 @@ test("falls back to local logging when OTLP initialization fails", async () => {
 })
 
 test("file logger appends concurrent runs with a run on every line", async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-log-test-"))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "omai-log-test-"))
   await using _ = {
     async [Symbol.asyncDispose]() {
       await fs.rm(dir, { recursive: true, force: true })
     },
   }
-  const file = path.join(dir, "opencode.log")
+  const file = path.join(dir, "omai.log")
   const write = (runID: string) =>
     Effect.forEach(
       Array.from({ length: 50 }, (_, index) => index),
@@ -113,13 +113,13 @@ test("file logger appends concurrent runs with a run on every line", async () =>
 })
 
 test("file logger flattens nested objects", async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-log-test-"))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "omai-log-test-"))
   await using _ = {
     async [Symbol.asyncDispose]() {
       await fs.rm(dir, { recursive: true, force: true })
     },
   }
-  const file = path.join(dir, "opencode.log")
+  const file = path.join(dir, "omai.log")
 
   await Effect.logInfo("request complete", {
     request: { method: "GET", timing: { duration: 42 } },

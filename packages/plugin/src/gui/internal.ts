@@ -36,7 +36,7 @@ export const DrawerContext = createContext<{
   }) => void
 }>()
 
-const live = Symbol.for("opencode.plugin.live")
+const live = Symbol.for("omai.plugin.live")
 
 /**
  * Marks an accessor `ctx.use` returns, so `createKeyed` follows its generations.

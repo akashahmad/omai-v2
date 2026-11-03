@@ -19,7 +19,7 @@ const addPlugin = Effect.fn(function* () {
 
 describe("LLMGatewayPlugin", () => {
   test("is registered so legacy referer headers can be applied", () => {
-    expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.llmgateway")
+    expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.llmgateway")
   })
 
   it.effect("applies legacy referer headers only to enabled llmgateway", () =>
@@ -41,9 +41,8 @@ describe("LLMGatewayPlugin", () => {
       yield* addPlugin()
       expect((yield* catalog.get(Provider.ID.make("llmgateway")))?.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
-        "X-Source": "opencode",
+        "X-Title": "omai",
+        "X-Source": "omai",
       })
       expect((yield* catalog.get(Provider.ID.openrouter))?.headers).toBeUndefined()
     }),

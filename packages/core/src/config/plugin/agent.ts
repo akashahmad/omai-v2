@@ -34,7 +34,7 @@ const agentKeys = new Set(["variant", ...Object.keys(ConfigAgent.Info.fields)])
 const nativeKeys = ["permissions", "request", "system", "disabled"]
 
 export const Plugin = define({
-  id: "opencode.config.agent",
+  id: "omai.config.agent",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const fs = yield* FSUtil.Service

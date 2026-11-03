@@ -28,7 +28,7 @@ export function icons(channel: string): Plugin {
   ]
 
   return {
-    name: "opencode-app:icons",
+    name: "omai-app:icons",
     generateBundle() {
       files.forEach((file) => this.emitFile({ type: "asset", fileName: file.fileName, source: file.source }))
     },
@@ -45,8 +45,8 @@ export function icons(channel: string): Plugin {
       order: "pre",
       handler(html) {
         return html
-          .replace("%OPENCODE_FAVICON%", `/${prefix}/favicon.ico`)
-          .replace("%OPENCODE_APPLE_TOUCH_ICON%", `/${prefix}/apple-touch-icon.png`)
+          .replace("%OMAI_FAVICON%", `/${prefix}/favicon.ico`)
+          .replace("%OMAI_APPLE_TOUCH_ICON%", `/${prefix}/apple-touch-icon.png`)
       },
     },
   }

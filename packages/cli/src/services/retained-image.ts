@@ -9,7 +9,7 @@ import path from "node:path"
 // so a process that must survive an installer keeps a second link to its own image while it
 // runs. Windows reuses process IDs quickly, so names carry a random suffix and only links of
 // processes that no longer exist are swept.
-const pattern = /^opencode-(?:service|upgrade)-(\d+)-[0-9a-f]+\.exe$/
+const pattern = /^omai-(?:service|upgrade)-(\d+)-[0-9a-f]+\.exe$/
 
 /** Hold a second link to the running image in `directory` for the lifetime of the scope. */
 export const retain = Effect.fnUntraced(function* (directory: string, role: "service" | "upgrade") {
@@ -25,7 +25,7 @@ export const retain = Effect.fnUntraced(function* (directory: string, role: "ser
           yield* fs.remove(path.join(directory, name)).pipe(Effect.ignore)
         }),
       )
-      const target = path.join(directory, `opencode-${role}-${process.pid}-${randomBytes(4).toString("hex")}.exe`)
+      const target = path.join(directory, `omai-${role}-${process.pid}-${randomBytes(4).toString("hex")}.exe`)
       const executable = yield* fs.realPath(process.execPath).pipe(Effect.orElseSucceed(() => process.execPath))
       return yield* fs.link(executable, target).pipe(
         Effect.as(target),
@@ -52,7 +52,7 @@ export const relocate = Effect.fnUntraced(function* (directory: string, destinat
 
 /**
  * Whether the running binary was installed by a package manager or the curl installer, the installs
- * whose upgrades replace it in place. The updater decides the same question from the install location.
+ * whose upgrades replace it in place.
  */
 export function installed(home: string) {
   const runtime = path.basename(process.execPath, path.extname(process.execPath)).toLowerCase()
@@ -61,7 +61,7 @@ export function installed(home: string) {
   return (
     executable.split(path.sep).includes("node_modules") ||
     /[\\/]winget[\\/]packages[\\/]/i.test(executable) ||
-    executable === path.resolve(home, ".opencode", "bin", "opencode.exe")
+    executable === path.resolve(home, ".omai", "bin", "omai.exe")
   )
 }
 

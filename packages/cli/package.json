@@ -5,8 +5,7 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "opencode": "./bin/opencode.cjs",
-    "opencode2": "./bin/opencode2.cjs"
+    "omai": "./bin/omai.cjs"
   },
   "files": [
     "bin"
@@ -18,7 +17,7 @@
     "build": "bun run script/build.ts",
     "build:node": "bun run script/build-node.ts",
     "pack": "bun run script/pack.ts",
-    "pack:docker": "chmod +x dist/cli-linux-*-musl/bin/opencode && mkdir -p ../../dist/docker && docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=../../dist/docker/opencode-image.tar .",
+    "pack:docker": "chmod +x dist/cli-linux-*-musl/bin/omai && mkdir -p ../../dist/docker && docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=../../dist/docker/omai-image.tar .",
     "dev": "bun run src/index.ts",
     "test": "bun test --timeout 30000 --only-failures",
     "typecheck": "bun check --no-script -b",
@@ -73,10 +72,5 @@
     "@parcel/watcher-win32-arm64": "2.5.1",
     "@parcel/watcher-win32-x64": "2.5.1",
     "vite": "catalog:"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/anomalyco/opencode.git",
-    "directory": "packages/cli"
   }
 }

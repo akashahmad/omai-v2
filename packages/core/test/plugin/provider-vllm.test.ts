@@ -64,8 +64,8 @@ describe("VLLMPlugin", () => {
           const providers = yield* Provider.Service
           const modelState = yield* Model.Service
           const providerID = Provider.ID.make("vllm")
-          expect(VLLMPlugin.id).toBe("opencode.provider.vllm")
-          expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.vllm")
+          expect(VLLMPlugin.id).toBe("omai.provider.vllm")
+          expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.vllm")
           yield* addPlugin(server.url.origin, "5 millis")
           yield* Effect.promise(() => Bun.sleep(20))
           expect(yield* providers.get(providerID)).toBeUndefined()

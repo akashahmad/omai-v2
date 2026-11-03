@@ -17,7 +17,7 @@ const churnSize = Number(process.env.HOME_INDEX_CHURN_SIZE ?? 10_000)
 const updates = Number(process.env.HOME_INDEX_UPDATES ?? 20)
 
 // Forced GC changes timing; retention runs stay separate from clean timing runs.
-const memory = process.env.OPENCODE_PERFORMANCE_MEMORY === "1"
+const memory = process.env.OMAI_PERFORMANCE_MEMORY === "1"
 
 const rowContainer = '[data-component="home-session-row-container"]'
 
@@ -230,7 +230,7 @@ async function setup(page: Page, fixture: HomeIndexFixture) {
   await page.addInitScript(
     ({ projects }) => {
       localStorage.setItem(
-        "opencode.global.dat:server",
+        "omai.global.dat:server",
         JSON.stringify({
           projects: { local: projects.map((worktree, index) => ({ worktree, expanded: index === 0 })) },
           lastProject: { local: projects[0] },

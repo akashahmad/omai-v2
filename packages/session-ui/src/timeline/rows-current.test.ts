@@ -1717,7 +1717,7 @@ describe("current session timeline rows", () => {
     expect(
       refused(
         "provider.budget-limit",
-        '{"error":{"code":429,"status":"RESOURCE_EXHAUSTED","message":"Budget reached.","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"BudgetLimitError","domain":"opencode.ai","metadata":{"coverage":"all","resetsAt":"2026-11-01T00:00:00.000Z"}}]}}',
+        '{"error":{"code":429,"status":"RESOURCE_EXHAUSTED","message":"Budget reached.","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"BudgetLimitError","domain":"omai.ai","metadata":{"coverage":"all","resetsAt":"2026-11-01T00:00:00.000Z"}}]}}',
       ),
     ).toMatchObject({ kind: "budget-limit", resetAt: Date.UTC(2026, 10, 1) })
     expect(refused("provider.budget-limit")).toEqual(

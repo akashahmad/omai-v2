@@ -127,7 +127,7 @@ for (const close of [false, true]) {
       await expectSessionTitle(page, sessions[0].title)
 
       const heap =
-        process.env.OPENCODE_PERFORMANCE_MEMORY === "1"
+        process.env.OMAI_PERFORMANCE_MEMORY === "1"
           ? await cdp.send("HeapProfiler.collectGarbage").then(() => cdp.send("Runtime.getHeapUsage"))
           : undefined
 

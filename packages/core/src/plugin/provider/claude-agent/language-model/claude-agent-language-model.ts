@@ -51,12 +51,12 @@ export class Model implements LanguageModelV3 {
     const primary = kind === "primary"
     const branch = kind === "generate" || kind === "compaction"
     const sessionID = primary ? session : undefined
-    // Conversation branches copy their source session and keep the Claude prompt. OpenCode supplies their task as user input.
+    // Conversation branches copy their source session and keep the Claude prompt. O M A I + supplies their task as user input.
     const sourceID = primary ? headers[RequestKind.FORK_HEADER] : branch ? session : undefined
     // Branches offer the chat's tools and system prompt so Claude reuses the chat's prompt cache.
     const offered = primary || branch ? tools : []
     const convert = ConvertClaudeStream.make(offered)
-    // Titles are standalone tasks, so OpenCode's system prompt replaces Claude Code's.
+    // Titles are standalone tasks, so O M A I +'s system prompt replaces Claude Code's.
     const system =
       primary || branch ? ClaudeSystemPrompt.make(agent, instructions) : ClaudeSystemPrompt.utility(options.prompt)
     let cancelled = false

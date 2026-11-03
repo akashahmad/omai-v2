@@ -34,14 +34,14 @@ const generate = makeLocationNode({
 
 it.live("uses base configuration without depending on process.cwd()", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-generate-endpoint-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-generate-endpoint-")))
     const global = path.join(tmp.path, "global")
     const project = path.join(tmp.path, "project")
     yield* Effect.promise(() => Promise.all([fs.mkdir(global), fs.mkdir(project)]))
     yield* Effect.promise(() =>
       Promise.all([
-        fs.writeFile(path.join(global, "opencode.json"), JSON.stringify({ model: "base/default" })),
-        fs.writeFile(path.join(project, "opencode.json"), JSON.stringify({ model: "project/default" })),
+        fs.writeFile(path.join(global, "omai.json"), JSON.stringify({ model: "base/default" })),
+        fs.writeFile(path.join(project, "omai.json"), JSON.stringify({ model: "project/default" })),
       ]),
     )
     const handler = yield* ServerFetch.make(
@@ -74,7 +74,7 @@ it.live("uses base configuration without depending on process.cwd()", () =>
 
 it.live("rejects unknown image and decision models and duplicate question names", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-generate-media-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-generate-media-")))
     const handler = yield* ServerFetch.make({
       database: { path: ":memory:" },
       config: { directory: tmp.path },

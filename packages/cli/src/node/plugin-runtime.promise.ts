@@ -11,7 +11,7 @@ import {
   Skill,
 } from "@opencode/plugin"
 
-const key = Symbol.for("opencode.plugin.v2.promise")
+const key = Symbol.for("omai.plugin.v2.promise")
 ;(globalThis as typeof globalThis & { [key]?: unknown })[key] = {
   Agent,
   Command,

@@ -130,9 +130,9 @@ function toModel(model: CatalogModel, prices: ReadonlyMap<string, Model.Info> | 
   return {
     ...defaults,
     name: model.name,
-    // The SDK reports context windows before a prompt, but not output limits. 0 means unknown in OpenCode.
+    // The SDK reports context windows before a prompt, but not output limits. 0 means unknown in O M A I +.
     limit: { context: model.contextWindow ?? defaults.limit.context, output: 0 },
-    // OpenCode picks the title model by family (Model.small).
+    // O M A I + picks the title model by family (Model.small).
     family: model.id.includes("haiku") ? Model.Family.make("claude-haiku") : undefined,
     capabilities: { tools: true, input: ["text", "image", "pdf"], output: ["text"] },
     variants: model.efforts.map((effort) => ({ id: Model.VariantID.make(effort), settings: { effort } })),

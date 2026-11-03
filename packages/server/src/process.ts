@@ -57,7 +57,7 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
   // Without a password anything that can reach the port can drive the server, so only this machine may.
   if (!password && !isLoopback(hostname))
     return yield* Effect.fail(
-      new Error(`Set OPENCODE_PASSWORD to listen on ${hostname}; without a password the server only listens on loopback`),
+      new Error(`Set OMAI_PASSWORD to listen on ${hostname}; without a password the server only listens on loopback`),
     )
   const port = Option.fromNullishOr(options.port)
   const shutdown = yield* Latch.make()
@@ -117,7 +117,7 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
         Effect.provideService(Scope.Scope, applicationScope),
       )
     }
-    // Schedules fire from any server process (`service`, `opencode serve`, or `--standalone`); the table holds all their state.
+    // Schedules fire from any server process (`service`, `omai serve`, or `--standalone`); the table holds all their state.
     yield* Effect.forkIn(Context.get(context, Schedule.Service).run, applicationScope)
     yield* Ref.set(application, Option.some(Context.get(context, HttpRouter.HttpRouter).asHttpEffect()))
     yield* status.ready
@@ -190,7 +190,7 @@ function dispatch(
   urls: () => ReadonlyArray<string>,
   tmp: string,
 ): App {
-  const auth = password ? ServerAuth.Config.of({ password: Option.some(password), username: "opencode" }) : undefined
+  const auth = password ? ServerAuth.Config.of({ password: Option.some(password), username: "omai" }) : undefined
   // Without a password, a page on another site could still send requests, so only allowed origins get through. The
   // Host must also be loopback: a site that rebinds its own name to 127.0.0.1 would otherwise count as same-host.
   const authorized = (request: HttpServerRequest.HttpServerRequest) =>
@@ -244,7 +244,7 @@ function unavailable(status: Status.State) {
       {
         code: "service_failed",
         message: "The background service could not start.",
-        action: "Run `opencode service restart` after checking the service logs.",
+        action: "Run `omai service restart` after checking the service logs.",
       },
       { status: 503 },
     )

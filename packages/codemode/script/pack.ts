@@ -9,7 +9,7 @@ import { pack } from "@opencode/script/pack"
 const tarball = await pack(path.resolve(import.meta.dir, ".."))
 
 // The package must import under Node and under Bun's workerd conditions once installed from the tarball.
-const consumer = await mkdtemp(path.join(tmpdir(), "opencode-codemode-"))
+const consumer = await mkdtemp(path.join(tmpdir(), "omai-codemode-"))
 try {
   await Bun.write(
     path.join(consumer, "package.json"),

@@ -161,7 +161,7 @@ const oauth = (app: App.Info) =>
   }) satisfies IntegrationOAuthMethodRegistration
 
 export const GithubCopilotPlugin = define({
-  id: "opencode.provider.github.copilot",
+  id: "omai.provider.github.copilot",
   effect: Effect.fn(function* (ctx) {
     const providers = yield* Provider.Service
     const cache = yield* SharedCache.Service

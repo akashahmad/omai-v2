@@ -5,10 +5,10 @@ import { isolatedEnv } from "./fixture/environment"
 
 test("standalone server exits when its owner is killed", async () => {
   // Windows can hold the server's files briefly after it exits; the fixture retries removal on EBUSY.
-  await using root = await tmpdir("opencode-cli-standalone-")
+  await using root = await tmpdir("omai-cli-standalone-")
   const owner = Bun.spawn([process.execPath, path.join(import.meta.dir, "fixture/standalone-owner.ts")], {
     cwd: path.join(import.meta.dir, ".."),
-    env: isolatedEnv(root.path, { OPENCODE_SERVER_USERNAME: "custom" }),
+    env: isolatedEnv(root.path, { OMAI_SERVER_USERNAME: "custom" }),
     stdin: "ignore",
     stdout: "pipe",
     stderr: "pipe",

@@ -507,7 +507,7 @@ describe("Session.prompt", () => {
     Effect.gen(function* () {
       yield* setup
       const session = yield* Session.Service
-      const directory = yield* tmpdirScoped("opencode-session-prompt-")
+      const directory = yield* tmpdirScoped("omai-session-prompt-")
       const source = path.join(directory.path, "image.png")
       const bytes = Buffer.from(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -539,7 +539,7 @@ describe("Session.prompt", () => {
     Effect.gen(function* () {
       yield* setup
       const session = yield* Session.Service
-      const directory = yield* tmpdirScoped("opencode-session-prompt-")
+      const directory = yield* tmpdirScoped("omai-session-prompt-")
       const source = path.join(directory.path, "screenshot.png")
       yield* Effect.promise(() => Bun.write(source, Buffer.from(pngBase64, "base64")))
       const bytes = yield* Effect.promise(() => Bun.file(source).arrayBuffer())

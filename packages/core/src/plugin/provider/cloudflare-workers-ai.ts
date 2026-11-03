@@ -8,7 +8,7 @@ import { credentialSettings, metadataSettings } from "./credential-settings.js"
 const providerID = Provider.ID.make("cloudflare-workers-ai")
 
 export const CloudflareWorkersAIPlugin = define({
-  id: "opencode.provider.cloudflare.workers.ai",
+  id: "omai.provider.cloudflare.workers.ai",
   effect: Effect.fn(function* (ctx) {
     const configured = yield* configuredSettings(providerID)
     const form =

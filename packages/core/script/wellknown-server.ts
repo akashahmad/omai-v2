@@ -93,12 +93,12 @@ const server = Bun.serve({
           env: "TOKEN",
         },
         remote_config: {
-          url: `${url.origin}/config/opencode.json`,
+          url: `${url.origin}/config/omai.json`,
           headers: { authorization: "Bearer {env:TOKEN}" },
         },
       })
     }
-    if (url.pathname === "/config/opencode.json") {
+    if (url.pathname === "/config/omai.json") {
       if (request.headers.get("authorization") !== `Bearer ${token}`) {
         return new Response("Unauthorized", { status: 401 })
       }

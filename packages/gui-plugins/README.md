@@ -1,6 +1,6 @@
 # Built-in GUI plugins
 
-Every feature of the desktop and web app that is not the core shell is a built-in GUI plugin: the terminal, review, files, the browser, SSH, WSL, the updater and more. Each one builds only on the GUI plugin SDK in [`packages/plugin/src/gui`](../plugin/src/gui), the same `@opencode/plugin/gui` that third-party plugins use. The SDK is typed so that the common bugs fail to compile or fail the lint, and every declaration has TSDoc, so editor hovers answer most questions. This guide shows how the parts fit, with code from the plugins that ship. [Build your first plugin](#build-your-first-plugin) walks through [`src/pairing`](src/pairing), a small built-in that uses both processes. `bun run lint` checks every code block marked with its source against that source.
+Every feature of the desktop and web app that is not the core shell is a built-in GUI plugin: the terminal, review, files, the browser, SSH, WSL and more. Each one builds only on the GUI plugin SDK in [`packages/plugin/src/gui`](../plugin/src/gui), the same `@opencode/plugin/gui` that third-party plugins use. The SDK is typed so that the common bugs fail to compile or fail the lint, and every declaration has TSDoc, so editor hovers answer most questions. This guide shows how the parts fit, with code from the plugins that ship. [Build your first plugin](#build-your-first-plugin) walks through [`src/pairing`](src/pairing), a small built-in that uses both processes. `bun run lint` checks every code block marked with its source against that source.
 
 - Window SDK: `@opencode/plugin/gui` ([`index.ts`](../plugin/src/gui/index.ts))
 - Main-process SDK: `@opencode/plugin/gui/main` ([`main.ts`](../plugin/src/gui/main.ts))
@@ -33,7 +33,7 @@ src/pairing/
 └── i18n/en.ts        English copy
 ```
 
-Unit tests of logic that carries a contract sit beside the code as `*.test.ts`, as in `src/ssh/` and `src/updater/`.
+Unit tests of logic that carries a contract sit beside the code as `*.test.ts`, as in `src/ssh/`.
 
 `Plugin.define` is the manifest, the same call a third-party plugin's `./gui-experimental` makes. The host lists attach each built-in's lazy `windowEntry` and `mainEntry`. The host reads the manifest before any entry loads. No definition declares an id: the host gives a built-in its key in `compose`, and a bundle the server plugin's id, as `ctx.id`. That id prefixes every id the plugin creates: commands, panel keys, stored keys, contract and Ipc ids.
 
@@ -332,9 +332,9 @@ An `Ipc` is the typed contract between a plugin's main entry and its windows. It
 
 ```mermaid
 sequenceDiagram
-  participant W as updater window (ctx.main(Updater))
+  participant W as plugin window (ctx.main(Ipc))
   participant B as bridge
-  participant M as updater main (ctx.provide)
+  participant M as plugin main (ctx.provide)
   W->>B: subscribe
   B->>M: state(window)
   M-->>W: available + state snapshot
@@ -367,19 +367,6 @@ sequenceDiagram
 - An Ipc that goes away is a suspension, not a failure: keep what the user had and resume when it returns. No retry timer.
 - An Ipc call can reject while the event that explains it is still in flight. When main reports an outcome as an event, let the event decide.
 - A contribution that throws renders nothing and records the error. The rest of the window keeps working.
-
-The updater's actions branch on the state its main entry pushes and still answer while main is missing:
-
-<!-- source: src/updater/renderer.tsx#act -->
-
-```tsx
-const act = (name: "check" | "install") => {
-  if (state()) return void import("./actions").then((module) => module[name](ctx, updater))
-
-  // Not loaded yet, or not active (failed, or not on this platform): nothing can check or install.
-  showToast({ title: ctx.t("common.requestFailed") })
-}
-```
 
 The pairing settings page waits for its main side only where it needs it. Pairing codes come from the local server's `ServerRef`, so they never wait for main; remote access and the display setting render only while main is active, so the page never offers a switch that cannot answer:
 
@@ -534,7 +521,7 @@ const setup: Plugin.MainSetup = (ctx) => {
   const stored = builtinMainContext(ctx).storage.store("keepScreenActive", {
     schema: Schema.Boolean,
     initial: false,
-    from: { state: ["opencode.settings", "keepScreenActive"] },
+    from: { state: ["omai.settings", "keepScreenActive"] },
   })
 
   const cli = ctx.cli
@@ -683,7 +670,6 @@ export const builtins = compose({
   details,
   browser: { ...browser, mainEntry: () => import("./browser/main") },
   pairing: { ...pairing, mainEntry: () => import("./pairing/main") },
-  updater: { ...updater, mainEntry: () => import("./updater/main") },
   ssh: { ...ssh, mainEntry: () => import("./ssh/main") },
   wsl: { ...wsl, mainEntry: () => import("./wsl/main") },
   "microsoft-office": microsoftOffice,
@@ -706,7 +692,6 @@ export const builtins = compose({
   file: { ...file, windowEntry: eager(fileRenderer) },
   review: { ...review, windowEntry: eager(reviewRenderer) },
   details: { ...details, windowEntry: eager(detailsRenderer) },
-  updater: { ...updater, windowEntry: eager(updaterRenderer) },
   "microsoft-office": { ...microsoftOffice, windowEntry: eager(microsoftOfficeRenderer) },
   sources: { ...sources, windowEntry: eager(sourcesRenderer) },
   goal: { ...goal, windowEntry: eager(goalRenderer) },

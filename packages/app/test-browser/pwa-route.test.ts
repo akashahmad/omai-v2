@@ -3,7 +3,7 @@ import { MemoryRouter, createMemoryHistory } from "@solidjs/router"
 import { createComponent, render } from "solid-js/web"
 import { isStandalone, PwaRoutePersistence, restorePwaRoute } from "../src/runtime/platform/pwa"
 
-const key = "opencode.pwa.last-route"
+const key = "omai.pwa.last-route"
 
 const originalUrl = window.location.href
 

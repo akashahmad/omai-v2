@@ -39,6 +39,6 @@ not be used to claim a destination-readiness gain from skipping sanitization.
 
 `MARKDOWN_ASSERT_DISPOSAL=1` enables the no-obsolete-sanitization assertion. Use
 `MARKDOWN_RETAINED=1` only in separate post-GC runs. The repository trace collector
-is available through `OPENCODE_PERFORMANCE_TRACE_DIR`, and `MARKDOWN_SCREENSHOT`
+is available through `OMAI_PERFORMANCE_TRACE_DIR`, and `MARKDOWN_SCREENSHOT`
 captures final output after timing. Run serially, preserve frozen builds, and keep
 all results outside Git.

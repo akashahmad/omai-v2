@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 
-const src = await Bun.file(new URL("../public/oc-theme-preload.js", import.meta.url)).text()
+const src = await Bun.file(new URL("../public/theme-preload.js", import.meta.url)).text()
 
 const run = () => Function(src)()
 
@@ -30,27 +30,27 @@ describe("theme preload", () => {
     ({ stored, systemDark, scheme, background }) => {
       setSystemDark(systemDark)
 
-      if (stored) localStorage.setItem("opencode-color-scheme", stored)
+      if (stored) localStorage.setItem("omai-color-scheme", stored)
       run()
 
-      expect(document.documentElement.dataset.theme).toBe("oc-2")
+      expect(document.documentElement.dataset.theme).toBe("omai")
       expect(document.documentElement.dataset.colorScheme).toBe(scheme)
       expect(document.documentElement.style.backgroundColor).toBe(background)
     },
   )
 
   test.each([
-    { scheme: undefined, key: "opencode-theme-css-light", css: "--background-base:#fff;", expected: "light" },
-    { scheme: "dark", key: "opencode-theme-css-dark", css: "--background-base:#010203;", expected: "dark" },
+    { scheme: undefined, key: "omai-theme-css-light", css: "--background-base:#fff;", expected: "light" },
+    { scheme: "dark", key: "omai-theme-css-dark", css: "--background-base:#010203;", expected: "dark" },
   ])("restores the cached $expected css of a custom theme", ({ scheme, key, css, expected }) => {
-    localStorage.setItem("opencode-theme-id", "nightowl")
+    localStorage.setItem("omai-theme-id", "nightowl")
 
-    if (scheme) localStorage.setItem("opencode-color-scheme", scheme)
+    if (scheme) localStorage.setItem("omai-color-scheme", scheme)
     localStorage.setItem(key, css)
     run()
 
     expect(document.documentElement.dataset.theme).toBe("nightowl")
     expect(document.documentElement.dataset.colorScheme).toBe(expected)
-    expect(document.getElementById("oc-theme-preload")?.textContent).toContain(css)
+    expect(document.getElementById("theme-preload")?.textContent).toContain(css)
   })
 })

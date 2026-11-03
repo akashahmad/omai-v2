@@ -15,7 +15,7 @@ export function ensurePluginRuntime() {
   const modules = loadRuntimeModules()
   installed = modules
   Bun.plugin({
-    name: "opencode-plugin-runtime",
+    name: "omai-plugin-runtime",
     setup(build) {
       for (const [specifier, load] of Object.entries(modules)) {
         build.module(specifier, () => {
@@ -29,7 +29,7 @@ export function ensurePluginRuntime() {
         const match = args.path.match(foreignPkgPattern)
         const target = match ? `${match[2] ?? match[3]}/${match[4]}`.replaceAll("\\", "/") : args.path
         throw new Error(
-          `Cannot load "${target}" from plugin node_modules: "${target}" is not provided by OpenCode; plugins must use the host's "effect" and "@opencode/plugin" modules.`,
+          `Cannot load "${target}" from plugin node_modules: "${target}" is not provided by O M A I +; plugins must use the host's "effect" and "@opencode/plugin" modules.`,
         )
       })
     },

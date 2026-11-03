@@ -72,7 +72,7 @@ export function make(tools: readonly LanguageModelV3FunctionTool[]) {
           usage.update(messageID, event.usage)
           break
         case "message_stop":
-          // Must match ClaudeSession.readStep's tool boundary, or OpenCode's step ends without a finish event.
+          // Must match ClaudeSession.readStep's tool boundary, or O M A I +'s step ends without a finish event.
           if (calledTools) {
             parts.push({
               type: "finish",

@@ -22,24 +22,12 @@ const keys: Record<string, string> = {
   stored: "sk-stored",
   XAI_API_KEY: "xai-env-key",
   GEMINI_API_KEY: "gemini-env-key",
-  OPENCODE_API_KEY: "opencode-env-key",
 }
 
-// A ChatGPT sign-in can't start voice sessions, so resolving one fails the test; an OpenCode Console sign-in can.
+// A ChatGPT sign-in can't start voice sessions, so resolving one fails the test.
 const resolveCredential: Integration.Interface["connection"]["resolve"] = (connection) => {
   if (connection.type === "env") return Effect.succeed(Credential.Key.make({ type: "key", key: keys[connection.name] }))
   if (connection.id === "chatgpt") return Effect.die("a ChatGPT sign-in was resolved")
-  if (connection.id === "console")
-    return Effect.succeed(
-      Credential.OAuth.make({
-        type: "oauth",
-        methodID: Integration.MethodID.make("device"),
-        access: "console-access",
-        refresh: "console-refresh",
-        expires: 1,
-        metadata: { orgID: "wrk_console" },
-      }),
-    )
   return Effect.succeed(Credential.Key.make({ type: "key", key: keys[connection.id] }))
 }
 
@@ -152,34 +140,6 @@ it.effect("uses the first key or env connection Integration lists and never a Ch
   }),
 )
 
-it.effect(
-  "starts GPT-Live on OpenCode's hosted endpoint with an OpenCode Console connection only without an OpenAI key",
-  () =>
-    Effect.gen(function* () {
-      const requests: HttpClientRequest.HttpClientRequest[] = []
-      const opencode = { opencode: [credential("console", "oauth")] }
-
-      yield* start("gpt-live-1", { openai: [credential("chatgpt", "oauth")], ...opencode }, requests)
-      yield* start("gpt-live-1", { opencode: [{ type: "env", name: "OPENCODE_API_KEY" }] }, requests)
-      yield* start("gpt-live-1", { openai: [credential("active", "key")], ...opencode }, requests)
-      expect(
-        requests.map((req): (string | undefined)[] => [
-          req.url,
-          req.headers.authorization,
-          req.headers["x-opencode-org-id"],
-        ]),
-      ).toEqual([
-        ["https://opencode.ai/inference/openai/v1/live/sessions", "Bearer console-access", "wrk_console"],
-        ["https://opencode.ai/inference/openai/v1/live/sessions", "Bearer opencode-env-key", undefined],
-        ["https://api.openai.com/v1/live/sessions", "Bearer sk-active", undefined],
-      ])
-
-      const realtime = yield* start("gpt-realtime-2.1", opencode, requests).pipe(Effect.flip)
-      expect(realtime).toMatchObject({ _tag: "Voice.UnavailableError", service: "openai" })
-      expect(requests).toHaveLength(3)
-    }),
-)
-
 it.effect("lists voice models with availability and default without resolving credentials", () =>
   Effect.gen(function* () {
     const list = (connections: Partial<Record<string, Integration.Info["connections"]>>) =>
@@ -210,18 +170,6 @@ it.effect("lists voice models with availability and default without resolving cr
         { model: "gemini-3.8-live", provider: "google", transports: ["websocket"], available: true },
       ],
       default: "grok-voice-3.0",
-    })
-
-    expect(
-      yield* list({ openai: [credential("chatgpt", "oauth")], opencode: [credential("console", "oauth")] }),
-    ).toEqual({
-      models: [
-        { model: "gpt-live-1", provider: "opencode", transports: ["webrtc"], available: true },
-        { model: "gpt-realtime-2.1", provider: "openai", transports: ["webrtc", "websocket"], available: false },
-        { model: "grok-voice-3.0", provider: "xai", transports: ["websocket"], available: false },
-        { model: "gemini-3.8-live", provider: "google", transports: ["websocket"], available: false },
-      ],
-      default: "gpt-live-1",
     })
 
     const none = yield* list({ openai: [credential("chatgpt", "oauth")] })

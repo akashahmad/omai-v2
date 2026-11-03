@@ -3,7 +3,7 @@ import en from "./en"
 type Keys = keyof typeof en
 
 export const dict = {
-  "desktop.menu.app": "OpenCode",
+  "desktop.menu.app": "O M A I +",
   "desktop.menu.file": "Dosya",
   "desktop.menu.edit": "Düzen",
   "desktop.menu.view": "Görünüm",
@@ -43,15 +43,15 @@ export const dict = {
   "desktop.menu.nextProject": "Sonraki proje",
   "desktop.menu.minimize": "Simge durumuna küçült",
   "desktop.menu.maximize": "Ekranı kapla",
-  "desktop.menu.documentation": "OpenCode belgeleri",
+  "desktop.menu.documentation": "O M A I + belgeleri",
   "desktop.menu.supportForum": "Destek forumu",
   "desktop.menu.shareFeedback": "Geri bildirim paylaş",
   "desktop.menu.reportBug": "Hata bildir",
-  "desktop.menu.ariaLabel": "OpenCode menüsü",
+  "desktop.menu.ariaLabel": "O M A I + menüsü",
 
   "desktop.cli.installed.title": "CLI yüklendi",
   "desktop.cli.installed.message":
-    "CLI, {{path}} konumuna yüklendi.\n\n'opencode2' komutunu kullanmak için terminalinizi yeniden başlatın.",
+    "CLI, {{path}} konumuna yüklendi.\n\n'omai' komutunu kullanmak için terminalinizi yeniden başlatın.",
   "desktop.cli.failed.title": "Yükleme başarısız oldu",
   "desktop.cli.failed.message": "CLI yüklenemedi: {{error}}",
 
@@ -59,9 +59,9 @@ export const dict = {
   "desktop.recovery.action.exportLogs": "Günlükleri dışa aktar",
   "desktop.recovery.action.keepWaiting": "Beklemeye devam et",
   "desktop.recovery.action.quit": "Çık",
-  "desktop.recovery.loadFailed": "OpenCode yüklenemedi",
-  "desktop.recovery.terminated": "OpenCode penceresi beklenmedik şekilde sonlandırıldı",
-  "desktop.recovery.unresponsive": "OpenCode yanıt vermiyor",
+  "desktop.recovery.loadFailed": "O M A I + yüklenemedi",
+  "desktop.recovery.terminated": "O M A I + penceresi beklenmedik şekilde sonlandırıldı",
+  "desktop.recovery.unresponsive": "O M A I + yanıt vermiyor",
   "desktop.recovery.unresponsive.detail":
     "Uygulamayı yeniden başlatabilir, günlükleri açabilir veya beklemeye devam edebilirsiniz.",
   "desktop.recovery.loadFailed.detail": "Pencere: {{window}}\nURL: {{url}}\nHata: {{code}} {{description}}",
@@ -150,10 +150,6 @@ export const dict = {
   "dialog.provider.search.placeholder": "Sağlayıcı ara",
   "dialog.provider.empty": "Sağlayıcı bulunamadı",
   "dialog.provider.group.popular": "Popüler",
-  "dialog.provider.tag.recommended": "Önerilen",
-  "dialog.provider.opencode.note": "Claude, GPT, Gemini ve daha fazlasını içeren seçilmiş modeller",
-  "dialog.provider.opencode.tagline": "Güvenilir, optimize edilmiş modeller",
-  "dialog.provider.opencodeGo.tagline": "Herkes için düşük maliyetli abonelik",
   "dialog.provider.copilot.note": "GitHub Copilot üzerinden kodlama yardımı için yapay zekâ modelleri",
   "dialog.provider.openai.note": "Hızlı ve yetenekli genel yapay zekâ görevleri için GPT modelleri",
   "dialog.provider.google.note": "Hızlı ve yapılandırılmış yanıtlar için Gemini modelleri",
@@ -166,7 +162,6 @@ export const dict = {
   "dialog.model.manage": "Modelleri yönet",
   "dialog.model.manage.description": "Model seçicide hangi modellerin görüneceğini özelleştirin.",
 
-  "dialog.model.unpaid.freeModels.title": "OpenCode tarafından sunulan ücretsiz modeller",
   "dialog.model.unpaid.addMore.title": "Popüler sağlayıcılardan daha fazla model ekleyin",
   "dialog.model.unpaid.viewMoreProviders": "70'ten fazla sağlayıcı daha görüntüle",
 
@@ -178,7 +173,7 @@ export const dict = {
   "provider.connect.status.waiting": "Yetkilendirme bekleniyor…",
   "provider.connect.status.failed": "Yetkilendirme başarısız: {{error}}",
   "provider.connect.apiKey.description":
-    "{{provider}} hesabınızı bağlamak ve OpenCode'da {{provider}} modellerini kullanmak için API anahtarınızı girin.",
+    "{{provider}} hesabınızı bağlamak ve O M A I +'da {{provider}} modellerini kullanmak için API anahtarınızı girin.",
   "provider.connect.apiKey.label": "{{provider}} API anahtarı",
   "provider.connect.apiKey.placeholder": "API anahtarı",
   "provider.connect.apiKey.required": "API anahtarı gerekli",
@@ -189,7 +184,6 @@ export const dict = {
   "provider.connect.oauth.auto.confirmationCode": "Onay kodu",
   "provider.connect.toast.connected.title": "{{provider}} bağlandı",
   "provider.connect.toast.connected.description": "{{provider}} modelleri artık kullanımda.",
-
 
   "provider.disconnect.toast.disconnected.title": "{{provider}} bağlantısı kesildi",
   "provider.disconnect.toast.disconnected.description": "{{provider}} modelleri artık kullanılamıyor.",
@@ -252,7 +246,6 @@ export const dict = {
   "dialog.mcp.title": "MCP'ler",
   "dialog.mcp.empty": "Yapılandırılmış MCP yok",
 
-
   "dialog.fork.empty": "Dallandırılacak mesaj yok",
 
   "dialog.directory.action.selectFile": "Dosya seç",
@@ -282,8 +275,6 @@ export const dict = {
   "dialog.project.edit.worktree.startup": "Çalışma alanı başlatma betiği",
   "dialog.project.edit.worktree.startup.placeholder": "örneğin bun install",
 
-  "dialog.usageExceeded.dontShowAgain": "Bir daha gösterme",
-
   "toast.permissions.autoaccept.on.title": "İzinler otomatik kabul ediliyor",
   "toast.permissions.autoaccept.on.description": "İzin istekleri otomatik olarak onaylanacak",
   "toast.permissions.autoaccept.off.title": "İzinleri otomatik kabul etme durduruldu",
@@ -311,8 +302,6 @@ export const dict = {
   "error.page.action.checking": "Kontrol ediliyor…",
   "error.page.action.checkUpdates": "Güncellemeleri kontrol et",
   "error.page.action.updateTo": "{{version}} sürümüne güncelle",
-  "error.page.report.prefix": "Lütfen bu hatayı OpenCode ekibine",
-  "error.page.report.discord": "Discord üzerinden bildirin",
   "error.page.version": "Sürüm: {{version}}",
 
   "error.dev.rootNotFound":
@@ -328,9 +317,9 @@ export const dict = {
   "error.chain.responseBody": "Yanıt gövdesi:\n{{body}}",
   "error.chain.didYouMean": "Bunu mu demek istediniz: {{suggestions}}",
   "error.chain.modelNotFound": "Model bulunamadı: {{provider}}/{{model}}",
-  "error.chain.checkConfig": "Yapılandırma dosyanızdaki (opencode.json) sağlayıcı/model adlarını kontrol edin",
+  "error.chain.checkConfig": "Yapılandırma dosyanızdaki (omai.json) sağlayıcı/model adlarını kontrol edin",
   "error.chain.mcpFailed":
-    'MCP sunucusu "{{name}}" çalıştırılamadı. Not: OpenCode henüz MCP kimlik doğrulamasını desteklemiyor.',
+    'MCP sunucusu "{{name}}" çalıştırılamadı. Not: O M A I + henüz MCP kimlik doğrulamasını desteklemiyor.',
   "error.chain.providerAuthFailed": "Sağlayıcı kimlik doğrulaması başarısız ({{provider}}): {{message}}",
   "error.chain.providerInitFailed":
     '"{{provider}}" sağlayıcısı başlatılamadı. Kimlik bilgilerini ve yapılandırmayı kontrol edin.',
@@ -414,7 +403,6 @@ export const dict = {
   "common.key.esc": "ESC",
 
   "sidebar.settings": "Ayarlar",
-  "sidebar.help": "Yardım",
   "sidebar.project.recentSessions": "Son oturumlar",
   "sidebar.project.clearNotifications": "Bildirimleri temizle",
 
@@ -426,7 +414,7 @@ export const dict = {
   "settings.general.section.sounds": "Ses efektleri",
 
   "settings.general.row.language.title": "Dil",
-  "settings.general.row.language.description": "OpenCode'un görünüm dilini değiştirin",
+  "settings.general.row.language.description": "O M A I +'un görünüm dilini değiştirin",
   "settings.general.row.shell.title": "Terminal Kabuğu",
   "settings.general.row.shell.description":
     "Terminalinizde kullanılacak kabuğu seçin. Uyumlu kabuklar, ajan araç çağrılarında da kullanılır.",
@@ -434,9 +422,9 @@ export const dict = {
   "settings.general.row.shell.terminalOnly": "yalnızca terminal",
   "settings.general.row.colorScheme.title": "Renk şeması",
   "settings.general.row.colorScheme.description":
-    "OpenCode'un sistem, açık veya koyu temayı takip etip etmeyeceğini seçin",
+    "O M A I +'un sistem, açık veya koyu temayı takip etip etmeyeceğini seçin",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "OpenCode'un temasını özelleştirin.",
+  "settings.general.row.theme.description": "O M A I +'un temasını özelleştirin.",
   "settings.general.row.font.title": "Kod yazı tipi",
   "settings.general.row.font.description": "Kod bloklarında kullanılan yazı tipini özelleştirin",
   "settings.general.row.terminalFont.title": "Terminal yazı tipi",
@@ -629,7 +617,7 @@ export const dict = {
   "command.project.copyID": "Proje kimliğini kopyala",
   "command.session.copyID": "Oturum kimliğini kopyala",
   "server.row.incompatible":
-    "Bu sunucu, bu uygulamayla uyumlu olmayan OpenCode {{version}} sürümünü çalıştırıyor. Devam etmek için OpenCode V2'ye yükseltin.",
+    "Bu sunucu, bu uygulamayla uyumlu olmayan O M A I + {{version}} sürümünü çalıştırıyor. Devam etmek için O M A I + V2'ye yükseltin.",
   "toast.session.copyID.failed.title": "Oturum kimliği kopyalanamadı",
   "toast.session.copyID.failed.description": "Oturum kimliği kopyalanırken bir hata oluştu",
   "toast.project.copyID.failed.title": "Proje kimliği kopyalanamadı",
@@ -639,7 +627,7 @@ export const dict = {
   "error.page.action.reload": "Yeniden yükle",
   "session.error.incompatible": "Bu sunucu sürümü desteklenmiyor",
   "session.error.incompatible.description":
-    "{{server}}, bu uygulamayla uyumlu olmayan OpenCode {{version}} sürümünü çalıştırıyor. Devam etmek için sunucuyu OpenCode V2'ye yükseltin.",
+    "{{server}}, bu uygulamayla uyumlu olmayan O M A I + {{version}} sürümünü çalıştırıyor. Devam etmek için sunucuyu O M A I + V2'ye yükseltin.",
   "session.background.moveInline": "Çalışan işi arka plana taşımak için {{keybind}} tuşuna basın",
 
   "command.session.background": "Arka plana taşı",
@@ -660,8 +648,7 @@ export const dict = {
   "settings.extensions.tab.mcps": "MCP'ler",
   "settings.extensions.tab.skills": "Beceriler",
   "settings.extensions.availableAll": "Tüm projelerde kullanılabilir",
-  "settings.extensions.manageConfig": "opencode.json içinde yönet",
-  "settings.extensions.addSkills": "Beceri ekleme",
+  "settings.extensions.manageConfig": "omai.json içinde yönet",
   "project.settings.extensions.description": "Bu projede kullanılabilen uzantıları görüntüleyin",
   "project.settings.extensions.tab.lsps": "LSP'ler",
   "project.settings.extensions.added": "Bu projeye eklendi",
@@ -745,17 +732,8 @@ export const dict = {
   "settings.tab.about": "Hakkında",
   "settings.about.version": "Sürüm {{version}}",
   "settings.about.devVersion": "geliştirme sürümü",
-  "settings.about.license": "MIT Lisansı altında yayınlandı",
-  "settings.about.otherContributor.one": "{{count}} diğer",
-  "settings.about.otherContributor.other": "{{count}} diğerleri",
-  "settings.about.firstPublished": "İlk olarak Missouri, ABD'de yayınlandı",
-  "settings.about.firstIllustrated": "İlk kez Londra, İngiltere'de resmedildi",
-  "settings.about.website": "www.opencode.ai",
-  "settings.about.description": "OpenCode, açık kaynak kodlama aracısı",
-  "settings.about.trademark": "OpenCode, Anomaly Innovations, Inc.'in tescilli ticari markasıdır.",
+  "settings.about.description": "O M A I +, açık kaynak kodlama aracısı",
   "settings.about.typeset": "Inter ve IBM Plex Mono'da dizgi",
-  "settings.about.tagline": "Yapay zeka siz olmadan mükemmel yazılım geliştiremez",
-  "settings.about.copyright": "© Anomaly Innovations, Inc.",
   "project.settings.title": "Projeyi düzenle",
   "settings.timeline.title": "Zaman çizelgesi",
   "settings.timeline.detail": "Zaman çizelgesi ayrıntısı",
@@ -780,8 +758,6 @@ export const dict = {
   "settings.timeline.category.subagents": "Alt temsilciler",
   "settings.timeline.category.notices": "Bildirimler",
   "settings.timeline.category.tools": "Diğer araçlar",
-  "settings.about.writtenByNames": "{{names}} tarafından yazıldı",
-  "settings.about.illustratedByNames": "{{names}} tarafından çizilmiştir",
   "server.action.authenticate": "Kimlik Doğrula",
   "server.status.connecting": "SSH üzerinden bağlanılıyor…",
   "server.status.authentication": "Kimlik doğrulama gerekli",
@@ -792,9 +768,9 @@ export const dict = {
   "server.connect.address.invalid": "Geçerli bir HTTP veya HTTPS sunucu adresi girin.",
   "server.connect.failed": "Bağlantı kurulamadı. Sunucu adresini ve şifreyi kontrol edip tekrar deneyin.",
   "server.connect.scan": "QR kodunu tarayın",
-  "server.connect.scan.description": "Kameranızı opencode pair tarafından gösterilen QR koduna doğrultun.",
+  "server.connect.scan.description": "Kameranızı omai pair tarafından gösterilen QR koduna doğrultun.",
   "server.connect.scan.invalid":
-    "Bu bir OpenCode eşleştirme kodu değildir. opencode pair tarafından gösterilen kodu tarayın.",
+    "Bu bir O M A I + eşleştirme kodu değildir. omai pair tarafından gösterilen kodu tarayın.",
   "server.connect.camera": "Kamera eşleniyor",
   "server.connect.camera.starting": "Kamera açılıyor…",
   "server.connect.mixedContent":
@@ -830,18 +806,18 @@ export const dict = {
     "Temsilcilerin web'de arama yapmak için kullanacağı arama sağlayıcısını seçin",
   "settings.projects.search.placeholder": "Proje ara",
   "project.settings.name.title": "Proje adı",
-  "project.settings.name.description": "OpenCode genelinde bu proje için gösterilen ad",
+  "project.settings.name.description": "O M A I + genelinde bu proje için gösterilen ad",
   "project.settings.icon.description": "Önerilen: 128×128 piksel. Bir görseli yüklemek için tıklayın veya sürükleyin.",
   "project.settings.color.description": "Özel bir görüntü ayarlanmadığında proje simgesi için kullanılır",
   "project.settings.worktree.startup.description": "Yeni bir çalışma ağacı oluşturulduktan sonra bir kez çalıştırılır",
-  "project.settings.worktree.startup.hint.base": "Temel çalışma ağacı için $OPENCODE_WORKTREE_BASE kullanın.",
-  "project.settings.worktree.startup.hint.new": "Yeni çalışma ağacı için $OPENCODE_WORKTREE_PATH'yi kullanın.",
+  "project.settings.worktree.startup.hint.base": "Temel çalışma ağacı için $OMAI_WORKTREE_BASE kullanın.",
+  "project.settings.worktree.startup.hint.new": "Yeni çalışma ağacı için $OMAI_WORKTREE_PATH'yi kullanın.",
   "project.settings.extensions.empty.mcps.title": "Henüz MCPs yok",
-  "project.settings.extensions.empty.mcps.description": "OpenCode tarafından kullanılabilen MCPs burada görünecek",
+  "project.settings.extensions.empty.mcps.description": "O M A I + tarafından kullanılabilen MCPs burada görünecek",
   "project.settings.extensions.empty.plugins.title": "Henüz eklenti yok",
-  "project.settings.extensions.empty.plugins.description": "OpenCode'de kullanılabilen eklentiler burada görünecek",
+  "project.settings.extensions.empty.plugins.description": "O M A I +'de kullanılabilen eklentiler burada görünecek",
   "project.settings.extensions.empty.skills.title": "Henüz beceri yok",
-  "project.settings.extensions.empty.skills.description": "OpenCode'nin kullanabileceği beceriler burada görünecek",
+  "project.settings.extensions.empty.skills.description": "O M A I +'nin kullanabileceği beceriler burada görünecek",
   "project.settings.extensions.lsp.configured": "Yapılandırılmış dil sunucuları",
   "project.settings.extensions.lsp.status.enabled": "Yapılandırmada etkinleştirildi",
   "project.settings.extensions.lsp.status.disabled": "Yapılandırmada devre dışı bırakıldı",
@@ -861,7 +837,7 @@ export const dict = {
   "settings.timeline.collapsed.label": "{{activity}} çöktü",
   "session.new.workspace.search.empty": "Eşleşen çalışma ağacı yok",
   "settings.workspaces.description": "Çalışma ağaçlarını inceleyin ve disk kullanımını yönetin",
-  "settings.workspaces.empty.description": "OpenCode'de oluşturulan çalışma ağaçları burada görünecek",
+  "settings.workspaces.empty.description": "O M A I +'de oluşturulan çalışma ağaçları burada görünecek",
   "settings.workspaces.sessions.filtered.one": "{{count}} oturumu",
   "settings.workspaces.sessions.filtered.other": "{{count}} oturumları",
   "settings.workspaces.deleteAll.confirm.one": "Bu, {{count}} seçili çalışma ağacını kalıcı olarak silecektir.",

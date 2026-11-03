@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test"
 import { globalConfigDirectory, serviceConfigFile } from "./config-file"
 
-const global = "/home/kit/.config/opencode/opencode.jsonc"
+const global = "/home/kit/.config/opencode/omai.jsonc"
 
-const project = "/work/acme/.opencode/opencode.jsonc"
+const project = "/work/acme/.omai/omai.jsonc"
 
 test("a project file that sets a service without entries does not hide the global file's entries", () => {
   const entries = [
@@ -12,7 +12,7 @@ test("a project file that sets a service without entries does not hide the globa
       path: global,
       info: {
         mcp: { servers: { atlas: { type: "remote" as const, url: "https://atlas.example" } } },
-        plugins: ["opencode-tidewater"],
+        plugins: ["omai-tidewater"],
       },
     },
     {
@@ -20,7 +20,7 @@ test("a project file that sets a service without entries does not hide the globa
       path: project,
       info: { mcp: {}, plugins: [], lsp: { zephyr: { command: ["zephyr"] } } },
     },
-    { type: "document" as const, path: "/work/acme/.opencode/agents/review.md", info: {} },
+    { type: "document" as const, path: "/work/acme/.omai/agents/review.md", info: {} },
   ]
 
   expect(serviceConfigFile(entries, "mcp")).toBe(global)
@@ -42,8 +42,8 @@ test("a file that only sets a service still wins over one that never mentions it
 
 test("setup sessions run in the global configuration's directory, never an ancestor project's", () => {
   // In the server's order: global files and root, an ancestor's config outside the worktree, then the project's.
-  const ancestor = "/work/opencode.json"
-  const projectRoot = { type: "directory" as const, path: "/work/acme/.opencode" }
+  const ancestor = "/work/omai.json"
+  const projectRoot = { type: "directory" as const, path: "/work/acme/.omai" }
 
   const entries = [
     { type: "document" as const, path: global, info: {} },

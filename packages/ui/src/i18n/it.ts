@@ -114,9 +114,6 @@ export const dict = {
   "ui.sessionTurn.error.freeUsageExceeded": "Utilizzo gratuito superato",
   "ui.sessionTurn.error.addCredits": "Aggiungi crediti",
   "dialog.usageExceeded.freeTier.title": "Limite gratuito raggiunto",
-  "dialog.usageExceeded.freeTier.description":
-    "Abbonati a OpenCode Go per 10 $ al mese e accedi in modo affidabile ai migliori modelli open source.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Iscriviti",
   "ui.sessionTurn.status.delegating": "Delega del lavoro",
   "ui.sessionTurn.status.planning": "Pianificazione dei prossimi passi",
   "ui.sessionTurn.status.gatheringContext": "Esplorazione",

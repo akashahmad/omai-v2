@@ -52,7 +52,7 @@ function replaceVertexVars(value: string, project: string | undefined, location:
 }
 
 export const GoogleVertexPlugin = define({
-  id: "opencode.provider.google.vertex",
+  id: "omai.provider.google.vertex",
   effect: Effect.fn(function* (ctx) {
     const fs = yield* FSUtil.Service
     const credentials = yield* Credential.Service

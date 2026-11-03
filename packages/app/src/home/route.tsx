@@ -51,12 +51,7 @@ export function Home() {
         </div>
       </ScrollView>
       <div class="hidden shrink-0 px-3 py-2 md:block lg:hidden">
-        <HomeUtilityNav
-          class="flex"
-          onOpenSettings={projects.utility.settings}
-          onOpenHelp={projects.utility.help}
-          language={projects.copy.language}
-        />
+        <HomeUtilityNav class="flex" onOpenSettings={projects.utility.settings} language={projects.copy.language} />
       </div>
     </div>
   )

@@ -10,11 +10,11 @@ import type { RpcCallOptions } from "../promise/rpc.js"
 
 type EventType = NonNullable<EventSubscribeInput["types"]>[number]
 
-const CurrentHeaders = Context.Reference<RpcCallOptions["headers"]>("@opencode/client/effect/rpc/headers", {
+const CurrentHeaders = Context.Reference<RpcCallOptions["headers"]>("@omai/client/effect/rpc/headers", {
   defaultValue: () => undefined,
 })
 
-export const make = Effect.fn("OpenCode.make")(function* (options?: { readonly baseUrl?: URL | string }) {
+export const make = Effect.fn("Omai.make")(function* (options?: { readonly baseUrl?: URL | string }) {
   const httpClient = yield* HttpClient.HttpClient
   const raw = yield* OpenCode.make(options).pipe(
     Effect.provideService(

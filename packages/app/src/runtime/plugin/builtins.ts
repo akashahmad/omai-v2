@@ -4,7 +4,7 @@ import type { Entry } from "@opencode/plugin/gui/host"
 export { builtins }
 
 /** Dispatched in development with the re-evaluated built-in list after a plugin's files change. */
-export const BUILTINS_UPDATED = "opencode:gui-plugins-updated"
+export const BUILTINS_UPDATED = "omai:gui-plugins-updated"
 
 // Accepting the list here keeps a plugin edit from reloading the window; hmr.tsx reloads that plugin.
 if (import.meta.hot)

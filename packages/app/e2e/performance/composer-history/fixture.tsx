@@ -44,7 +44,7 @@ const shell = Array.from({ length: 100 }, (_, index) => {
 })
 
 // Seed only this Playwright context, before opening the production draft store.
-const request = indexedDB.open("opencode-drafts", 1)
+const request = indexedDB.open("omai-drafts", 1)
 
 request.onupgradeneeded = () => {
   request.result.createObjectStore("documents")
@@ -86,9 +86,9 @@ for (const id of ids) {
 
 const transaction = db.transaction(["documents", "blobs"], "readwrite")
 
-transaction.objectStore("documents").put(JSON.stringify({ entries: normal }), "opencode.global.dat:prompt-history")
+transaction.objectStore("documents").put(JSON.stringify({ entries: normal }), "omai.global.dat:prompt-history")
 
-transaction.objectStore("documents").put(JSON.stringify({ entries: shell }), "opencode.global.dat:prompt-history-shell")
+transaction.objectStore("documents").put(JSON.stringify({ entries: shell }), "omai.global.dat:prompt-history-shell")
 
 screenshots.forEach(({ id, blob }) => transaction.objectStore("blobs").put(blob, id))
 

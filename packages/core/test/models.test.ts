@@ -788,7 +788,7 @@ describe("ModelsDev Service", () => {
         Effect.provide(buildLayer(state, cache, { url: "", fetch: true, snapshot: false })),
       )
       expect((yield* Ref.get(state)).calls[0]?.url).toBe(
-        "https://models.opencode.ai/experimental/v2.0/api.json?type=chat,decision,image",
+        "https://models.dev/experimental/v2.0/api.json?type=chat,decision,image",
       )
     }),
   )
@@ -854,7 +854,7 @@ describe("ModelsDev Service", () => {
       const final = yield* Ref.get(state)
       expect(final.calls.length).toBe(1)
       expect(final.calls[0].url).toContain(ModelsDev.catalogPath)
-      expect(final.calls[0].userAgent).toContain("/opencode")
+      expect(final.calls[0].userAgent).toContain("/omai")
     }),
   )
 

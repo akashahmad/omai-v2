@@ -3,13 +3,13 @@ import { Model } from "../../model.js"
 import { define } from "@opencode/plugin/effect/plugin"
 
 export const OpenRouterPlugin = define({
-  id: "opencode.provider.openrouter",
+  id: "omai.provider.openrouter",
   effect: Effect.fn(function* (ctx) {
     yield* ctx.provider.transform((evt) => {
       for (const item of evt.list()) {
         if (item.provider.package !== "@opencode/ai/providers/openrouter") continue
         evt.update(item.provider.id, (provider) => {
-          provider.headers = { ...provider.headers, "HTTP-Referer": "https://opencode.ai/", "X-Title": "opencode" }
+          provider.headers = { ...provider.headers, "X-Title": "omai" }
         })
       }
     })

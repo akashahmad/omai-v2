@@ -435,7 +435,7 @@ it.live("loads a GUI-only package under its package name without running it, and
     yield* Effect.promise(() =>
       writeFiles(directory.path, {
         "gui/package.json": JSON.stringify({
-          name: "opencode-acme-gui",
+          name: "omai-acme-gui",
           exports: { "./gui-experimental": "./dist/gui-experimental.cjs" },
         }),
         "gui/dist/gui-experimental.cjs": evaluated,
@@ -447,7 +447,7 @@ it.live("loads a GUI-only package under its package name without running it, and
 
     const loaded = yield* modules.load({ type: "add", target: gui, options: { region: "eu" } })
     expect(loaded).toMatchObject({
-      id: "opencode-acme-gui",
+      id: "omai-acme-gui",
       features: { gui: true },
       gui: { options: { region: "eu" } },
       source: { type: "local", path: gui },
@@ -461,7 +461,7 @@ it.live("loads a GUI-only package under its package name without running it, and
     yield* plugins.awaitActivation
     expect((yield* plugins.list()).filter((plugin) => plugin.source.type === "local")).toEqual([
       {
-        id: Plugin.ID.make("opencode-acme-gui"),
+        id: Plugin.ID.make("omai-acme-gui"),
         source: { type: "local", path: gui },
         state: { status: "active" },
         features: { gui: true },

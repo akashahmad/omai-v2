@@ -29,14 +29,14 @@ const CODE_LIMITS: CodeMode.ExecutionLimits = {
 }
 
 const FORBIDDEN_CODE_TOOLS = new Set([
-  "opencode.schedule_create",
-  "opencode.schedule_pause",
-  "opencode.schedule_resume",
-  "opencode.schedule_delete",
-  "opencode.session_move",
-  "opencode.session_rename",
-  "opencode.worktree_create",
-  "opencode.worktree_remove",
+  "omai.schedule_create",
+  "omai.schedule_pause",
+  "omai.schedule_resume",
+  "omai.schedule_delete",
+  "omai.session_move",
+  "omai.session_rename",
+  "omai.worktree_create",
+  "omai.worktree_remove",
 ])
 
 const decodeCodeObjectResult = Schema.decodeUnknownResult(

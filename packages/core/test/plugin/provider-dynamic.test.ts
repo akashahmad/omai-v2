@@ -37,7 +37,7 @@ const addPlugin = Effect.fn(function* (npm?: Npm.Interface) {
 function tempPackage(source: string) {
   return Effect.acquireRelease(
     Effect.promise(async () => {
-      const directory = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-provider-dynamic-"))
+      const directory = await fs.mkdtemp(path.join(os.tmpdir(), "omai-provider-dynamic-"))
       await Bun.write(path.join(directory, "provider.mjs"), source)
       await Bun.write(
         path.join(directory, "package.json"),

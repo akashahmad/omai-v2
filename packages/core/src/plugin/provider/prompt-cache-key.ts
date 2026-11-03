@@ -22,7 +22,7 @@ const providerIDs = [
 ] as const
 
 export const PromptCacheKeyPlugin = define({
-  id: "opencode.provider.prompt-cache-key",
+  id: "omai.provider.prompt-cache-key",
   effect: Effect.fn(function* (ctx) {
     // Set on the provider so configured provider and model compatibility can override it.
     yield* ctx.provider.transform((providers) => {

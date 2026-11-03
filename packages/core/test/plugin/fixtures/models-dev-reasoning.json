@@ -243,10 +243,10 @@
       }
     }
   },
-  "opencode-go": {
-    "id": "opencode-go",
+  "omai-go": {
+    "id": "omai-go",
     "name": "OpenCode Go",
-    "env": ["OPENCODE_API_KEY"],
+    "env": ["OMAI_API_KEY"],
     "models": {
       "minimax-m3": {
         "id": "minimax-m3",

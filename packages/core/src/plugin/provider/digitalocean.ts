@@ -116,7 +116,7 @@ const oauth = {
 } satisfies IntegrationOAuthMethodRegistration
 
 export const DigitalOceanPlugin = define({
-  id: "opencode.provider.digitalocean",
+  id: "omai.provider.digitalocean",
   effect: Effect.fn(function* (ctx) {
     const cache = yield* SharedCache.Service
     const http = HttpClient.filterStatusOk(yield* HttpClient.HttpClient)

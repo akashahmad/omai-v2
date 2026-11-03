@@ -3,7 +3,7 @@ export * as ToolNames from "./names.js"
 import { createHash } from "node:crypto"
 import type { LanguageModelV3FunctionTool } from "@ai-sdk/provider"
 
-export const PREFIX = "mcp__opencode__"
+export const PREFIX = "mcp__omai__"
 
 export function short(name: string) {
   const limit = 64 - PREFIX.length

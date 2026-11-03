@@ -367,7 +367,7 @@ test("summary catalogs load, refresh while cached, and tell errors from empty", 
             { id: "builtin", source: { type: "builtin" }, features: {}, state: { status: "active" } },
             {
               id: "supermemory",
-              source: { type: "package", target: "opencode-supermemory" },
+              source: { type: "package", target: "omai-supermemory" },
               features: { server: true },
               state: { status: "active" },
             },
@@ -381,7 +381,7 @@ test("summary catalogs load, refresh while cached, and tell errors from empty", 
               ? [
                   {
                     id: "daytona",
-                    source: { type: "package", target: "opencode-daytona" },
+                    source: { type: "package", target: "omai-daytona" },
                     features: {},
                     state: { status: "active" },
                   },
@@ -618,7 +618,7 @@ test("Extensions lists open on hover, hold course into the open list, and follow
     plugins: [
       {
         id: "supermemory",
-        source: { type: "package", target: "opencode-supermemory" },
+        source: { type: "package", target: "omai-supermemory" },
         features: {},
         state: { status: "active" },
       },
@@ -676,8 +676,8 @@ test("Extensions lists open on hover, hold course into the open list, and follow
 })
 
 test("Extensions lists open config files and skills in a side tab and start setup sessions", async ({ page }) => {
-  const global = "C:/Users/kit/.config/opencode/opencode.jsonc"
-  const skill = `${fixture.directory}/.opencode/skills/release-notes/SKILL.md`
+  const global = "C:/Users/kit/.config/opencode/omai.jsonc"
+  const skill = `${fixture.directory}/.omai/skills/release-notes/SKILL.md`
   let builtinReads = 0
 
   await mockStressTimeline(page, {
@@ -694,7 +694,7 @@ test("Extensions lists open config files and skills in a side tab and start setu
         info: { mcp: { servers: { "atlas-search": { type: "remote", url: "https://atlas.example" } } } },
       },
       // An empty project override used to win, so the servers' own file never opened.
-      { type: "document", path: `${fixture.directory}/.opencode/opencode.jsonc`, info: { mcp: {} } },
+      { type: "document", path: `${fixture.directory}/.omai/omai.jsonc`, info: { mcp: {} } },
     ],
     fileContent: (path) => ({ type: "text", content: `contents:${path}` }),
   })
@@ -717,12 +717,12 @@ test("Extensions lists open config files and skills in a side tab and start setu
   await trigger.click()
   await row("MCP").hover()
   // A file outside the workspace is read by name from its own directory.
-  const read = page.waitForRequest((request) => new URL(request.url()).pathname.endsWith("/api/fs/read/opencode.jsonc"))
+  const read = page.waitForRequest((request) => new URL(request.url()).pathname.endsWith("/api/fs/read/omai.jsonc"))
   await list("MCP").getByRole("button", { name: "Configuration file", exact: true }).click()
   expect(new URL((await read).url()).searchParams.get("location[directory]")).toBe("C:/Users/kit/.config/opencode/")
   await expect(summary).toBeHidden()
-  await expect(page.getByRole("tab", { name: "opencode.jsonc", exact: true })).toHaveAttribute("aria-selected", "true")
-  await expect(page.getByText("contents:opencode.jsonc", { exact: true })).toBeVisible()
+  await expect(page.getByRole("tab", { name: "omai.jsonc", exact: true })).toHaveAttribute("aria-selected", "true")
+  await expect(page.getByText("contents:omai.jsonc", { exact: true })).toBeVisible()
 
   await trigger.click()
   await row("Skills").hover()
@@ -782,8 +782,8 @@ test.describe("remote configuration", () => {
       { type: "document", path: `${home}/plugins.json`, info: { plugins: [] } },
       { type: "document", path: `${home}/skills.jsonc`, info: { skills: [] } },
       { type: "document", path: `${home}/lsp.json`, info: { lsp: false } },
-      { type: "document", path: `${fixture.directory}/opencode.json`, info: {} },
-      { type: "document", path: `${fixture.directory}/.opencode/agents/review.md`, info: {} },
+      { type: "document", path: `${fixture.directory}/omai.json`, info: {} },
+      { type: "document", path: `${fixture.directory}/.omai/agents/review.md`, info: {} },
     ]
 
     await mockOpenCodeServer(page, {
@@ -863,7 +863,7 @@ test("long MCP lists stay in the viewport in a real RTL locale", async ({ page }
       status: { status: "connected" },
     })),
   })
-  await seed(page, { locale: "he", theme: { id: "oc-2", scheme: "dark" } })
+  await seed(page, { locale: "he", theme: { id: "omai", scheme: "dark" } })
   await page.goto(sessionHref(fixture.targetID))
   await page.getByRole("button", { name: "פרטי ההפעלה", exact: true }).click()
   const summary = page.getByRole("dialog", { name: "פרטי ההפעלה", exact: true })

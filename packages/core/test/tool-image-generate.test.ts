@@ -487,7 +487,7 @@ describe("experimental_image_generate", () => {
             type: "tool-call",
             id: `models-${JSON.stringify(input)}`,
             name: "execute",
-            input: { code: `return await tools.opencode.models(${JSON.stringify(input)})` },
+            input: { code: `return await tools.omai.models(${JSON.stringify(input)})` },
           },
         }).pipe(
           Effect.map((result) =>

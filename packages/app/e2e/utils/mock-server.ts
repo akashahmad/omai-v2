@@ -351,7 +351,7 @@ export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
 
     if (
       password !== undefined &&
-      (await route.request().headerValue("authorization")) !== `Basic ${btoa(`opencode:${password}`)}`
+      (await route.request().headerValue("authorization")) !== `Basic ${btoa(`omai:${password}`)}`
     ) {
       return route.fulfill({
         status: 401,
@@ -613,7 +613,7 @@ function mockHandlers(
   const persistentPtyEnabled = Effect.suspend(() =>
     state.persistentPty.capability !== false
       ? Effect.void
-      : Effect.fail(new MockServiceUnavailable({ message: "opencode-pty is not available", service: "opencode-pty" })),
+      : Effect.fail(new MockServiceUnavailable({ message: "omai-pty is not available", service: "omai-pty" })),
   )
 
   const findPersistentPty = (id: string) =>
@@ -1133,7 +1133,7 @@ function mockHandlers(
         },
         // The goal plugin's pill reads each routed session's goal; no scenario sets one.
         rpcCall: (ctx) =>
-          ctx.params.rpcID === "opencode.goal" && ctx.params.method === "get"
+          ctx.params.rpcID === "omai.goal" && ctx.params.method === "get"
             ? Effect.succeed({ output: null })
             : Effect.fail(
                 new MockUnsupported({

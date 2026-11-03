@@ -20,7 +20,7 @@
   height: 100%;
 }
 
-file-tree-container.opencode-pierre-file-tree {
+file-tree-container.omai-pierre-file-tree {
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
@@ -28,13 +28,13 @@ file-tree-container.opencode-pierre-file-tree {
   cursor: pointer;
 }
 
-[data-theme="dark"] file-tree-container.opencode-pierre-file-tree,
-.dark file-tree-container.opencode-pierre-file-tree {
+[data-theme="dark"] file-tree-container.omai-pierre-file-tree,
+.dark file-tree-container.omai-pierre-file-tree {
   color-scheme: dark;
 }
 
-[data-theme="light"] file-tree-container.opencode-pierre-file-tree,
-.light file-tree-container.opencode-pierre-file-tree {
+[data-theme="light"] file-tree-container.omai-pierre-file-tree,
+.light file-tree-container.omai-pierre-file-tree {
   color-scheme: light;
 }
 

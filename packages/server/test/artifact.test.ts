@@ -17,7 +17,7 @@ const client = (handler: (request: Request) => Promise<Response>) =>
 
 it.live("manages local and plugin-backed artifacts through /api/experimental/artifacts when enabled", () =>
   Effect.gen(function* () {
-    const dir = (yield* tmpdirScoped("opencode-artifact-api-")).path
+    const dir = (yield* tmpdirScoped("omai-artifact-api-")).path
     const global = path.join(dir, "global")
     const enabled = path.join(dir, "enabled")
     const enabledOther = path.join(dir, "enabled-other")
@@ -67,14 +67,14 @@ export default {
 `,
       )
       await fs.writeFile(
-        path.join(enabled, "opencode.json"),
+        path.join(enabled, "omai.json"),
         JSON.stringify({
           plugins: [{ package: pluginDir }],
           experimental: { artifacts: true },
         }),
       )
       await fs.writeFile(
-        path.join(enabledOther, "opencode.json"),
+        path.join(enabledOther, "omai.json"),
         JSON.stringify({
           experimental: { artifacts: true },
         }),
@@ -83,7 +83,7 @@ export default {
 
     const handler = yield* ServerFetch.make({
       app: { version: "test" },
-      database: { path: path.join(dir, "opencode.db") },
+      database: { path: path.join(dir, "omai.db") },
       config: { directory: global, project: true, claude: false },
       models: { fetch: false },
       fs: { filewatcher: false },

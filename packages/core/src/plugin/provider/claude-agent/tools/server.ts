@@ -12,7 +12,7 @@ export async function make(
 ): Promise<McpSdkServerConfigWithInstance> {
   // Loaded on first use, so opencode starts without loading the MCP SDK.
   const { Server } = await import("@modelcontextprotocol/server")
-  const server = new Server({ name: "opencode", version: "1.0.0" }, { capabilities: { tools: {} } })
+  const server = new Server({ name: "omai", version: "1.0.0" }, { capabilities: { tools: {} } })
   const definitions = tools.map(
     (tool): Tool => ({
       name: ToolNames.short(tool.name),
@@ -26,9 +26,9 @@ export async function make(
   server.setRequestHandler("tools/list", async () => ({ tools: definitions }))
   server.setRequestHandler("tools/call", async (request) => {
     const name = ToolNames.PREFIX + request.params.name
-    if (!ToolNames.original(name, tools)) throw new Error(`Claude Code called an unregistered OpenCode tool: ${name}`)
+    if (!ToolNames.original(name, tools)) throw new Error(`Claude Code called an unregistered O M A I + tool: ${name}`)
     return pending.call(name)
   })
   // Claude Agent SDK bundles its own MCP SDK types; its public instance type also names the higher-level McpServer.
-  return { type: "sdk", name: "opencode", instance: server as unknown as McpSdkServerConfigWithInstance["instance"] }
+  return { type: "sdk", name: "omai", instance: server as unknown as McpSdkServerConfigWithInstance["instance"] }
 }

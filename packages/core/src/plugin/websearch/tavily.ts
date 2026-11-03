@@ -26,7 +26,7 @@ const SearchResponse = Schema.Struct({
 })
 
 export const Plugin = define<HttpClient.HttpClient | Scope.Scope>({
-  id: "opencode.websearch.tavily",
+  id: "omai.websearch.tavily",
   effect: Effect.fn("WebSearchTavily.Plugin")(function* (ctx) {
     const http = yield* HttpClient.HttpClient
     yield* WebSearchProvider.register(ctx, {

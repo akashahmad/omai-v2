@@ -19,12 +19,12 @@ import { ProviderRefresh } from "./refresh.js"
 const providerID = Provider.ID.gitlab
 const integrationID = Integration.ID.make("gitlab")
 const methodID = Integration.MethodID.make("pkce")
-// Instance-owned, trusted GitLab OAuth application for OpenCode. Registered with
+// Instance-owned, trusted GitLab OAuth application for O M A I +. Registered with
 // redirect URI http://127.0.0.1:8080/callback on gitlab.com. Self-managed instances
 // need their own application; override with GITLAB_OAUTH_CLIENT_ID in that case.
 const bundledClientID = "fd180700a8f9c5d5557aca231632dd0611a1135a3bb510a741d5a988a3394fa7"
 // Application used by every opencode-gitlab-auth release (and gitlab-ai-provider's
-// OPENCODE_GITLAB_AUTH_CLIENT_ID). Refresh tokens stay bound to the issuing
+// OMAI_GITLAB_AUTH_CLIENT_ID). Refresh tokens stay bound to the issuing
 // application, so credentials created by that plugin must refresh with it.
 const legacyClientID = "1d89f9fdb23ee96d4e603201f6861dab6e143c5c3c00469a018a2d94bdc03d4e"
 const gitlabComHost = "gitlab.com"
@@ -52,7 +52,7 @@ const refreshing = new Map<string, { attempt: Deferred.Deferred<Credential.OAuth
 const refreshRetention = 60_000
 
 export const GitLabPlugin = define({
-  id: "opencode.provider.gitlab",
+  id: "omai.provider.gitlab",
   effect: Effect.fn(function* (ctx) {
     const providers = yield* Provider.Service
     const http = yield* HttpClient.HttpClient
@@ -368,7 +368,7 @@ function describeClient(clientID: string) {
     clientID === bundledClientID
       ? "bundled default"
       : clientID === legacyClientID
-        ? "opencode-gitlab-auth application"
+        ? "omai-gitlab-auth application"
         : "from GITLAB_OAUTH_CLIENT_ID"
   return `client_id used: ${clientID.slice(0, 12)}... (${source})`
 }

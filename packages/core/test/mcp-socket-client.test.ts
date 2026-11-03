@@ -208,7 +208,7 @@ describe("McpSocketClient", () => {
       },
       async (input) => ({ content: [{ type: "text", text: `echo: ${input.text}` }] }),
     )
-    const client = new Client({ name: "opencode", version: "1.0.0" })
+    const client = new Client({ name: "omai", version: "1.0.0" })
     const closed = Promise.withResolvers<void>()
     server.server.onclose = () => closed.resolve()
     await Promise.all([server.connect(ends.server), client.connect(ends.client)])

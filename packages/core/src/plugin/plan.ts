@@ -25,10 +25,10 @@ You are NO LONGER in Plan mode. The previous Plan restrictions no longer apply. 
 </system-reminder>`
 
 export const Plugin = define({
-  id: "opencode.plan",
+  id: "omai.plan",
   effect: Effect.fn(function* (ctx) {
     const global = yield* Global.Service
-    const directory = path.join(global.home, ".opencode", "plan")
+    const directory = path.join(global.home, ".omai", "plan")
     const enterReminder = enter(directory)
     yield* ctx.agent.transform((editor) => {
       editor.update(plan, (item) => {

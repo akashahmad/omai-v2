@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test"
 import path from "node:path"
-import { OPENCODE_VERSION } from "../src/version"
+import { OMAI_VERSION } from "../src/version"
 import type { FormFields } from "@opencode/client"
 
 const consoleForm = [
-  { type: "string", key: "server", hidden: true, format: "uri", default: "https://opencode.ai/console" },
+  { type: "string", key: "server", hidden: true, format: "uri", default: "https://console.example.com" },
 ] satisfies FormFields
 
 describe("auth command", () => {
@@ -27,15 +27,15 @@ describe("auth command", () => {
     expect(auth.stdout).toContain("switch the active account for an integration")
     expect(auth.stdout).not.toMatch(/^  connect\s/m)
     expect(list.exitCode).toBe(0)
-    expect(list.stdout).toContain("opencode auth list [flags]")
+    expect(list.stdout).toContain("omai auth list [flags]")
     expect(list.stdout).toContain("--format")
     expect(login.exitCode).toBe(0)
-    expect(login.stdout).toContain("opencode auth login [flags] [<target>]")
+    expect(login.stdout).toContain("omai auth login [flags] [<target>]")
     expect(login.stdout).toContain("Integration ID, name, or well-known provider URL")
     expect(login.stdout).toContain("--method")
     expect(login.stdout).toContain("--answer")
     expect(logout.exitCode).toBe(0)
-    expect(logout.stdout).toContain("opencode auth logout [flags] [<target>] [<credential>]")
+    expect(logout.stdout).toContain("omai auth logout [flags] [<target>] [<credential>]")
   })
 
   test("lists stored and environment connections", async () => {
@@ -75,15 +75,15 @@ describe("auth command", () => {
     expect(requests.indexOf("/api/model/default")).toBeLessThan(requests.indexOf("/api/integration"))
   })
 
-  test("lists OpenCode Go before Zen and preserves the remaining integration order", async () => {
+  test("preserves the integration order", async () => {
     using server = authServer((request, url) => {
       if (url.pathname === "/api/integration") {
         return Response.json(
           located(
             [
-              { id: "opencode", name: "OpenCode Zen" },
+              { id: "openai", name: "OpenAI" },
               { id: "anthropic", name: "Anthropic" },
-              { id: "opencode-go", name: "OpenCode Go" },
+              { id: "google", name: "Google" },
             ].map((integration) => ({
               ...integration,
               methods: [],
@@ -102,7 +102,7 @@ describe("auth command", () => {
         .trim()
         .split("\n")
         .map((line) => line.split(/\s{2,}/)[0]),
-    ).toEqual(["OpenCode Go", "OpenCode Zen", "Anthropic"])
+    ).toEqual(["OpenAI", "Anthropic", "Google"])
   })
 
   test("runs command authentication without interactive input", async () => {
@@ -144,14 +144,14 @@ describe("auth command", () => {
   test.each([
     { id: "openai", method: "browser", form: undefined, args: [], answer: undefined },
     {
-      id: "opencode",
+      id: "company-console",
       method: "device",
       form: consoleForm,
       args: [],
-      answer: { server: "https://opencode.ai/console" },
+      answer: { server: "https://console.example.com" },
     },
     {
-      id: "opencode",
+      id: "company-console",
       method: "device",
       form: consoleForm,
       args: ["--answer", "server=https://staging.example.com/console"],
@@ -356,7 +356,7 @@ function authServer(fetch: (request: Request, url: URL) => Response | Promise<Re
 }
 
 function status() {
-  return Response.json({ version: OPENCODE_VERSION, pid: process.pid, urls: [], paths: { tmp: "/tmp/opencode" } })
+  return Response.json({ version: OMAI_VERSION, pid: process.pid, urls: [], paths: { tmp: "/tmp/omai" } })
 }
 
 function located<T>(data: T) {

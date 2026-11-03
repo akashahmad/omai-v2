@@ -50,7 +50,7 @@ const McpOutput = Schema.Struct({
 })
 
 export const Plugin = define<HttpClient.HttpClient | Scope.Scope>({
-  id: "opencode.websearch.parallel",
+  id: "omai.websearch.parallel",
   effect: Effect.fn("WebSearchParallel.Plugin")(function* (ctx) {
     const http = yield* HttpClient.HttpClient
     yield* WebSearchProvider.register(ctx, {

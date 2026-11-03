@@ -13,7 +13,6 @@ import { ServerConnection } from "@/runtime/server/registry"
 import { useMcpToggle } from "@/providers/connect/mcp"
 import { DialogMcp } from "@/providers/connect/mcp-dialog"
 import { ExtensionPlugins } from "@/runtime/plugin/extension-plugins"
-import { ExternalLink } from "@/runtime/platform/external-link"
 import { usePlatform } from "@/runtime/platform/platform"
 import { SettingsList } from "@/settings/list"
 import type { SettingsView } from "@/settings/surface"
@@ -213,9 +212,6 @@ export const SettingsExtensions: Component<{
                 <span class="settings-extension-heading text-13-medium">
                   {language.t("settings.extensions.availableAll")}
                 </span>
-                <ExternalLink class="settings-extension-link text-13-regular" href="https://opencode.ai/v2/docs/skills">
-                  {language.t("settings.extensions.addSkills")}
-                </ExternalLink>
               </div>
               <SettingsList variant="catalog">
                 <For each={skills()}>

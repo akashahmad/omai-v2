@@ -73,7 +73,7 @@ const median = (values: ReadonlyArray<number>) => {
   return sorted.length % 2 === 0 ? ((sorted[middle - 1] ?? 0) + upper) / 2 : upper
 }
 
-const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "opencode-location-memory-")))
+const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "omai-location-memory-")))
 const globalLayer = Global.layerWith({
   home: path.join(root, "home"),
   data: path.join(root, "data"),
@@ -230,7 +230,7 @@ if (jsonPath) {
     jsonPath,
     JSON.stringify(
       {
-        revision: process.env.OPENCODE_BENCH_REVISION,
+        revision: process.env.OMAI_BENCH_REVISION,
         bun: Bun.version,
         bunRevision: Bun.revision,
         locationCount,

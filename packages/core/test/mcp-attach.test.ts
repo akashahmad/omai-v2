@@ -60,7 +60,7 @@ const clientServer = (label: string, tools: ReadonlyArray<string>) =>
     const sessions: Array<unknown> = []
     for (const tool of tools)
       server.registerTool(tool, { description: `${label} ${tool}` }, (ctx) => {
-        sessions.push(ctx.mcpReq._meta?.["ai.opencode/sessionID"])
+        sessions.push(ctx.mcpReq._meta?.["ai.omai/sessionID"])
         return { content: [{ type: "text", text: `${label}:${tool}` }] }
       })
     const [client, transport] = InMemoryTransport.createLinkedPair()

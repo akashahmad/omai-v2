@@ -38,7 +38,7 @@ export const toModelContent = (output: Output) =>
 // TODO: Add LSP notification and diagnostics after LSP runtime exists.
 
 export const Plugin = {
-  id: "opencode.tool.write",
+  id: "omai.tool.write",
   effect: Effect.fn("WriteTool.Plugin")(function* (ctx: Context) {
     const fileWrite = yield* FileWrite.Service
 

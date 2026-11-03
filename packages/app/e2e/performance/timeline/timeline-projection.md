@@ -27,6 +27,6 @@ active streaming row, not normal virtualizer mounts while scrolling.
 Use `PROJECTION_COUNTERS=1` for separate diagnostic runs. The benchmark build
 instruments the full-history constructor with its call count, input entries visited,
 and synchronous elapsed time. The probe is absent from normal builds and disabled
-in clean timing runs. `OPENCODE_PERFORMANCE_TRACE_DIR` enables the existing Chrome
+in clean timing runs. `OMAI_PERFORMANCE_TRACE_DIR` enables the existing Chrome
 trace collector. Set `PROJECTION_SCREENSHOT` to an output path prefix for screenshots
 after timing. Do not compare diagnostic timing with clean timing.

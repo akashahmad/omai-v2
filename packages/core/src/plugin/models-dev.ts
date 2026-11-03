@@ -31,7 +31,7 @@ const BEDROCK_PROFILE_ONLY_IDS = [
 ]
 
 export const ModelsDevPlugin = define({
-  id: "opencode.models.dev",
+  id: "omai.models.dev",
   effect: Effect.fn(function* (ctx) {
     const modelsDev = yield* ModelsDev.Service
     const bus = yield* Bus.Service

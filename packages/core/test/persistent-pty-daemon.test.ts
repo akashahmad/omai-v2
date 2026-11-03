@@ -183,7 +183,7 @@ it.live("rejects incompatible daemons without replacing or killing them", () =>
     const optional = yield* Effect.flip(daemon.requestIfRunning({ op: "list" }))
     expect(optional).toMatchObject({
       kind: "protocol",
-      message: "opencode-pty protocol mismatch: daemon=6, client=7",
+      message: "omai-pty protocol mismatch: daemon=6, client=7",
       pid: existing.pid,
     })
 

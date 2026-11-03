@@ -11,7 +11,7 @@ export const stopSignal = catchesSigterm ? "SIGTERM" : undefined
 export const stoppedExitCode = catchesSigterm ? 0 : 1
 
 export async function serviceFixture() {
-  const directory = await mkdtemp(join(tmpdir(), "opencode-client-service-"))
+  const directory = await mkdtemp(join(tmpdir(), "omai-client-service-"))
   const registration = join(directory, "service.json")
   const processes: Bun.Subprocess[] = []
   const pids = new Set<number>()

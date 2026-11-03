@@ -392,7 +392,7 @@ Review files`,
           )
 
           yield* configTest.emitChange({ type: "create", path: path.join(tmp.path, "notes", "todo.md") })
-          yield* configTest.emitChange({ type: "update", path: path.join(tmp.path, "opencode.json") })
+          yield* configTest.emitChange({ type: "update", path: path.join(tmp.path, "omai.json") })
           yield* drain
           expect(reloads).toBe(0)
 
@@ -419,7 +419,7 @@ describeNative("ConfigCommandPlugin native watcher", () => {
     Effect.gen(function* () {
       const fs = yield* FSUtil.Service
       // Watcher events report real paths, so resolve the tempdir symlink up front.
-      const tmp = yield* fs.makeTempDirectoryScoped({ prefix: "opencode-core-test-" }).pipe(Effect.flatMap(fs.realPath))
+      const tmp = yield* fs.makeTempDirectoryScoped({ prefix: "omai-core-test-" }).pipe(Effect.flatMap(fs.realPath))
       const global = path.join(tmp, "global")
       yield* fs.makeDirectory(path.join(global, "commands"), { recursive: true })
       yield* fs.makeDirectory(path.join(tmp, "project"))

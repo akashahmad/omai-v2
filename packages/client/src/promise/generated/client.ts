@@ -311,8 +311,6 @@ import type {
   WebsearchProvidersOutput,
   WebsearchQueryInput,
   WebsearchQueryOutput,
-  ExperimentalUsageLimitsInput,
-  ExperimentalUsageLimitsOutput,
   ConfigGetInput,
   ConfigGetOutput,
   ConfigShellsOutput,
@@ -1315,7 +1313,7 @@ export function make(options: ClientOptions) {
                 method: "POST",
                 path: `/api/experimental/client-mcp/token`,
                 query: { location: input["location"], name: input["name"] },
-                headers: { "x-opencode-ticket": input["x-opencode-ticket"] },
+                headers: { "x-omai-ticket": input["x-omai-ticket"] },
                 successStatus: 200,
                 declaredStatuses: [400, 401, 403, 404],
                 empty: false,
@@ -1481,7 +1479,7 @@ export function make(options: ClientOptions) {
             {
               method: "POST",
               path: `/api/experimental/persistent-pty/${encodeURIComponent(input.ptyID)}/connect-token`,
-              headers: { "x-opencode-ticket": input["x-opencode-ticket"] },
+              headers: { "x-omai-ticket": input["x-omai-ticket"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 403, 404, 503],
               empty: false,
@@ -1695,20 +1693,6 @@ export function make(options: ClientOptions) {
               requestOptions,
             ),
         },
-      },
-      usage: {
-        limits: (input?: ExperimentalUsageLimitsInput, requestOptions?: RequestOptions) =>
-          request<ExperimentalUsageLimitsOutput>(
-            {
-              method: "GET",
-              path: `/api/experimental/usage/limits`,
-              query: { location: input?.["location"] },
-              successStatus: 200,
-              declaredStatuses: [400, 401, 404, 503],
-              empty: false,
-            },
-            requestOptions,
-          ),
       },
       config: {
         update: (input: ExperimentalConfigUpdateInput, requestOptions?: RequestOptions) =>
@@ -2347,7 +2331,7 @@ export function make(options: ClientOptions) {
               method: "POST",
               path: `/api/pty/${encodeURIComponent(input.ptyID)}/connect-token`,
               query: { location: input["location"] },
-              headers: { "x-opencode-ticket": input["x-opencode-ticket"] },
+              headers: { "x-omai-ticket": input["x-omai-ticket"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 403, 404],
               empty: false,
@@ -2753,11 +2737,6 @@ export function make(options: ClientOptions) {
         /** @deprecated Use `client.experimental.migration.v1.status`. Removed in the next minor. */
         status: client.experimental.migration.v1.status,
       },
-    },
-    /** @deprecated Use `client.experimental.usage`. Removed in the next minor. */
-    usage: {
-      /** @deprecated Use `client.experimental.usage.limits`. Removed in the next minor. */
-      limits: client.experimental.usage.limits,
     },
     config: {
       ...client.config,

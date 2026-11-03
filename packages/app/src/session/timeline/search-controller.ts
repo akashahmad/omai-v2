@@ -232,8 +232,8 @@ export function createTimelineSearchController(input: {
     },
   ])
   const onOpenRequest = () => open()
-  document.addEventListener("opencode:timeline-search-open", onOpenRequest)
-  onCleanup(() => document.removeEventListener("opencode:timeline-search-open", onOpenRequest))
+  document.addEventListener("omai:timeline-search-open", onOpenRequest)
+  onCleanup(() => document.removeEventListener("omai:timeline-search-open", onOpenRequest))
 
   function open() {
     setState("visible", true)

@@ -44,7 +44,7 @@ const flag = (name: string) => {
 const fixture = flag("fixture") ?? "opencode"
 const ttft = Number(flag("ttft") ?? 400)
 const rounds = Number(flag("rounds") ?? 2)
-const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "opencode-snapshot-bench")
+const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "omai-snapshot-bench")
 const directory = path.join(root, "fixtures", fixture)
 
 // A read-heavy coding loop: explore, edit, run checks, answer.

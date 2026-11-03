@@ -278,7 +278,7 @@ const layer = () =>
           env: {
             ...baseEnv,
             TERM: "xterm-256color",
-            OPENCODE_TERMINAL: "1",
+            OMAI_TERMINAL: "1",
           },
         }
         yield* hooks.trigger("shell", "create.before", invocation)

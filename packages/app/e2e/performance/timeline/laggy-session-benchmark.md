@@ -22,6 +22,6 @@ The report writes `summary.json` and prints the median, p95, maximum, and median
 
 The app shell, source session, model control, and fonts are ready before the timed action. These measurements cover session entry, not application startup. `firstCorrectObservedMs` begins at mousedown and ends when the destination is visible at its expected bottom position, including Compact's automatic history fill. `stableObservedMs` includes three-observation confirmation and must not be treated as additional rendering time.
 
-Set `OPENCODE_PERFORMANCE_TRACE_DIR` for Chrome traces. `LAGGY_TRACE_ITERATION=0` traces the cold load; the default (`1`) traces the warm member of the pair. Profile separately from timing runs.
+Set `OMAI_PERFORMANCE_TRACE_DIR` for Chrome traces. `LAGGY_TRACE_ITERATION=0` traces the cold load; the default (`1`) traces the warm member of the pair. Profile separately from timing runs.
 
 `LAGGY_HTTP=1` disables route interception for an external HTTP replay server containing the same export and source fixture. Keep direct HTTP and Playwright-routed cold series separate: routing adds transport overhead. Raw samples, mode settings, viewport, browser version, and screenshots are retained in the output directory. The export itself is not copied into the repository.

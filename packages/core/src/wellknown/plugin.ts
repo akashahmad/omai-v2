@@ -6,7 +6,7 @@ import { Bus } from "../bus.js"
 import { WellKnown } from "../wellknown.js"
 
 export const Plugin = define({
-  id: "opencode.wellknown",
+  id: "omai.wellknown",
   effect: Effect.fn(function* (ctx) {
     const bus = yield* Bus.Service
     const wellknown = yield* WellKnown.Service

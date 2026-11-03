@@ -2,7 +2,6 @@ import { Component, Show } from "solid-js"
 import { Select } from "@opencode/ui/select"
 import { TextInput } from "@opencode/ui/text-input"
 import { useLanguage } from "@/runtime/i18n/language"
-import { ExternalLink } from "@/runtime/platform/external-link"
 import { SettingsList } from "@/settings/list"
 import { SettingsRow } from "@/settings/row"
 import { createAppearanceSettingsController, type AppearanceSettingsController } from "@/settings/general/controllers"
@@ -110,14 +109,7 @@ export const SettingsAppearance: Component = () => {
 
             <SettingsRow
               title={language.t("settings.general.row.theme.title")}
-              description={
-                <>
-                  {language.t("settings.general.row.theme.description")}{" "}
-                  <ExternalLink class="settings-link" href="https://opencode.ai/v2/docs/themes">
-                    {language.t("common.learnMore")}
-                  </ExternalLink>
-                </>
-              }
+              description={language.t("settings.general.row.theme.description")}
             >
               <Select
                 data-action="settings-theme"

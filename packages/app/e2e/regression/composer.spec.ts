@@ -118,8 +118,8 @@ test("the free usage limit opens the Go dialog once, leaves a readable notice, a
         ...(state.authorized
           ? [
               {
-                id: "opencode-go",
-                integrationID: "opencode-go",
+                id: "omai-go",
+                integrationID: "omai-go",
                 name: "OpenCode Go",
                 models: {
                   "glm-5-go": {
@@ -133,7 +133,7 @@ test("the free usage limit opens the Go dialog once, leaves a readable notice, a
             ]
           : []),
       ],
-      connected: state.authorized ? ["opencode", "opencode-go"] : ["opencode"],
+      connected: state.authorized ? ["opencode", "omai-go"] : ["opencode"],
       default: { build: "opencode/big-pickle" },
     }),
     integrations: () => [
@@ -146,14 +146,14 @@ test("the free usage limit opens the Go dialog once, leaves a readable notice, a
           : [],
       },
       {
-        id: "opencode-go",
+        id: "omai-go",
         name: "OpenCode Go",
         methods: [{ type: "key" }],
         connections: state.authorized ? [{ type: "credential", id: "cred_go", label: "Go key", method: "key" }] : [],
       },
     ],
     onConnectKey: (input) => {
-      if (input.integrationID === "opencode-go") state.authorized = true
+      if (input.integrationID === "omai-go") state.authorized = true
     },
     pageMessages: () => ({
       items: [
@@ -281,7 +281,7 @@ for (const action of ["tray", "picker"] as const) {
     await page.clock.setFixedTime(T0)
     await context.route("https://opencode.ai/**", (route) => route.fulfill({ body: "Go" }))
     const sessionID = "ses_go_limit"
-    const model = { id: "glm-5-go", providerID: "opencode-go" }
+    const model = { id: "glm-5-go", providerID: "omai-go" }
 
     const view = await openSession(page, {
       name: "GoLimit",
@@ -302,7 +302,7 @@ for (const action of ["tray", "picker"] as const) {
             },
           },
           {
-            id: "opencode-go",
+            id: "omai-go",
             name: "OpenCode Go",
             models: {
               "glm-5-go": {
@@ -314,8 +314,8 @@ for (const action of ["tray", "picker"] as const) {
             },
           },
         ],
-        connected: ["opencode", "opencode-go"],
-        default: { build: "opencode-go/glm-5-go" },
+        connected: ["opencode", "omai-go"],
+        default: { build: "omai-go/glm-5-go" },
       }),
       pageMessages: () => ({
         items: [
@@ -449,7 +449,7 @@ test("a catalog refresh cannot replace an existing session's model", async ({ pa
     sessions: [{ id: sessionID, agent: "build", model: { id: "alpha", providerID: "opencode", variant: "high" } }],
     provider: () => catalog.current,
     onPrompt: (input) => void prompts.push(input.body),
-    seed: { storage: { "opencode.global.dat:model": { recent: [{ providerID: "opencode", modelID: "beta" }] } } },
+    seed: { storage: { "omai.global.dat:model": { recent: [{ providerID: "opencode", modelID: "beta" }] } } },
   })
 
   const control = page.locator('[data-action="composer-model"]')
@@ -519,7 +519,7 @@ test("an existing session's model never shows a fallback while its agent loads",
     name: "AgentPending",
     sessions: [{ id: sessionID, agent: "build", model: { id: "alpha", providerID: "opencode" } }],
     provider: provider({ id: "alpha", name: "Alpha" }, { id: "beta", name: "Beta" }),
-    seed: { storage: { "opencode.global.dat:model": { recent: [{ providerID: "opencode", modelID: "beta" }] } } },
+    seed: { storage: { "omai.global.dat:model": { recent: [{ providerID: "opencode", modelID: "beta" }] } } },
   })
   const agents = Promise.withResolvers<void>()
   await page.route(/\/api\/agent(\?|$)/, async (route) => {
@@ -718,7 +718,7 @@ test("a managed composer label follows direct connections, not picker filtering 
     onPrompt: (input) => void prompts.push(input.body),
     seed: {
       storage: {
-        "opencode.global.dat:model": {
+        "omai.global.dat:model": {
           user: [
             { providerID: "console-openai", modelID: "gpt", visibility: "show" },
             { providerID: "openai", modelID: "direct-model", visibility: "show" },
@@ -1118,9 +1118,9 @@ test("lists OpenCode's free models in the model picker however old they are", as
 
   await page.locator('[data-component="composer"] [data-action="composer-model"]').click()
   const models = page.getByRole("dialog", { name: "Select model", exact: true })
-  await expect(models.locator('[data-option-key="opencode:new-paid"]')).toBeVisible()
-  await expect(models.locator('[data-option-key="opencode:big-pickle"]')).toBeVisible()
-  await expect(models.locator('[data-option-key="opencode:old-paid"]')).toHaveCount(0)
+  await expect(models.locator('[data-option-key="omai:new-paid"]')).toBeVisible()
+  await expect(models.locator('[data-option-key="omai:big-pickle"]')).toBeVisible()
+  await expect(models.locator('[data-option-key="omai:old-paid"]')).toHaveCount(0)
 })
 
 test("lists slash commands in their built-in order", async ({ page }) => {
@@ -1268,7 +1268,7 @@ test("marks a Console provider with its workspace only when it is also connected
     },
     seed: {
       storage: {
-        "opencode.global.dat:model": {
+        "omai.global.dat:model": {
           user: [
             ["opencode", "console-model"],
             ["console-google", "managed-gemini"],

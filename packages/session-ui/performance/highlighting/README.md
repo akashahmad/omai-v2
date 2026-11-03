@@ -30,7 +30,7 @@ invalidation on content, theme, and worker option changes, and plain rendering o
 large diffs with complete reconstructed content.
 
 Optional output settings: `HIGHLIGHT_RESULTS`, `HIGHLIGHT_SCREENSHOTS`,
-`OPENCODE_PERFORMANCE_RUN_ID`, and `OPENCODE_PERFORMANCE_TRACE_DIR` (separate
+`OMAI_PERFORMANCE_RUN_ID`, and `OMAI_PERFORMANCE_TRACE_DIR` (separate
 diagnostic runs, not clean timing). `HIGHLIGHT_PORT` defaults to 4793. Preserve the
 baseline build before product edits, then point `HIGHLIGHT_BUNDLE` at either frozen
 build to compare the same workload without rebuilding.

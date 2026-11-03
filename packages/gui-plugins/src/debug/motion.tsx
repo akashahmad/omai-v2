@@ -22,7 +22,7 @@ import { usePlugin } from "@opencode/plugin/gui"
 
 // Where the panel was dragged to, as an offset from its bottom-right home, its width, and the feature it last showed;
 // kept per device.
-const key = "opencode.motion.panel"
+const key = "omai.motion.panel"
 
 // From this width the list and the open feature sit side by side.
 const wideAt = 560
@@ -449,7 +449,7 @@ function FeatureKnobs(props: {
     applyMotion(item, value as MotionKnob["value"])
   }
 
-  const controls = createRemoteControls(`opencode-motion-${group}`, descriptors, {
+  const controls = createRemoteControls(`omai-motion-${group}`, descriptors, {
     values: values(),
     // Beta is a production build, where knobs resolves its production entry: the panel mounts only when shipped.
     ship: () => import("knobs/panel"),

@@ -131,7 +131,7 @@ for (const direction of ["ltr", "rtl"] as const) {
     await model.click()
     await expect(dialog.getByRole("combobox", { name: "Search models", exact: true })).toBeFocused()
     await expect(page.getByRole("menu")).toHaveCount(0)
-    await dialog.locator('[data-option-key="opencode:mobile-b"]').click()
+    await dialog.locator('[data-option-key="omai:mobile-b"]').click()
     await expect(dialog).toBeHidden()
     await expect(model).toHaveText("Mobile Model B")
     await expect(page.locator('[data-slot="mobile-drawer-content"]')).toHaveCount(0)
@@ -142,12 +142,12 @@ for (const direction of ["ltr", "rtl"] as const) {
     const { model, variant, dialog } = await openDesktopPicker(page, direction)
     const flyout = dialog.locator('[data-slot="model-dialog-flyout"]')
     await model.click()
-    await dialog.locator('[data-option-key="opencode:mobile-a"]').hover()
+    await dialog.locator('[data-option-key="omai:mobile-a"]').hover()
     await expect(flyout.getByRole("menuitemradio", { name: "balanced", exact: true })).toHaveAttribute(
       "aria-checked",
       "true",
     )
-    await dialog.locator('[data-option-key="opencode:mobile-b"]').hover()
+    await dialog.locator('[data-option-key="omai:mobile-b"]').hover()
     await expect(flyout.getByText("OpenCode · 1M context", { exact: true })).toBeVisible()
     await expect(flyout.getByText("Text, Image, PDF, Tools", { exact: true })).toBeVisible()
     await flyout.getByRole("menuitemradio", { name: "max", exact: true }).click()
@@ -159,7 +159,7 @@ for (const direction of ["ltr", "rtl"] as const) {
   test(`model dialog arrow keys stage a variant in ${direction}`, async ({ page }) => {
     const { composer, model, variant, dialog } = await openDesktopPicker(page, direction)
     const search = dialog.getByRole("combobox", { name: "Search models", exact: true })
-    const rowA = dialog.locator('[data-option-key="opencode:mobile-a"]')
+    const rowA = dialog.locator('[data-option-key="omai:mobile-a"]')
     const next = direction === "rtl" ? "ArrowLeft" : "ArrowRight"
     await model.click()
     await expect(search).toBeFocused()
@@ -193,7 +193,7 @@ for (const direction of ["ltr", "rtl"] as const) {
     const search = dialog.getByRole("combobox", { name: "Search models", exact: true })
     await expect(search).toBeFocused()
     await search.press(direction === "rtl" ? "ArrowLeft" : "ArrowRight")
-    await expect(dialog.locator('[data-option-key="opencode:mobile-a"]')).toContainText("high")
+    await expect(dialog.locator('[data-option-key="omai:mobile-a"]')).toContainText("high")
     await search.press("Enter")
     await expect(dialog).toBeHidden()
     await expect(model).toHaveText("Mobile Model A")
@@ -216,7 +216,7 @@ test("model dialog shows a summary and only the default variant for models witho
   const { model, dialog } = await openDesktopPicker(page, "ltr")
   const flyout = dialog.locator('[data-slot="model-dialog-flyout"]')
   await model.click()
-  await dialog.locator('[data-option-key="opencode:mobile-c"]').hover()
+  await dialog.locator('[data-option-key="omai:mobile-c"]').hover()
   await expect(flyout.getByText("OpenCode · 262K context", { exact: true })).toBeVisible()
   await expect(flyout.getByRole("menuitemradio")).toHaveText(["Default"])
 })
@@ -234,13 +234,13 @@ test("model dialog toggles a favorite from the keyboard and leads with favorite 
   await search.press("ControlOrMeta+f")
   await expect(sections).toHaveText(["Favorites", "OpenCode"])
   // A favorite leaves its provider group, so the model is listed once.
-  await expect(dialog.locator('[data-option-key="opencode:mobile-c"]')).toHaveCount(1)
-  await dialog.locator('[data-option-key="opencode:mobile-b"]').click()
+  await expect(dialog.locator('[data-option-key="omai:mobile-c"]')).toHaveCount(1)
+  await dialog.locator('[data-option-key="omai:mobile-b"]').click()
   await expect(model).toHaveText("Mobile Model B")
 
   await model.click()
   await expect(sections).toHaveText(["Favorites", "Recent", "OpenCode"])
-  await expect(dialog.locator('[data-option-key="opencode:mobile-b"]')).toHaveAttribute("aria-current", "true")
+  await expect(dialog.locator('[data-option-key="omai:mobile-b"]')).toHaveAttribute("aria-current", "true")
   await search.fill("Mobile")
   await expect(sections).toHaveText(["OpenCode"])
   await search.press("Escape")
@@ -248,11 +248,11 @@ test("model dialog toggles a favorite from the keyboard and leads with favorite 
   // The dialog opens on its first row with the search focused, not on the selected model further down.
   await model.click()
   await expect(search).toBeFocused()
-  await expect(dialog.locator('[data-option-key="opencode:mobile-c"]')).toHaveAttribute("data-active", "")
-  await expect(dialog.locator('[data-option-key="opencode:mobile-b"]')).not.toHaveAttribute("data-active")
+  await expect(dialog.locator('[data-option-key="omai:mobile-c"]')).toHaveAttribute("data-active", "")
+  await expect(dialog.locator('[data-option-key="omai:mobile-b"]')).not.toHaveAttribute("data-active")
   await search.press("ControlOrMeta+f")
   await expect(sections).toHaveText(["Recent", "OpenCode"])
-  await expect(dialog.locator('[data-option-key="opencode:mobile-c"]')).toHaveAttribute("data-active", "")
+  await expect(dialog.locator('[data-option-key="omai:mobile-c"]')).toHaveAttribute("data-active", "")
 })
 
 test("model dialog opens Manage models from its search row with Enter", async ({ page }) => {
@@ -355,9 +355,9 @@ async function openPickerSession(page: Page, direction: "ltr" | "rtl", paid: boo
   })
   await installStressSessionTabs(page)
   await page.addInitScript((direction) => {
-    localStorage.setItem("opencode-color-scheme", direction === "rtl" ? "dark" : "light")
+    localStorage.setItem("omai-color-scheme", direction === "rtl" ? "dark" : "light")
     localStorage.setItem(
-      "opencode.global.dat:model",
+      "omai.global.dat:model",
       JSON.stringify({
         user: ["a", "b", "c"].map((id) => ({ providerID: "opencode", modelID: `mobile-${id}`, visibility: "show" })),
         recent: [],

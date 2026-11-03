@@ -74,7 +74,7 @@ export function createComposerControls(input: { model?: ModelSelection } = {}) {
     const variants = Object.keys(match.model.variants ?? {})
 
     return {
-      provider: composerProviderName(expected.model.providerID, match.all, match.connected),
+      provider: composerProviderName(expected.model.providerID, match.all),
       model: match.model.name.replace("(latest)", "").trim(),
       label: composerModelLabels(match.all, match.connected).get(
         composerModelLabelKey(expected.model.providerID, expected.model.modelID),
@@ -106,11 +106,7 @@ export function createComposerControls(input: { model?: ModelSelection } = {}) {
         selection,
         providerName:
           key &&
-          composerProviderName(
-            key.providerID,
-            providers.all(),
-            providers.connected().map((provider) => provider.id),
-          ),
+          composerProviderName(key.providerID, providers.all()),
         label: key && modelLabels().get(composerModelLabelKey(key.providerID, key.modelID)),
         paid: providers.paid().length > 0,
         // The session's model applies only to its agent, so resolve agents before showing a model.

@@ -13,8 +13,6 @@ import review from "./review"
 import reviewRenderer from "./review/renderer"
 import details from "./details"
 import detailsRenderer from "./details/renderer"
-import updater from "./updater"
-import updaterRenderer from "./updater/renderer"
 import microsoftOffice from "./microsoft-office"
 import microsoftOfficeRenderer from "./microsoft-office/renderer"
 import sources from "./sources"
@@ -36,7 +34,6 @@ export const builtins = compose({
   file: { ...file, windowEntry: eager(fileRenderer) },
   review: { ...review, windowEntry: eager(reviewRenderer) },
   details: { ...details, windowEntry: eager(detailsRenderer) },
-  updater: { ...updater, windowEntry: eager(updaterRenderer) },
   "microsoft-office": { ...microsoftOffice, windowEntry: eager(microsoftOfficeRenderer) },
   sources: { ...sources, windowEntry: eager(sourcesRenderer) },
   goal: { ...goal, windowEntry: eager(goalRenderer) },

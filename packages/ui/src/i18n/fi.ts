@@ -104,9 +104,6 @@ export const dict = {
   "ui.sessionTurn.error.freeUsageExceeded": "Ilmainen käyttöraja ylitetty",
   "ui.sessionTurn.error.addCredits": "Lisää krediittejä",
   "dialog.usageExceeded.freeTier.title": "Ilmainen raja saavutettu",
-  "dialog.usageExceeded.freeTier.description":
-    "Tilaa OpenCode Go 10 dollarilla kuukaudessa saadaksesi luotettavan pääsyn parhaisiin avoimen lähdekoodin malleihin.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Tilaa",
   "ui.sessionTurn.status.delegating": "Työn delegointi",
   "ui.sessionTurn.status.planning": "Seuraavien vaiheiden suunnittelu",
   "ui.sessionTurn.status.gatheringContext": "Tutkiminen",

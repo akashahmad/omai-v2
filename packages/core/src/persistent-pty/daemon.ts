@@ -165,7 +165,7 @@ export interface DaemonTransport {
 export const makeDaemonTransport = Effect.fn("PersistentPty.makeDaemonTransport")(function* (
   root: string,
   initialID: string,
-  binary: () => Promise<string> = () => Promise.resolve(process.env.OPENCODE_PTY_BIN || "opencode-pty"),
+  binary: () => Promise<string> = () => Promise.resolve(process.env.OMAI_PTY_BIN || "opencode-pty"),
   inherited?: Handoff,
 ) {
   const startup = Semaphore.makeUnsafe(1)
@@ -217,7 +217,7 @@ export const makeDaemonTransport = Effect.fn("PersistentPty.makeDaemonTransport"
       return yield* Effect.fail(
         new DaemonError({
           kind: "protocol",
-          message: `opencode-pty protocol mismatch: daemon=${decoded.protocol}, client=${ProtocolVersion}`,
+          message: `omai-pty protocol mismatch: daemon=${decoded.protocol}, client=${ProtocolVersion}`,
           pid: decoded.pid,
         }),
       )
@@ -228,7 +228,7 @@ export const makeDaemonTransport = Effect.fn("PersistentPty.makeDaemonTransport"
       response.pid !== decoded.pid ||
       response.protocol !== ProtocolVersion
     )
-      return yield* Effect.fail(new DaemonError({ kind: "protocol", message: "opencode-pty registration mismatch" }))
+      return yield* Effect.fail(new DaemonError({ kind: "protocol", message: "omai-pty registration mismatch" }))
     // Daemons older than the features list omit it; trust the live daemon's answer over the file.
     return { ...decoded, features: response.features ?? [] }
   })
@@ -269,7 +269,7 @@ export const makeDaemonTransport = Effect.fn("PersistentPty.makeDaemonTransport"
         yield* Effect.sleep(50)
       }
       return yield* Effect.fail(
-        last ?? new DaemonError({ kind: "connect", message: "opencode-pty did not become ready" }),
+        last ?? new DaemonError({ kind: "connect", message: "omai-pty did not become ready" }),
       )
     }).pipe(
       Effect.onError(() =>
@@ -369,7 +369,7 @@ export const makeDaemonTransport = Effect.fn("PersistentPty.makeDaemonTransport"
       if (!running) return response
       yield* Effect.sleep(50)
     }
-    return yield* Effect.fail(new DaemonError({ kind: "connect", message: "opencode-pty did not stop" }))
+    return yield* Effect.fail(new DaemonError({ kind: "connect", message: "omai-pty did not stop" }))
   })
 
   const handoff = startup.withPermit(
@@ -525,7 +525,7 @@ const oneShot = Effect.fn("PersistentPty.daemon.oneShot")(function* (registratio
             signal.addEventListener("abort", abort, { once: true })
             try {
               const frame = await frames.next()
-              if (frame.done) throw new Error("opencode-pty closed without response")
+              if (frame.done) throw new Error("omai-pty closed without response")
               return frame.value
             } finally {
               signal.removeEventListener("abort", abort)
@@ -548,7 +548,7 @@ const oneShot = Effect.fn("PersistentPty.daemon.oneShot")(function* (registratio
         Effect.fail(
           new DaemonError({
             kind: dispatched ? "response" : "connect",
-            message: "opencode-pty request timed out",
+            message: "omai-pty request timed out",
           }),
         ),
     }),
@@ -581,7 +581,7 @@ async function subscribePromise(
       }),
     )
     const initial = await frames.next()
-    if (initial.done) throw new Error("opencode-pty closed before attachment")
+    if (initial.done) throw new Error("omai-pty closed before attachment")
     const response = decode(initial.value)
     if (response.type === "error") throw responseError(response.message)
     if (response.type !== "attached") throw new Error(`unexpected opencode-pty response: ${response.type}`)
@@ -661,7 +661,7 @@ async function subscribePromise(
 
 function encode(value: unknown) {
   const payload = Buffer.from(JSON.stringify(value))
-  if (payload.length > MaxFrameBytes) throw new Error("opencode-pty frame too large")
+  if (payload.length > MaxFrameBytes) throw new Error("omai-pty frame too large")
   const output = Buffer.allocUnsafe(payload.length + 4)
   output.writeUInt32BE(payload.length)
   payload.copy(output, 4)
@@ -675,13 +675,13 @@ async function* decoder(socket: net.Socket) {
     pending = pending.length === 0 ? chunk : Buffer.concat([pending, chunk])
     while (pending.length >= 4) {
       const length = pending.readUInt32BE(0)
-      if (length > MaxFrameBytes) throw new Error("opencode-pty frame too large")
+      if (length > MaxFrameBytes) throw new Error("omai-pty frame too large")
       if (pending.length < length + 4) break
       yield pending.subarray(4, length + 4)
       pending = pending.subarray(length + 4)
     }
   }
-  if (pending.length !== 0) throw new Error("opencode-pty truncated frame")
+  if (pending.length !== 0) throw new Error("omai-pty truncated frame")
 }
 
 const decodeWireResponse = Schema.decodeUnknownSync(Schema.fromJsonString(WireResponse))

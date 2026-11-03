@@ -17,7 +17,7 @@ import { AbsolutePath, RelativePath } from "../src/schema"
 import { Snapshot } from "../src/snapshot"
 import { Global } from "@opencode/util/global"
 
-const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "opencode-snapshot-parity")
+const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "omai-snapshot-parity")
 
 // User-level Git configuration reaches every snapshot command, so the corpus runs under several.
 const variants: Record<string, string | undefined> = {

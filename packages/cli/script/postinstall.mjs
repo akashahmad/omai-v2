@@ -134,7 +134,7 @@ function resolveBinary(name) {
 }
 
 function installPackage(name) {
-  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "opencode-install-"))
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "omai-install-"))
   try {
     const result = childProcess.spawnSync(
       npm[0],

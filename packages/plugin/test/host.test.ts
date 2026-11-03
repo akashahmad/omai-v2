@@ -11,7 +11,7 @@ const source = 'throw new Error("Plugin code must not run during resolution")'
 const name = "@fixture/plugin"
 
 async function fixture(files: Record<string, string>, installed = false) {
-  const root = await realpath(await mkdtemp(path.join(tmpdir(), "opencode-host-")))
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "omai-host-")))
   const directory = installed ? path.join(root, "node_modules", name) : root
   await Promise.all(
     Object.entries(files).map(async ([file, content]) => {
@@ -181,7 +181,7 @@ describe("Host.resolve", () => {
   it("resolves a local directory through its package.json exports, as the published package", async () => {
     await using plugin = await fixture({
       "package.json": JSON.stringify({
-        name: "opencode-acme-plugin",
+        name: "omai-acme-plugin",
         exports: { ".": "./src/index.ts", "./gui-experimental": "./dist/gui-experimental.cjs" },
       }),
       "src/index.ts": source,

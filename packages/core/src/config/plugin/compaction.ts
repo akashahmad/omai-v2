@@ -7,7 +7,7 @@ import { SessionCompaction } from "../../session/compaction.js"
 import { ConfigEntryObserver } from "./entry-observer.js"
 
 export const Plugin = define({
-  id: "opencode.config.compaction",
+  id: "omai.config.compaction",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const compaction = yield* SessionCompaction.Service

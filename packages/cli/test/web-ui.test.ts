@@ -11,7 +11,7 @@ import { brotliCompressSync } from "node:zlib"
 import { WebUi } from "../src/services/web-ui"
 import { it } from "../../core/test/lib/effect"
 
-const root = await mkdtemp(path.join(tmpdir(), "opencode-web-ui-"))
+const root = await mkdtemp(path.join(tmpdir(), "omai-web-ui-"))
 afterAll(() => rm(root, { recursive: true, force: true }))
 
 describe("web UI", () => {
@@ -65,7 +65,7 @@ describe("web UI", () => {
         }),
       )
       const response = yield* Effect.promise(() =>
-        fetch(new URL("/api/info", origin), { headers: { authorization: `Basic ${btoa("opencode:secret")}` } }),
+        fetch(new URL("/api/info", origin), { headers: { authorization: `Basic ${btoa("omai:secret")}` } }),
       )
       expect(response.status).toBe(200)
       expect(yield* Effect.promise(() => response.json())).toHaveProperty("pid")
@@ -73,7 +73,7 @@ describe("web UI", () => {
       const pairing = yield* Effect.promise(() =>
         fetch(new URL("/api/pair", origin), {
           method: "POST",
-          headers: { authorization: `Basic ${btoa("opencode:secret")}` },
+          headers: { authorization: `Basic ${btoa("omai:secret")}` },
         }).then((response) => response.json() as Promise<{ code: string }>),
       )
       const redirect = yield* Effect.promise(() =>
@@ -162,7 +162,7 @@ describe("web UI", () => {
                     version: "test",
                     pid: 1,
                     urls: [origin],
-                    paths: { tmp: "/tmp/opencode" },
+                    paths: { tmp: "/tmp/omai" },
                   })
                 return yield* Effect.fail(
                   new HttpServerError.HttpServerError({
@@ -179,7 +179,7 @@ describe("web UI", () => {
             version: "test",
             pid: 1,
             urls: [origin],
-            paths: { tmp: "/tmp/opencode" },
+            paths: { tmp: "/tmp/omai" },
           })
 
           const missing = yield* Effect.promise(() => fetch(`${origin}/api/missing`))

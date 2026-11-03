@@ -11,7 +11,7 @@ import { SkillFile } from "./skill-file.js"
 import { SkillScan } from "./skill-scan.js"
 
 export const Plugin = define({
-  id: "opencode.config.compatibility",
+  id: "omai.config.compatibility",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const fs = yield* FSUtil.Service

@@ -88,7 +88,7 @@ function csp(hash = "") {
 
 function cspForHtml(body: string) {
   const match = body.match(
-    /<script\b(?![^>]*\bsrc\s*=)[^>]*\bid=(["'])oc-theme-preload-script\1[^>]*>([\s\S]*?)<\/script>/i,
+    /<script\b(?![^>]*\bsrc\s*=)[^>]*\bid=(["'])theme-preload-script\1[^>]*>([\s\S]*?)<\/script>/i,
   )
   return csp(match ? createHash("sha256").update(match[2]).digest("base64") : "")
 }

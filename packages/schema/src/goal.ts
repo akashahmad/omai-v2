@@ -31,7 +31,7 @@ export const State = Schema.Struct({
  * without one. The schemas are Standard Schemas too, so Promise clients can call it.
  */
 export const Definition = Rpc.define({
-  id: "opencode.goal",
+  id: "omai.goal",
   methods: {
     get: {
       input: Schema.toStandardSchemaV1(Schema.Struct({ sessionID: Schema.String })),

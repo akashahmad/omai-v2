@@ -20,7 +20,7 @@ export async function openReviewLauncher(panel: Locator) {
 /** Storage that restores the Review tab, selected, in each session's side strip, as the app writes it. */
 export function reviewTabs(directory: string, ...sessions: string[]) {
   return {
-    "opencode.global.dat:layout": {
+    "omai.global.dat:layout": {
       sessionTabs: Object.fromEntries(
         sessions.map((id) => [
           `local\u0000${base64Encode(directory)}/${id}`,

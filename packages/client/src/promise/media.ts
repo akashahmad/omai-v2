@@ -3,7 +3,7 @@ import type { MessageListInput, SessionInboxListInput, SessionMessageGetInput } 
 
 const MEDIA_URI_CAPABILITY = "experimental-media-uri"
 
-const CAPABILITIES_HEADER = "X-OpenCode-Capabilities"
+const CAPABILITIES_HEADER = "X-Omai-Capabilities"
 
 const MEDIA_REF = /^media:([0-9a-f]{64})$/
 

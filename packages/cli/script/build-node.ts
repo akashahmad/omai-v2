@@ -31,10 +31,10 @@ const bundleOnly = process.argv.includes("--bundle-only")
 const single = process.argv.includes("--single")
 const skipInstall = process.argv.includes("--skip-install")
 const appArchiveOnly = process.argv.includes("--app-archive-only")
-const highlights = Script.preview ? undefined : embed(process.env.OPENCODE_RELEASE_NOTES)
-const requestedArchive = process.env.OPENCODE_APP_ARCHIVE
+const highlights = Script.preview ? undefined : embed(process.env.OMAI_RELEASE_NOTES)
+const requestedArchive = process.env.OMAI_APP_ARCHIVE
 const archivePath = requestedArchive ? path.resolve(dir, requestedArchive) : undefined
-const requested = process.env.OPENCODE_TARGET
+const requested = process.env.OMAI_TARGET
 const allTargets = [
   nodeTarget("linux", "arm64"),
   nodeTarget("linux", "x64"),
@@ -51,7 +51,7 @@ const targets = requested
 process.chdir(dir)
 if (!skipInstall) run(process.execPath, ["install", "--os=*", "--cpu=*"])
 if (appArchiveOnly) {
-  if (!archivePath) throw new Error("--app-archive-only requires OPENCODE_APP_ARCHIVE")
+  if (!archivePath) throw new Error("--app-archive-only requires OMAI_APP_ARCHIVE")
   await mkdir(path.dirname(archivePath), { recursive: true })
   await writeFile(archivePath, await buildAppArchive(Script.channel))
   process.exit(0)
@@ -106,24 +106,24 @@ for (const target of targets) {
   await copyNodeAssets(assets)
   await writeFile(path.join("dist-node", "assets", appArchiveAsset), appArchive)
   await build(mainConfig(input))
-  await assertTextImportsInlined("dist-node/opencode.mjs")
-  if (bundleOnly) await verifyArtifact("dist-node/opencode.mjs")
+  await assertTextImportsInlined("dist-node/omai.mjs")
+  if (bundleOnly) await verifyArtifact("dist-node/omai.mjs")
 
   const host = target.platform === process.platform && target.arch === process.arch
   if (host) {
     if (!builder) throw new Error("Node SEA builder is unavailable")
-    run(builder, [...nodeExecArgv, "dist-node/opencode.mjs", "--version"])
-    run(builder, [...nodeExecArgv, "dist-node/opencode.mjs", "--help"])
+    run(builder, [...nodeExecArgv, "dist-node/omai.mjs", "--version"])
+    run(builder, [...nodeExecArgv, "dist-node/omai.mjs", "--help"])
   }
   if (bundleOnly) continue
 
   const name = `cli-node-${targetName(target)}`
-  const binary = target.platform === "win32" ? "opencode2-node.exe" : "opencode2-node"
+  const binary = target.platform === "win32" ? "omai-node.exe" : "omai-node"
   const output = path.join(outdir, name, "bin", binary)
   if (!builder) throw new Error("Node SEA builder is unavailable")
   await mkdir(path.dirname(output), { recursive: true })
   const config = {
-    main: "dist-node/opencode.mjs",
+    main: "dist-node/omai.mjs",
     mainFormat: "module",
     executable: await resolveTargetNode(target, builder),
     output: path.relative(dir, output),
@@ -149,7 +149,6 @@ for (const target of targets) {
         name: `@opencode/${name}`,
         version: Script.version,
         license: pkg.license,
-        repository: { type: "git", url: "git+https://github.com/anomalyco/opencode.git" },
         os: [target.platform],
         cpu: [target.arch],
       },
@@ -229,7 +228,7 @@ async function resolveTargetNode(target: NodeTarget, host?: string) {
 }
 
 async function smoke(output: string) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "opencode-node-smoke-"))
+  const root = await mkdtemp(path.join(os.tmpdir(), "omai-node-smoke-"))
   const executable = path.join(root, path.basename(output))
   await copyFile(output, executable)
   if (process.platform !== "win32") await chmod(executable, 0o755)

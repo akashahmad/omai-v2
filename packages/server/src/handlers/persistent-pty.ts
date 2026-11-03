@@ -117,7 +117,7 @@ export const PersistentPtyHandler = HttpApiBuilder.group(Api, "server.experiment
                 "PersistentPty.UnsupportedError": (error) =>
                   new PtyFeatureUnsupportedError({
                     feature: error.feature,
-                    message: "Terminal renaming will be available after OpenCode's terminal service restarts",
+                    message: "Terminal renaming will be available after O M A I +'s terminal service restarts",
                   }),
                 "PersistentPty.UnavailableError": unavailable,
               }),
@@ -270,4 +270,4 @@ const notFound = (error: PersistentPty.NotFoundError) =>
   new PtyNotFoundError({ ptyID: error.ptyID, message: `PTY session not found: ${error.ptyID}` })
 
 const unavailable = (error: PersistentPty.UnavailableError) =>
-  new ServiceUnavailableError({ message: error.message, service: "opencode-pty" })
+  new ServiceUnavailableError({ message: error.message, service: "omai-pty" })

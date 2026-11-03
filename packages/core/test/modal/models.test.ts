@@ -13,7 +13,7 @@ const run = <A, E>(effect: (http: HttpClient.HttpClient) => Effect.Effect<A, E>)
 const providerID = Provider.ID.make("modal")
 
 test("modal plugin is registered", () => {
-  expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.modal")
+  expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.modal")
 })
 
 function template(id: string, overrides: Partial<Model.Info> = {}) {

@@ -5,7 +5,7 @@ import { Effect, Schema } from "effect"
 import { RequestKind } from "./language-model/request-kind.js"
 import { ClaudeProvider } from "./provider.js"
 
-// OpenCode records stopped tools (including a plain permission rejection) with this structured error.
+// O M A I + records stopped tools (including a plain permission rejection) with this structured error.
 const isAborted = Schema.is(Schema.Struct({ error: Schema.Struct({ type: Schema.Literal("aborted") }) }))
 
 export const register = Effect.fn("ClaudeSessionHooks.register")(function* (ctx: Context) {
@@ -25,7 +25,7 @@ export const register = Effect.fn("ClaudeSessionHooks.register")(function* (ctx:
     (event) =>
       Effect.sync(() => {
         // Let Claude choose its normal output budget. Later hooks can still set an explicit maxTokens.
-        // Compaction has its own hook, so it keeps OpenCode's summary budget.
+        // Compaction has its own hook, so it keeps O M A I +'s summary budget.
         delete event.options.maxTokens
         // Preserve tool error status before the AI SDK bridge flattens error results to plain text.
         event.messages = event.messages.map((message) => {

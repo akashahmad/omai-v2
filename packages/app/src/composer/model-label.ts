@@ -1,5 +1,3 @@
-import { consoleProviderGroup, consoleProviderName } from "@/providers/catalog/console"
-
 export type ComposerModelLabel = { provider?: string; model: string }
 
 type Provider = {
@@ -14,36 +12,8 @@ export function composerModelLabelKey(providerID: string, modelID: string) {
   return JSON.stringify([providerID, modelID])
 }
 
-// Native Console models need no provider. A managed provider drops its workspace, and says it routes through
-// OpenCode only when the same provider is also connected directly.
-export function composerProviderName(
-  providerID: string,
-  catalog: ReadonlyMap<string, Provider>,
-  connected?: readonly string[],
-) {
-  const provider = catalog.get(providerID)
-
-  if (!provider) return providerID
-
-  if (native(provider)) return
-  const all = [...catalog.values()]
-  const group = consoleProviderGroup(all)
-
-  const name =
-    provider.integrationID === "opencode" && group ? consoleProviderName(group, provider.name) : provider.name
-
-  if (provider.integrationID !== "opencode" || !provider.canonical) return name
-  const active = connected && new Set(connected)
-
-  const direct = all.some(
-    (item) =>
-      !native(item) &&
-      item.integrationID !== "opencode" &&
-      (!active || active.has(item.id)) &&
-      (item.integrationID ?? item.id) === provider.canonical,
-  )
-
-  return direct ? `OpenCode / ${name}` : name
+export function composerProviderName(providerID: string, catalog: ReadonlyMap<string, Provider>) {
+  return catalog.get(providerID)?.name ?? providerID
 }
 
 export function composerModelLabels(
@@ -55,7 +25,7 @@ export function composerModelLabels(
   const rows = [...catalog.values()]
     .filter((provider) => !active || active.has(provider.id))
     .flatMap((provider) => {
-      const name = composerProviderName(provider.id, catalog, connected)
+      const name = composerProviderName(provider.id, catalog)
 
       return Object.values(provider.models).map((model) => {
         const label = model.name.replace("(latest)", "").trim()
@@ -98,8 +68,4 @@ function sharedPrefix(ids: string[]) {
   const common = differs === -1 ? first.length : differs
 
   return Array.from({ length: common + 1 }, (_, index) => common - index).find(boundary) ?? 0
-}
-
-function native(provider: Provider) {
-  return provider.id === "opencode" && (!provider.integrationID || provider.integrationID === "opencode")
 }

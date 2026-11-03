@@ -73,7 +73,7 @@ export interface Interface {
   readonly tick: Effect.Effect<void>
   /**
    * Runs `tick` whenever a schedule falls due, until interrupted. Elects at most one active leader per SQLite
-   * database via a lease row, so auxiliary processes (`opencode acp`, `--standalone`) sharing a data directory
+   * database via a lease row, so auxiliary processes (`omai acp`, `--standalone`) sharing a data directory
    * never double-fire alongside a managed service.
    */
   readonly run: Effect.Effect<never>

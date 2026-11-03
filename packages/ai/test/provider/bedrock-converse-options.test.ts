@@ -86,7 +86,7 @@ describe("Bedrock Converse options", () => {
             name: "answer",
             schema: { type: "object", properties: { product: { type: "integer" } } },
           },
-          requestMetadata: { suite: "opencode-ai" },
+          requestMetadata: { suite: "omai-ai" },
         }),
       )
 
@@ -112,7 +112,7 @@ describe("Bedrock Converse options", () => {
             },
           },
         },
-        requestMetadata: { suite: "opencode-ai" },
+        requestMetadata: { suite: "omai-ai" },
       })
     }),
   )

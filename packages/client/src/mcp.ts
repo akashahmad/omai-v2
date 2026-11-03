@@ -51,7 +51,7 @@ type Message = {
   }
 }
 
-const SESSION_ID_META_KEY = "ai.opencode/sessionID"
+const SESSION_ID_META_KEY = "ai.omai/sessionID"
 const PROTOCOL_VERSION = "2025-11-25"
 const RECONNECT_MIN = 500
 const RECONNECT_MAX = 10_000

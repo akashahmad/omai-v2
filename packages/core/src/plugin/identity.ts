@@ -17,7 +17,7 @@ export function identity(model: { readonly name: string; readonly ref: Model.Ref
 }
 
 export const Plugin = define({
-  id: "opencode.prompt.identity",
+  id: "omai.prompt.identity",
   effect: Effect.fn("IdentityPlugin")(function* (ctx) {
     const hook = (event: SessionHooks["context"]) =>
       Effect.gen(function* () {

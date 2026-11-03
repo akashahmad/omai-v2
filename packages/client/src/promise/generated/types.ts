@@ -364,8 +364,6 @@ export type WebSearchID = string
 
 export type WebSearchResult = { url: string; title?: string; content?: string; time: { published?: number } }
 
-export type UsageLimitsMeter = { percent: number; limited: boolean; resetsAt: number }
-
 export type McpProtocol = "legacy" | "auto" | "2026-07-28"
 
 export type ConfigCompactionPercent = string
@@ -449,8 +447,6 @@ export type SessionMessageCompactionRunning = {
   reason: "auto" | "manual"
   summary: string
 }
-
-export type UsageLimitsBudgetModel = { providerID: ProviderID; modelID: string; name: string; spent?: MoneyUSD }
 
 export type FileSystemEntry = { path: RelativePath; type: "file" | "directory" }
 
@@ -940,8 +936,6 @@ export type VcsInfo = { provider?: string; branch: VcsBranch }
 
 export type WebSearchProvider = { id: WebSearchID; name: string }
 
-export type UsageLimitsGo = { rolling: UsageLimitsMeter; weekly: UsageLimitsMeter; monthly: UsageLimitsMeter }
-
 export type ConfigModelCapabilities = {
   tools?: boolean
   input?: Array<string>
@@ -1047,21 +1041,6 @@ export type ModelVariant = {
 }
 
 export type PermissionRuleset = Array<PermissionRule>
-
-export type UsageLimitsBudget = {
-  id: string
-  limit: MoneyUSD
-  spent: MoneyUSD
-  scope: "each" | "combined"
-  per: "set" | "model"
-  coverage: "all" | "models"
-  models: Array<UsageLimitsBudgetModel>
-  vendors: Array<string>
-  inputPriceAtLeast?: MoneyUSDPerMillionTokens
-  picked: boolean
-  shared: boolean
-  resetsAt: number
-}
 
 export type GenerateImageResult = {
   images: Array<GenerateImageOutput2>
@@ -2525,12 +2504,6 @@ export type ConfigEntry =
       }
     }
   | { type: "directory"; path: AbsolutePath }
-
-export type UsageLimitsInfo = {
-  workspace: { id: string; name?: string; usageURL: string }
-  go?: UsageLimitsGo
-  budgets: Array<UsageLimitsBudget>
-}
 
 export type GenerateImageResponse = { data: GenerateImageResult }
 
@@ -4113,7 +4086,7 @@ export type ExperimentalMcpDisconnectOutput = void
 export type ExperimentalMcpClientTokenInput = {
   readonly location?: { readonly directory?: string | undefined } | undefined
   readonly name: string
-  readonly "x-opencode-ticket"?: string | undefined
+  readonly "x-omai-ticket"?: string | undefined
 }
 
 export type ExperimentalMcpClientTokenOutput = { location: LocationPublicRef; data: PtyTicketConnectToken }
@@ -4429,7 +4402,7 @@ export type PtyRemoveOutput = void
 export type PtyConnectTokenInput = {
   readonly ptyID: string
   readonly location?: { readonly directory?: string | undefined } | undefined
-  readonly "x-opencode-ticket"?: string | undefined
+  readonly "x-omai-ticket"?: string | undefined
 }
 
 export type PtyConnectTokenOutput = { location: LocationPublicRef; data: PtyTicketConnectToken }
@@ -4481,7 +4454,7 @@ export type ExperimentalPersistentPtyRemoveOutput = void
 
 export type ExperimentalPersistentPtyConnectTokenInput = {
   readonly ptyID: string
-  readonly "x-opencode-ticket"?: string | undefined
+  readonly "x-omai-ticket"?: string | undefined
 }
 
 export type ExperimentalPersistentPtyConnectTokenOutput = { data: PtyTicketConnectToken }["data"]
@@ -4782,12 +4755,6 @@ export type WebsearchQueryOutput = {
   data: { providerID: WebSearchID; results: Array<WebSearchResult> }
 }
 
-export type ExperimentalUsageLimitsInput = {
-  readonly location?: { readonly directory?: string | undefined } | undefined
-}
-
-export type ExperimentalUsageLimitsOutput = { location: LocationPublicRef; data: UsageLimitsInfo | null }
-
 export type ConfigGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 
 export type ConfigGetOutput = Array<ConfigEntry>
@@ -4935,12 +4902,6 @@ export type FileUnwatchOutput = ExperimentalFileUnwatchOutput
 
 /** @deprecated Use `ExperimentalMigrationV1StatusOutput`. Removed in the next minor. */
 export type MigrationV1StatusOutput = ExperimentalMigrationV1StatusOutput
-
-/** @deprecated Use `ExperimentalUsageLimitsInput`. Removed in the next minor. */
-export type UsageLimitsInput = ExperimentalUsageLimitsInput
-
-/** @deprecated Use `ExperimentalUsageLimitsOutput`. Removed in the next minor. */
-export type UsageLimitsOutput = ExperimentalUsageLimitsOutput
 
 /** @deprecated Use `ExperimentalConfigUpdateInput`. Removed in the next minor. */
 export type ConfigUpdateInput = ExperimentalConfigUpdateInput

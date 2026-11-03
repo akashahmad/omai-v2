@@ -142,7 +142,6 @@ const builtins = new Map<string, () => Promise<unknown>>([
     "@opencode/ai/providers/openai-compatible-responses",
     () => import("@opencode/ai/providers/openai-compatible-responses"),
   ],
-  ["@opencode/ai/providers/opencode/decisions", () => import("@opencode/ai/providers/opencode/decisions")],
   ["@opencode/ai/providers/openrouter", () => import("@opencode/ai/providers/openrouter")],
   ["@opencode/ai/providers/openrouter/decisions", () => import("@opencode/ai/providers/openrouter/decisions")],
   ["@opencode/ai/providers/openrouter/images", () => import("@opencode/ai/providers/openrouter/images")],
@@ -215,7 +214,7 @@ export const loadPackage = Effect.fn("Provider.loadPackage")(function* (input: s
 const settingsKeys = Struct.keys(Provider.Settings.schema.fields)
 const providerOnlyKeys = settingsKeys.filter((key) => !(key in Model.Settings.schema.fields))
 
-/** The provider options: every settings key OpenCode doesn't read itself. */
+/** The provider options: every settings key O M A I + doesn't read itself. */
 export function nativeSettings(settings: Settings) {
   return Struct.omit(settings, settingsKeys)
 }

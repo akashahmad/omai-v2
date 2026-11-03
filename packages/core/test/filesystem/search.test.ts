@@ -59,7 +59,7 @@ const fakeFff = () => {
     Layer.provide(
       Layer.succeed(
         Location.Service,
-        Location.Service.of(location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "opencode-fff-fake")) })),
+        Location.Service.of(location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "omai-fff-fake")) })),
       ),
     ),
   )
@@ -146,7 +146,7 @@ describe("FileSystemSearch", () => {
 
   it.live("honors wildcard directory rules from .gitignore", () =>
     Effect.gen(function* () {
-      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-fff-ignore-")))).path
+      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-fff-ignore-")))).path
       yield* Effect.promise(() => mkdir(path.join(directory, "rust/target/debug/deps"), { recursive: true }))
       yield* Effect.promise(() => Bun.write(path.join(directory, ".gitignore"), "**/target/\n"))
       yield* Effect.promise(() => Bun.write(path.join(directory, "rust/target/debug/deps/ignored.rs"), "ignored"))
@@ -175,7 +175,7 @@ describe("FileSystemSearch", () => {
 
   it.live("real fff finds files on first search", () =>
     Effect.gen(function* () {
-      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-fff-lazy-")))).path
+      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-fff-lazy-")))).path
       yield* Effect.promise(() => Bun.write(path.join(directory, "src/existing-alpha.ts"), "alpha"))
       expect(Bun.spawnSync(["git", "init", "-q"], { cwd: directory }).exitCode).toBe(0)
 
@@ -202,7 +202,7 @@ describe("FileSystemSearch", () => {
 
   it.live("selects the ripgrep layer for workspace-backed locations even when vcs would pick fff", () =>
     Effect.gen(function* () {
-      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-search-workspace-"))))
+      const directory = (yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-search-workspace-"))))
         .path
       // A local file that only an fff index of the server directory could surface.
       // The fff-vs-ripgrep discrimination only bites where Fff.available() is
@@ -276,7 +276,7 @@ describe("FileSystemSearch", () => {
           Layer.succeed(
             Location.Service,
             Location.Service.of(
-              location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "opencode-search-atomic")) }),
+              location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "omai-search-atomic")) }),
             ),
           ),
         ),
@@ -345,7 +345,7 @@ describe("FileSystemSearch", () => {
           Layer.succeed(
             Location.Service,
             Location.Service.of(
-              location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "opencode-search-cache")) }),
+              location({ directory: AbsolutePath.make(path.join(os.tmpdir(), "omai-search-cache")) }),
             ),
           ),
         ),

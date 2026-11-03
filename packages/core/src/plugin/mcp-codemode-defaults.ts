@@ -3,10 +3,10 @@ export * as McpCodeModeDefaultsPlugin from "./mcp-codemode-defaults.js"
 import { define } from "@opencode/plugin/effect/plugin"
 import { Effect } from "effect"
 
-// Defaults that make known MCP servers work well with OpenCode Code Mode, so a server's own Code Mode never ends up
-// nested inside OpenCode's. A server with `codemode` set in config is left exactly as configured.
+// Defaults that make known MCP servers work well with O M A I + Code Mode, so a server's own Code Mode never ends up
+// nested inside O M A I +'s. A server with `codemode` set in config is left exactly as configured.
 
-// These servers are Code Mode themselves, so OpenCode Code Mode is turned off for them (`codemode: false`).
+// These servers are Code Mode themselves, so O M A I + Code Mode is turned off for them (`codemode: false`).
 const urls = [/^https:\/\/executor\.sh\/[^/]+\/mcp$/]
 
 // PostHog wraps all of its tools in one server-side Code Mode tool unless the client asks for "tools" mode, so OpenCode
@@ -16,7 +16,7 @@ const posthog = /^mcp(?:-eu|\.us|\.eu)?\.posthog\.com$/
 const mode = "x-posthog-mcp-mode"
 
 export const Plugin = define({
-  id: "opencode.mcp.codemode.defaults",
+  id: "omai.mcp.codemode.defaults",
   effect: Effect.fn(function* (ctx) {
     yield* ctx.mcp.transform((editor) => {
       for (const [, server] of editor.list()) {

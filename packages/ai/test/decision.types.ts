@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import { ai, DecisionClient, DecisionModel, type DecisionModelRoute, type DecisionRequestInput } from "../src/effect.js"
 import type { Service } from "../src/decision-client.js"
-import { Baseten, OpenAI, OpenCode, OpenRouter, TypeSafeAI } from "../src/providers.js"
+import { Baseten, OpenAI, OpenRouter, TypeSafeAI } from "../src/providers.js"
 
 type Requirements<T> = T extends Effect.Effect<infer _A, infer _E, infer R> ? R : never
 type Success<T> = T extends Effect.Effect<infer A, infer _E, infer _R> ? A : never
@@ -36,7 +36,7 @@ ai.decision.generate({ ...request, input: [{ type: "text", text: "Charged twice"
 
 Effect.gen(function* () {
   const response = yield* ai.decision.generate({
-    model: OpenCode.decision("jev-1.13"),
+    model: TypeSafeAI.decision("jev-1.13"),
     input: [{ type: "text", text: "hello" }],
     questions: [{ name: "greeting", type: "predicate", instructions: "Greeting?" }],
   })
@@ -49,7 +49,7 @@ Effect.gen(function* () {
   response.answers[1]
 })
 ;({
-  model: OpenCode.decision("jev-1.13"),
+  model: TypeSafeAI.decision("jev-1.13"),
   // @ts-expect-error Input is a JSON object or a list of parts, not a plain string.
   input: "hello",
   questions: [{ name: "ok", type: "predicate", instructions: "OK?" }],

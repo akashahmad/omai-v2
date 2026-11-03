@@ -7,7 +7,7 @@ import { tmpdir } from "../../core/test/fixture/tmpdir"
 import { it } from "../../core/test/lib/effect"
 import { ServerFetch } from "../src/fetch"
 
-const authorization = `Basic ${btoa("opencode:secret")}`
+const authorization = `Basic ${btoa("omai:secret")}`
 
 const server = Effect.fnUntraced(function* (root: string) {
   const log = path.join(root, "log")
@@ -42,7 +42,7 @@ it.live(
   "writes completed private snapshots of the server process, one at a time",
   () =>
     Effect.gen(function* () {
-      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-heap-dump-")))
+      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-heap-dump-")))
       const api = yield* server(root.path)
 
       expect((yield* api.dump({})).status).toBe(401)
@@ -87,7 +87,7 @@ it.live(
   "reports a failed write without blocking later snapshots",
   () =>
     Effect.gen(function* () {
-      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-heap-dump-")))
+      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-heap-dump-")))
       const api = yield* server(root.path)
       // A file where the log directory should be makes the write fail.
       yield* Effect.promise(() => fs.rm(api.log, { recursive: true }))
@@ -117,7 +117,7 @@ it.live(
   "writes into a requested directory, creating it, and rejects a relative one",
   () =>
     Effect.gen(function* () {
-      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-heap-dump-")))
+      const root = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-heap-dump-")))
       const api = yield* server(root.path)
       const directory = path.join(root.path, "capture", "nested")
 

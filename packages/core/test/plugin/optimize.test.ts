@@ -49,11 +49,11 @@ const context = (id: string, system = fallback): SessionHooks["context"] => ({
 describe("OptimizePlugin", () => {
   test("enables prompt plugins without model-specific tool optimization", () => {
     expect(OptimizePlugin.Plugins.map((plugin) => plugin.id)).toEqual([
-      "opencode.prompt.openai",
-      "opencode.prompt.anthropic",
-      "opencode.prompt.kimi",
-      "opencode.prompt.arcee",
-      "opencode.prompt.meta",
+      "omai.prompt.openai",
+      "omai.prompt.anthropic",
+      "omai.prompt.kimi",
+      "omai.prompt.arcee",
+      "omai.prompt.meta",
     ])
   })
 
@@ -128,7 +128,7 @@ describe("OptimizePlugin", () => {
         SessionSystemPrompt.render(PROMPT_GPT, Object.keys(event.tools)),
         "Project instructions",
       ])
-      expect(event.system[0]?.text).not.toContain("${OPENCODE_TOOL_GUIDANCE}")
+      expect(event.system[0]?.text).not.toContain("${OMAI_TOOL_GUIDANCE}")
       expect(Object.keys(event.tools).sort()).toEqual(["edit", "glob", "grep", "patch", "read", "shell", "write"])
     }),
   )

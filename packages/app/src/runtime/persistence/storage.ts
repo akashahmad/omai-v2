@@ -40,11 +40,11 @@ type PickPart = (value: unknown) => unknown
 
 type CopyFrom = { key: string; storage?: string; pick?: PickPart }
 
-const GLOBAL_STORAGE = "opencode.global.dat"
+const GLOBAL_STORAGE = "omai.global.dat"
 
-const WINDOW_STORAGE = "opencode.window"
+const WINDOW_STORAGE = "omai.window"
 
-const LOCAL_PREFIX = "opencode."
+const LOCAL_PREFIX = "omai."
 
 const fallback = new Map<string, boolean>()
 
@@ -338,14 +338,14 @@ function workspaceStorage(dir: string) {
   const head = (dir.slice(0, 12) || "workspace").replace(/[^a-zA-Z0-9._-]/g, "-")
   const sum = checksum(dir) ?? "0"
 
-  return `opencode.workspace.${head}.${sum}.dat`
+  return `omai.workspace.${head}.${sum}.dat`
 }
 
 function draftStorage(draftID: string) {
   const head = (draftID.slice(0, 12) || "draft").replace(/[^a-zA-Z0-9._-]/g, "-")
   const sum = checksum(draftID) ?? "0"
 
-  return `opencode.draft.${head}.${sum}.dat`
+  return `omai.draft.${head}.${sum}.dat`
 }
 
 function windowStorage(windowID: string) {
@@ -741,7 +741,7 @@ export function persisted<S extends Schema.ConstraintCodec<object, unknown>>(
 
   const channel =
     config.sync && typeof BroadcastChannel !== "undefined"
-      ? new BroadcastChannel(`opencode.persist:${config.storage ?? "default"}:${config.key}`)
+      ? new BroadcastChannel(`omai.persist:${config.storage ?? "default"}:${config.key}`)
       : undefined
 
   if (channel) onCleanup(() => channel.close())

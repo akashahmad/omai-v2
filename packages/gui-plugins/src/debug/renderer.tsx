@@ -8,7 +8,7 @@ const setup: Plugin.Setup<typeof Debug> = (ctx) => {
   const DebugBar = lazy(() => import("./bar"))
   // Motion tuning lives only in the debug bar, on the dev server and in Beta. Both are fixed at build time, so other
   // builds, prod included, drop the import and never contain knobs.
-  const motionTools = import.meta.env.DEV || import.meta.env.VITE_OPENCODE_CHANNEL === "beta"
+  const motionTools = import.meta.env.DEV || import.meta.env.VITE_OMAI_CHANNEL === "beta"
   const Motion = motionTools ? lazy(() => import("./motion")) : undefined
   const bar = ctx.stores.bar
   const visible = () => bar.value.visible

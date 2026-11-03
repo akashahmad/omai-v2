@@ -24,14 +24,14 @@ describe("pairing link", () => {
     expect(pairingLink("http://192.168.1.2:49374/auth/connect/")).toBeUndefined()
     expect(pairingLink("http://192.168.1.2:49374/auth/connect/abc/extra")).toBeUndefined()
     expect(pairingLink("http://192.168.1.2:49374/connect#abc")).toBeUndefined()
-    expect(pairingLink("opencode-ios://auth/connect/abc")).toBeUndefined()
+    expect(pairingLink("omai-ios://auth/connect/abc")).toBeUndefined()
     expect(pairingLink("192.168.1.2:49374")).toBeUndefined()
   })
 
   test("rejects malformed QR payloads", () => {
     expect(pairingLink(JSON.stringify({ code: "abc", urls: [] }))).toBeUndefined()
     expect(pairingLink(JSON.stringify({ code: "a/b", urls: ["http://192.168.1.2:49374"] }))).toBeUndefined()
-    expect(pairingLink(JSON.stringify({ code: "abc", urls: ["opencode-ios://host"] }))).toBeUndefined()
+    expect(pairingLink(JSON.stringify({ code: "abc", urls: ["omai-ios://host"] }))).toBeUndefined()
     expect(pairingLink(JSON.stringify({ urls: ["http://192.168.1.2:49374"] }))).toBeUndefined()
     expect(pairingLink("{not json")).toBeUndefined()
   })

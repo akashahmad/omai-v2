@@ -99,7 +99,7 @@ const backgroundResult = (shellID: string, file: string) => ({
 })
 
 export const Plugin = {
-  id: "opencode.tool.shell",
+  id: "omai.tool.shell",
   effect: Effect.fn("ShellTool.Plugin")(function* (ctx: Context) {
     const sessions = yield* Session.Service
     const jobs = yield* Job.Service
@@ -199,8 +199,8 @@ export const Plugin = {
                   Effect.gen(function* () {
                     invocation.env.AGENT = "1"
                     invocation.env.OPENCODE = "1"
-                    invocation.env.AI_AGENT ||= "opencode"
-                    invocation.env.OPENCODE_SESSION_ID = context.sessionID
+                    invocation.env.AI_AGENT ||= "omai"
+                    invocation.env.OMAI_SESSION_ID = context.sessionID
                     finalTimeout = yield* prepare(invocation, context)
                   }),
               )

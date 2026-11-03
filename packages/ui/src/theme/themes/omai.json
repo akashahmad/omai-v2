@@ -1,7 +1,6 @@
 {
-  "$schema": "https://opencode.ai/desktop-theme.json",
-  "name": "OpenCode",
-  "id": "oc-2",
+  "name": "O M A I +",
+  "id": "omai",
   "light": {
     "palette": {
       "neutral": "#f7f7f7",

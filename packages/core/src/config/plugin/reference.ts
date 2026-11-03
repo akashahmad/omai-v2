@@ -13,7 +13,7 @@ import { Location } from "../../location.js"
 import { ConfigEntryObserver } from "./entry-observer.js"
 
 export const Plugin = define({
-  id: "opencode.config.reference",
+  id: "omai.config.reference",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const location = yield* Location.Service

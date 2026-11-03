@@ -3,7 +3,6 @@ import { Command } from "effect/cli"
 import { PrintLogs } from "../commands/commands"
 import { Spec } from "./spec"
 import { Global } from "@opencode/util/global"
-import { Updater } from "../services/updater"
 import { Npm } from "@opencode/util/npm"
 
 export type Input<Value> =
@@ -18,7 +17,7 @@ type RuntimeHandler = (
 ) => Effect.Effect<
   void,
   unknown,
-  FileSystem.FileSystem | Global.Service | Npm.Service | Updater.Service | Scope.Scope
+  FileSystem.FileSystem | Global.Service | Npm.Service | Scope.Scope
 >
 type Loader<Node extends Spec.Any> = () => Promise<{
   default: (
@@ -26,7 +25,7 @@ type Loader<Node extends Spec.Any> = () => Promise<{
   ) => Effect.Effect<
     void,
     any,
-    FileSystem.FileSystem | Global.Service | Npm.Service | Updater.Service | Scope.Scope
+    FileSystem.FileSystem | Global.Service | Npm.Service | Scope.Scope
   >
 }>
 type ProvidedCommand = Command.Command<
@@ -34,7 +33,7 @@ type ProvidedCommand = Command.Command<
   unknown,
   unknown,
   unknown,
-  FileSystem.FileSystem | Global.Service | Npm.Service | Updater.Service | Scope.Scope
+  FileSystem.FileSystem | Global.Service | Npm.Service | Scope.Scope
 >
 
 export type Handlers<Node extends Spec.Any> = keyof Node["commands"] extends never
@@ -94,7 +93,7 @@ function provide(node: Spec.Any, handlers: ReadonlyArray<LazyHandler>): Provided
     ? node.spec.pipe(
         Command.withHandler((input) =>
           Effect.gen(function* () {
-            if (yield* PrintLogs) process.env.OPENCODE_PRINT_LOGS = "1"
+            if (yield* PrintLogs) process.env.OMAI_PRINT_LOGS = "1"
             const module = yield* Effect.promise(handler.load)
             return yield* module.default(input)
           }),

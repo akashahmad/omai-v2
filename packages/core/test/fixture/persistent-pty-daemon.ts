@@ -8,7 +8,7 @@ export const pong = { type: "pong", instance_id: "test", pid: process.pid, proto
 
 export function temporaryDirectory() {
   return Effect.acquireRelease(
-    Effect.promise(() => mkdtemp(path.join(os.tmpdir(), "opencode-pty-test-"))),
+    Effect.promise(() => mkdtemp(path.join(os.tmpdir(), "omai-pty-test-"))),
     (directory) => Effect.promise(() => rm(directory, { recursive: true, force: true })),
   )
 }

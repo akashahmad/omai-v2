@@ -181,7 +181,7 @@ export const make = Effect.gen(function* () {
         const llmError = llmFailure && !recorded.providerFailed ? toSessionError(llmFailure) : undefined
         const tokens = recorded.finish?.usage
         yield* Effect.annotateCurrentSpan({
-          ...(firstOutputAt === undefined ? {} : { "opencode.llm.first_output_ms": firstOutputAt - started }),
+          ...(firstOutputAt === undefined ? {} : { "omai.llm.first_output_ms": firstOutputAt - started }),
           ...(recorded.finish === undefined ? {} : { "gen_ai.response.finish_reasons": [recorded.finish.finish] }),
           ...(tokens?.inputTokens === undefined ? {} : { "gen_ai.usage.input_tokens": tokens.inputTokens }),
           ...(tokens?.outputTokens === undefined ? {} : { "gen_ai.usage.output_tokens": tokens.outputTokens }),

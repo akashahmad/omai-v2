@@ -142,7 +142,7 @@ describe("PluginSupervisor", () => {
       expect(state.instance).toBeUndefined()
       // Builtins stay active: the duplicate is a plugin failure, not a generation defect.
       expect(
-        state.inventory.some((plugin) => plugin.id?.startsWith("opencode.") && plugin.state.status === "active"),
+        state.inventory.some((plugin) => plugin.id?.startsWith("omai.") && plugin.state.status === "active"),
       ).toBe(true)
     }),
   )
@@ -233,8 +233,8 @@ describe("PluginSupervisor", () => {
     }),
   )
 
-  for (const targets of [["opencode.config.policy", "opencode.provider.opencode", "opencode.config.agent"], ["*"]]) {
-    it.effect(`keeps policy enforcement and the Console connection through plugin removals: ${targets}`, () =>
+  for (const targets of [["omai.config.policy", "omai.config.agent"], ["*"]]) {
+    it.effect(`keeps policy enforcement through plugin removals: ${targets}`, () =>
       Effect.gen(function* () {
         source.operations = targets.map((target) => ({ type: "remove", target }))
         const directory = yield* tmpdirScoped()
@@ -248,10 +248,9 @@ describe("PluginSupervisor", () => {
           Effect.provide(locations.get(Location.Ref.make({ directory: AbsolutePath.make(directory.path) }))),
         )
         const status = (id: string) => inventory.find((plugin) => plugin.id === id)?.state.status
-        expect(status("opencode.config.policy")).toBe("active")
-        expect(status("opencode.provider.opencode")).toBe("active")
+        expect(status("omai.config.policy")).toBe("active")
         // Removals still apply to everything else, including instance and builtin plugins.
-        expect(status("opencode.config.agent")).toBeUndefined()
+        expect(status("omai.config.agent")).toBeUndefined()
         expect(inventory.some((plugin) => plugin.id === id)).toBe(targets[0] !== "*")
       }).pipe(
         Effect.ensuring(

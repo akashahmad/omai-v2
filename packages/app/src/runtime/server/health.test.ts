@@ -30,7 +30,7 @@ describe("checkServerHealth", () => {
 
     expect(await checkServerHealth({ ...server, password }, fetch)).toEqual({ healthy: true, version: "2.0.0" })
     expect(requests).toEqual([
-      { path: "/api/info", authorization: password ? `Basic ${btoa(`opencode:${password}`)}` : null },
+      { path: "/api/info", authorization: password ? `Basic ${btoa(`omai:${password}`)}` : null },
     ])
   })
 

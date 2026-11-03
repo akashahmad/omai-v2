@@ -120,7 +120,7 @@ export async function start(options: Options) {
       emit(message)
       if (message.type === "assistant" && message.parent_tool_use_id === null) {
         for (const part of message.message.content) {
-          // Calls to tools we did not offer get Claude Code's own error, and the turn continues without OpenCode.
+          // Calls to tools we did not offer get Claude Code's own error, and the turn continues without O M A I +.
           if (part.type === "tool_use" && ToolNames.original(part.name, tools)) calledTools = true
         }
       }

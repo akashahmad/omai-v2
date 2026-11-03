@@ -27,7 +27,7 @@ const flag = (name: string) => {
 const iterations = Number(flag("iterations") ?? 10)
 const selected = (flag("fixtures") ?? "small,medium,large,opencode").split(",")
 const jsonOut = flag("json")
-const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "opencode-snapshot-bench")
+const root = path.join(process.env.SNAPSHOT_BENCH_ROOT ?? os.tmpdir(), "omai-snapshot-bench")
 
 type Fixture = { name: string; tracked: number; ignored: number; dirs: number }
 const fixtures: Record<string, Fixture> = {

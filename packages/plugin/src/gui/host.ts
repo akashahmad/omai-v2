@@ -315,7 +315,7 @@ const matchesPlugin = Schema.is(BundleDefinition)
  * @returns True when no built-in claims the id.
  */
 export function pluginIdAvailable(id: string, builtins: readonly Pick<Entry, "id">[]) {
-  return [{ id: "opencode" }, ...builtins].every(
+  return [{ id: "omai" }, ...builtins].every(
     (taken) => id !== taken.id && !id.startsWith(`${taken.id}.`) && !taken.id.startsWith(`${id}.`),
   )
 }
@@ -395,7 +395,7 @@ export interface BridgePluginGui {
   readonly revision: string
   /** The bundle's CommonJS code. */
   readonly code: string
-  /** The plugin's options from `opencode.json`, its GUI's `ctx.options`. */
+  /** The plugin's options from `omai.json`, its GUI's `ctx.options`. */
   readonly options: PluginOptions
 }
 

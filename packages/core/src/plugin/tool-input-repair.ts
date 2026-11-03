@@ -24,7 +24,7 @@ const maxDepth = 6
 const aliases = new Map([["bash", "shell"]])
 
 export const Plugin = define({
-  id: "opencode.tool.input.repair",
+  id: "omai.tool.input.repair",
   effect: (ctx) =>
     Effect.gen(function* () {
       const aliased = new Map<string, string>()

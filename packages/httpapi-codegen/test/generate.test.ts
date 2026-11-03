@@ -28,7 +28,7 @@ function compile<Id extends string, Groups extends HttpApiGroup.Constraint>(sour
 }
 
 async function emittedModule(output: Output) {
-  const directory = await mkdtemp(join(tmpdir(), "opencode-httpapi-codegen-"))
+  const directory = await mkdtemp(join(tmpdir(), "omai-httpapi-codegen-"))
   const dispose = () => rm(directory, { recursive: true, force: true })
 
   try {

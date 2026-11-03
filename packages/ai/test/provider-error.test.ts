@@ -325,7 +325,7 @@ describe("provider error classification", () => {
               {
                 "@type": "type.googleapis.com/google.rpc.ErrorInfo",
                 reason: "BudgetLimitError",
-                domain: "opencode.ai",
+                domain: "omai.ai",
                 metadata: { coverage: "models", resetsAt: "2026-11-01T00:00:00.000Z" },
               },
             ],

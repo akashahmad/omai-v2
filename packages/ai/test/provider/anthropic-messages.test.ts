@@ -1108,7 +1108,7 @@ describe("Anthropic Messages route", () => {
         coding.with({ provider: "opencode" }).model({ id: "qwen3.8-flash" }),
       )
       const minimaxPrepared = yield* compileUnsignedReasoning(
-        coding.with({ provider: "opencode-go" }).model({ id: "minimax-m3" }),
+        coding.with({ provider: "omai-go" }).model({ id: "minimax-m3" }),
       )
 
       for (const prepared of [codingPrepared, moonshotPrepared, qwenPrepared, minimaxPrepared]) {

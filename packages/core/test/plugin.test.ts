@@ -116,7 +116,7 @@ it.live("serves a local plugin's GUI bundle, and reloads it alone when only the 
     const bus = yield* Bus.Service
     yield* plugins.awaitActivation
     const directory = yield* Effect.acquireRelease(
-      Effect.promise(() => mkdtemp(path.join(tmpdir(), "opencode-plugin-gui-"))),
+      Effect.promise(() => mkdtemp(path.join(tmpdir(), "omai-plugin-gui-"))),
       (directory) => Effect.promise(() => rm(directory, { recursive: true, force: true })),
     )
     const starts = path.join(directory, "starts")

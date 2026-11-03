@@ -3,11 +3,11 @@ import { iconNames, isIconName, getIcon, type IconName } from "../catalog"
 import { getNewIcon, newIconViewBox } from "../new-icons"
 import "./icon.css"
 
-const spriteID = "opencode-v2-icon-sprite"
+const spriteID = "omai-v2-icon-sprite"
 
-const symbol = (name: IconName) => `opencode-v2-icon-${name}`
+const symbol = (name: IconName) => `omai-v2-icon-${name}`
 
-const newSymbol = (name: IconName) => `opencode-v2-icon-new-${name}`
+const newSymbol = (name: IconName) => `omai-v2-icon-new-${name}`
 
 let spriteInserted = false
 

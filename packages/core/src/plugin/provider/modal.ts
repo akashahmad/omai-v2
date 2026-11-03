@@ -12,7 +12,7 @@ import { ProviderRefresh } from "./refresh.js"
 const providerID = Provider.ID.make("modal")
 
 export const ModalPlugin = define({
-  id: "opencode.provider.modal",
+  id: "omai.provider.modal",
   effect: Effect.fn(function* (ctx) {
     const providers = yield* Provider.Service
     const cache = yield* SharedCache.Service

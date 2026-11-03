@@ -107,9 +107,6 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Tilføj kreditter",
 
   "dialog.usageExceeded.freeTier.title": "Gratis grænse nået",
-  "dialog.usageExceeded.freeTier.description":
-    "Abonnér på OpenCode Go for $10/måned, og få pålidelig adgang til de bedste open source-modeller.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Abonnér",
 
   "ui.sessionTurn.status.delegating": "Delegerer arbejde",
   "ui.sessionTurn.status.planning": "Planlægger næste trin",

@@ -38,8 +38,8 @@ describe("shell", () => {
     await withShell(undefined, async () => {
       const configured = ShellSelect.resolve({ priority: "config" })
       const compatible = ShellSelect.resolve({ priority: "compat" })
-      expect(ShellSelect.resolve({ priority: "config" }, "opencode-missing-shell")).toBe(configured)
-      expect(ShellSelect.resolve({ priority: "compat" }, "opencode-missing-shell")).toBe(compatible)
+      expect(ShellSelect.resolve({ priority: "config" }, "omai-missing-shell")).toBe(configured)
+      expect(ShellSelect.resolve({ priority: "compat" }, "omai-missing-shell")).toBe(compatible)
     })
   })
 

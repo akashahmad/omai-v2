@@ -41,7 +41,7 @@ export const summarize = (todos: ReadonlyArray<Info>) => {
 }
 
 export const Plugin = {
-  id: "opencode.tool.todo",
+  id: "omai.tool.todo",
   effect: Effect.fn("TodoTool.Plugin")(function* (ctx: Context) {
     const config = yield* Config.Service
     const permission = yield* Permission.Service

@@ -585,7 +585,7 @@ test("backspacing keeps confirmed branch results until the broader search answer
 
 test("the dark new session panel exposes no lighter background at its rounded corners", async ({ page }) => {
   await page.setViewportSize({ width: 935, height: 522 })
-  await openDraft(page, { name: "PanelCorner", seed: { theme: { id: "oc-2", scheme: "dark" } } })
+  await openDraft(page, { name: "PanelCorner", seed: { theme: { id: "omai", scheme: "dark" } } })
   await expect(page.locator("html")).toHaveAttribute("data-color-scheme", "dark")
   const box = await page.locator('[data-component="new-session"]').boundingBox()
 
@@ -1065,9 +1065,9 @@ test("the location dialog separates added projects from server projects and tags
   await expect(add).toHaveCount(0)
   await expect(back).toHaveText("Run session in")
   await expect(options.nth(0).locator('[data-component="tag"]')).toHaveText("apollo")
-  await expect(options.locator(".command-palette-title")).toHaveText(["opencode", "New worktree", "opencode-beta"])
+  await expect(options.locator(".command-palette-title")).toHaveText(["opencode", "New worktree", "omai-beta"])
   await expect(dialog.getByRole("separator")).toHaveCount(1)
-  await search.fill("opencode-beta")
+  await search.fill("omai-beta")
   await expect(options).toHaveCount(1)
   await expect(dialog.getByRole("separator")).toHaveCount(0)
   await search.fill("no-worktree-matches")
@@ -1165,7 +1165,7 @@ for (const row of [
         ],
       }),
       worktrees: () => inventory,
-      seed: { theme: { id: "oc-2", scheme: "light" } },
+      seed: { theme: { id: "omai", scheme: "light" } },
     })
 
     expect((await listed).ok()).toBe(true)

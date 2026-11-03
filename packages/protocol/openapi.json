@@ -7764,7 +7764,7 @@
         "operationId": "experimental.mcp.client.token",
         "parameters": [
           {
-            "name": "x-opencode-ticket",
+            "name": "x-omai-ticket",
             "in": "header",
             "schema": {
               "type": "string"
@@ -10967,7 +10967,7 @@
             "required": true
           },
           {
-            "name": "x-opencode-ticket",
+            "name": "x-omai-ticket",
             "in": "header",
             "schema": {
               "type": "string"
@@ -11826,7 +11826,7 @@
             "required": true
           },
           {
-            "name": "x-opencode-ticket",
+            "name": "x-omai-ticket",
             "in": "header",
             "schema": {
               "type": "string"

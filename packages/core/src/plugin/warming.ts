@@ -18,7 +18,7 @@ const defaults = {
 }
 
 export const Plugin = define({
-  id: "opencode.warming",
+  id: "omai.warming",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     // A model's or provider's `cache.warming` overrides the top-level `warming`.

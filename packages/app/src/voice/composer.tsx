@@ -41,7 +41,7 @@ export function VoiceComposer(props: ParentProps<{ session: SessionInfo | undefi
   onCleanup(motionTuning.subscribe(() => setState("enabled", toggle())))
 
   const enabled = () =>
-    platform.platform === "desktop" && import.meta.env.VITE_OPENCODE_CHANNEL !== "prod" && state.enabled
+    platform.platform === "desktop" && import.meta.env.VITE_OMAI_CHANNEL !== "prod" && state.enabled
 
   createEffect(() => {
     const session = props.session

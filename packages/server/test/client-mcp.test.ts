@@ -23,10 +23,10 @@ declare const WebSocket: {
   new (url: string | URL, options?: Bun.WebSocketOptions): globalThis.WebSocket
 }
 
-const authorization = `Basic ${btoa("opencode:secret")}`
+const authorization = `Basic ${btoa("omai:secret")}`
 
 const serve = Effect.fnUntraced(function* () {
-  const directory = (yield* tmpdirScoped("opencode-client-mcp-")).path
+  const directory = (yield* tmpdirScoped("omai-client-mcp-")).path
   const context = yield* Layer.build(
     createRoutes({
       password: "secret",
@@ -91,7 +91,7 @@ const connectClient = (url: URL, headers?: Record<string, string>) =>
             tools: [{ name: "open_terminal", description: "Open a terminal", inputSchema: { type: "object" } }],
           })
         if (message.method === "tools/call") {
-          sessions.push(message.params._meta?.["ai.opencode/sessionID"])
+          sessions.push(message.params._meta?.["ai.omai/sessionID"])
           return reply(message.id, { content: [{ type: "text", text: "opened" }] })
         }
         if (message.id !== undefined && message.method) reply(message.id, {})
@@ -245,7 +245,7 @@ it.live(
       }
       const token = (name: string) =>
         Effect.promise(async () => {
-          const response = await requestToken(name, { authorization, "x-opencode-ticket": "1" })
+          const response = await requestToken(name, { authorization, "x-omai-ticket": "1" })
           expect(response.status).toBe(200)
           return ((await response.json()) as { data: { ticket: string } }).data.ticket
         })
@@ -338,7 +338,7 @@ it.live(
   "shuts the server down while a client is attached",
   () =>
     Effect.gen(function* () {
-      const directory = (yield* tmpdirScoped("opencode-client-mcp-")).path
+      const directory = (yield* tmpdirScoped("omai-client-mcp-")).path
       // Released before the directory so the server lets go of it first; closing twice is a no-op.
       const scope = yield* Effect.acquireRelease(Scope.make(), (scope) => Scope.close(scope, Exit.void))
       const server = yield* ServerProcess.start<never, never>(

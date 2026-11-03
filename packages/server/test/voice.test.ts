@@ -46,7 +46,7 @@ const voice = makeLocationNode({
 
 it.live("routes experimental voice models and session endpoints", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-voice-endpoint-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-voice-endpoint-")))
     const global = path.join(tmp.path, "global")
     yield* Effect.promise(() => fs.mkdir(global))
     const handler = yield* ServerFetch.make(

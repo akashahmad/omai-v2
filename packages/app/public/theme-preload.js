@@ -1,8 +1,8 @@
 ;(function () {
-  var key = "opencode-theme-id"
-  var themeId = localStorage.getItem(key) || "oc-2"
+  var key = "omai-theme-id"
+  var themeId = localStorage.getItem(key) || "omai"
 
-  var scheme = localStorage.getItem("opencode-color-scheme") || "system"
+  var scheme = localStorage.getItem("omai-color-scheme") || "system"
   var isDark = scheme === "dark" || (scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
   var mode = isDark ? "dark" : "light"
 
@@ -14,12 +14,12 @@
   var metas = document.querySelectorAll("meta[name='theme-color']")
   if (metas.length > 0) metas[0].setAttribute("content", isDark ? "#080808" : "#fafafa")
 
-  if (themeId === "oc-2") return
+  if (themeId === "omai") return
 
-  var css = localStorage.getItem("opencode-theme-css-" + mode)
+  var css = localStorage.getItem("omai-theme-css-" + mode)
   if (css) {
     var style = document.createElement("style")
-    style.id = "oc-theme-preload"
+    style.id = "theme-preload"
     style.textContent =
       ":root{color-scheme:" +
       mode +

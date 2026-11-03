@@ -38,7 +38,7 @@ export const Remote = Schema.Struct({
 export type Remote = typeof Remote.Type
 
 /**
- * A config document delivered by an integration connection, such as the OpenCode Console's config. Config loads it
+ * A config document delivered by an integration connection, such as the O M A I + Console's config. Config loads it
  * right after managed policies, so user and project config override its settings while its policies outrank theirs.
  * Its providers authenticate with, and only exist for, that connection.
  */

@@ -15,7 +15,7 @@ live(
   () =>
     Effect.gen(function* () {
       const directory = yield* Effect.acquireRelease(
-        Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "opencode-pty-transport-"))),
+        Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "omai-pty-transport-"))),
         (directory) => Effect.promise(() => fs.rm(directory, { recursive: true, force: true })),
       )
       const server = yield* ServerProcess.start<never, never>({
@@ -29,7 +29,7 @@ live(
         fs: { filewatcher: false },
       })
       const base = HttpServer.formatAddress(server.address)
-      const client = OpenCode.make({ baseUrl: base, headers: { authorization: `Basic ${btoa("opencode:secret")}` } })
+      const client = OpenCode.make({ baseUrl: base, headers: { authorization: `Basic ${btoa("omai:secret")}` } })
       const location = { directory }
       const terminal = yield* Effect.acquireRelease(
         Effect.promise(() =>
@@ -47,7 +47,7 @@ live(
       )
       yield* Effect.promise(async () => {
         const open = async () => {
-          const token = await client.pty.connect.token({ location, ptyID: terminal.data.id, "x-opencode-ticket": "1" })
+          const token = await client.pty.connect.token({ location, ptyID: terminal.data.id, "x-omai-ticket": "1" })
           const url = new URL(`/api/pty/${terminal.data.id}/connect`, base)
           url.protocol = "ws:"
           url.searchParams.set("location[directory]", directory)
@@ -133,7 +133,7 @@ live(
   () =>
     Effect.gen(function* () {
       const directory = yield* Effect.acquireRelease(
-        Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "opencode-pty-reload-"))),
+        Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "omai-pty-reload-"))),
         (directory) => Effect.promise(() => fs.rm(directory, { recursive: true, force: true })),
       )
       const server = yield* ServerProcess.start<never, never>({
@@ -147,7 +147,7 @@ live(
         fs: { filewatcher: false },
       })
       const base = HttpServer.formatAddress(server.address)
-      const client = OpenCode.make({ baseUrl: base, headers: { authorization: `Basic ${btoa("opencode:secret")}` } })
+      const client = OpenCode.make({ baseUrl: base, headers: { authorization: `Basic ${btoa("omai:secret")}` } })
       const location = { directory }
       yield* Effect.promise(async () => {
         const terminal = await client.pty.create({
@@ -156,7 +156,7 @@ live(
           args: ["-c", "sleep 30"],
           cwd: directory,
         })
-        const token = await client.pty.connect.token({ location, ptyID: terminal.data.id, "x-opencode-ticket": "1" })
+        const token = await client.pty.connect.token({ location, ptyID: terminal.data.id, "x-omai-ticket": "1" })
         const url = new URL(`/api/pty/${terminal.data.id}/connect`, base)
         url.protocol = "ws:"
         url.searchParams.set("location[directory]", directory)

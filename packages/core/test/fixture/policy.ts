@@ -17,7 +17,7 @@ export function organizationPolicy(policies: ConfigPolicy.Info[], organization?:
   return new ConfigIntegration.Document({
     type: "document",
     integrationID: Integration.ID.make("opencode"),
-    connection: { type: "env", name: "OPENCODE_API_KEY" },
+    connection: { type: "env", name: "OMAI_API_KEY" },
     organization,
     info: Schema.decodeUnknownSync(Info)({ policies }),
   })

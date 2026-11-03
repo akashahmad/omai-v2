@@ -54,7 +54,7 @@ type Meta = {
 }
 
 // Bumped when knobs are merged or renamed, so values saved for the old ones are dropped.
-const key = "opencode.motion.v2"
+const key = "omai.motion.v2"
 
 const knobs = new Map<string, MotionKnob>()
 
@@ -283,7 +283,7 @@ function number(id: string, fallback: number) {
 
 function load(): Record<string, number> {
   try {
-    localStorage.removeItem("opencode.motion.v1")
+    localStorage.removeItem("omai.motion.v1")
 
     return JSON.parse(localStorage.getItem(key) ?? "{}")
   } catch {

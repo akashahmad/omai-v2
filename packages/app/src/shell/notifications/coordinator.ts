@@ -3,9 +3,9 @@ import { Predicate } from "effect"
 
 type FocusLock = { pending: boolean; release?: VoidFunction }
 
-const FOCUS_LOCK = "opencode:notification-focus"
+const FOCUS_LOCK = "omai:notification-focus"
 
-const DELIVERY_LOCK = "opencode:notification-delivery"
+const DELIVERY_LOCK = "omai:notification-delivery"
 
 const MAX_CLAIMED = 500
 
@@ -63,7 +63,7 @@ export function createNotificationCoordinator() {
     }
 
     if (!locks) return execute()
-    await locks.request(`opencode:notification:${key}`, execute)
+    await locks.request(`omai:notification:${key}`, execute)
   }
 
   return {
@@ -92,7 +92,7 @@ function claim(kind: "sound" | "system", eventID: string, claimed: Set<string>) 
 
   if (typeof localStorage !== "undefined") {
     try {
-      const storageKey = `opencode:notification-${kind}`
+      const storageKey = `omai:notification-${kind}`
       const value: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]")
       const events = Array.isArray(value) ? value.filter(Predicate.isString) : []
 

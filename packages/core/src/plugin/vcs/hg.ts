@@ -23,7 +23,7 @@ import {
 } from "../../vcs/patch.js"
 
 export const Plugin = define({
-  id: "opencode.vcs.hg",
+  id: "omai.vcs.hg",
   effect: Effect.fn("VcsHgPlugin")(function* (ctx) {
     const location = yield* Location.Service
     // Markerless locations need this definition to initialize their first repository.

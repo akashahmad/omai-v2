@@ -78,9 +78,6 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Kredi ekle",
 
   "dialog.usageExceeded.freeTier.title": "Ücretsiz sınıra ulaşıldı",
-  "dialog.usageExceeded.freeTier.description":
-    "En iyi açık kaynaklı modellere güvenilir erişim için aylık $10 karşılığında OpenCode Go'ya abone olun.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Abone ol",
 
   "ui.sessionTurn.status.delegating": "Görev devrediliyor",
   "ui.sessionTurn.status.planning": "Sonraki adımlar planlanıyor",

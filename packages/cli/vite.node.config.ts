@@ -8,7 +8,7 @@ const dir = import.meta.dirname
 
 function rawTextPlugin(modelsSnapshot?: string): Plugin {
   return {
-    name: "opencode:raw-text",
+    name: "omai:raw-text",
     // "pre" is load-bearing for .txt: Vite's built-in asset plugin claims
     // known asset types (.txt among them) ahead of normal-priority plugins,
     // replacing the import with an asset URL string instead of the content.
@@ -28,26 +28,26 @@ export const appArchiveAsset = "app-archive.bin"
 
 function appAssetsPlugin(): Plugin {
   return {
-    name: "opencode:app-assets",
+    name: "omai:app-assets",
     resolveId(id) {
-      if (id === "virtual:opencode-app-assets") return "\0virtual:opencode-app-assets"
+      if (id === "virtual:omai-app-assets") return "\0virtual:omai-app-assets"
     },
     load(id) {
-      if (id !== "\0virtual:opencode-app-assets") return
+      if (id !== "\0virtual:omai-app-assets") return
       return `import { readFileSync } from "node:fs"
 import path from "node:path"
 import { getRawAsset, isSea } from "node:sea"
 export default () =>
   isSea()
     ? new Uint8Array(getRawAsset(${JSON.stringify(appArchiveAsset)}))
-    : readFileSync(path.join(process.env.OPENCODE_NODE_ASSETS_DIR, ${JSON.stringify(appArchiveAsset)}))`
+    : readFileSync(path.join(process.env.OMAI_NODE_ASSETS_DIR, ${JSON.stringify(appArchiveAsset)}))`
     },
   }
 }
 
 function runtimeRequirePlugin(): Plugin {
   return {
-    name: "opencode:runtime-require",
+    name: "omai:runtime-require",
     enforce: "pre",
     transform(code, id) {
       if (!id.endsWith("turndown/lib/turndown.es.js")) return
@@ -60,7 +60,7 @@ function runtimeRequirePlugin(): Plugin {
 
 function fffNodePlugin(): Plugin {
   return {
-    name: "opencode:fff-node",
+    name: "omai:fff-node",
     enforce: "pre",
     transform(code, id) {
       const normalized = id.replaceAll("\\", "/")
@@ -68,7 +68,7 @@ function fffNodePlugin(): Plugin {
         const start = code.indexOf("if (!nativeBinding) {")
         if (start === -1) this.error("Failed to rewrite ffi-rs native binding loader")
         return `const unavailable = () => { throw new Error("ffi-rs native binding unavailable") }
-const nativeBinding = globalThis.__OPENCODE_FFF_FFI ?? {
+const nativeBinding = globalThis.__OMAI_FFF_FFI ?? {
   DataType: new Proxy({}, { get: (target, key) => target[key] ?? key }),
   PointerType: {},
   FFITypeTag: {},
@@ -121,7 +121,7 @@ function nodePrelude(input: NodeBuildInput) {
       ? `${input.target.nodePtyPackage}/prebuilds/darwin-${input.target.arch}/spawn-helper`
       : undefined
   const opencodePtyAsset = input.target.opencodePtyAsset
-  const promiseModule = `const sdk = globalThis[Symbol.for("opencode.plugin.v2.promise")]
+  const promiseModule = `const sdk = globalThis[Symbol.for("omai.plugin.v2.promise")]
 if (!sdk) throw new Error("OpenCode Promise plugin SDK is unavailable")
 export const Agent = sdk.Agent
 export const Command = sdk.Command
@@ -134,16 +134,16 @@ export const Provider = sdk.Provider
 export const Reference = sdk.Reference
 export const Skill = sdk.Skill`
   const effectModule = promiseModule
-    .replace("opencode.plugin.v2.promise", "opencode.plugin.v2.effect")
+    .replace("omai.plugin.v2.promise", "omai.plugin.v2.effect")
     .replace("Promise plugin", "Effect plugin")
-  const promisePluginModule = `const sdk = globalThis[Symbol.for("opencode.plugin.v2.promise")]
+  const promisePluginModule = `const sdk = globalThis[Symbol.for("omai.plugin.v2.promise")]
 if (!sdk) throw new Error("OpenCode Promise plugin SDK is unavailable")
 export const define = sdk.Plugin.define`
   const effectPluginModule = promisePluginModule
-    .replace("opencode.plugin.v2.promise", "opencode.plugin.v2.effect")
+    .replace("omai.plugin.v2.promise", "omai.plugin.v2.effect")
     .replace("Promise plugin", "Effect plugin")
   const promiseToolModule = `export {}`
-  const effectToolModule = `const sdk = globalThis[Symbol.for("opencode.plugin.v2.effect")]
+  const effectToolModule = `const sdk = globalThis[Symbol.for("omai.plugin.v2.effect")]
 if (!sdk) throw new Error("OpenCode Effect plugin SDK is unavailable")
 export const Error = sdk.Tool.Error
 `
@@ -158,20 +158,20 @@ const __filename = import.meta.filename
 const __dirname = import.meta.dirname
 const require = __cjs_mod__.createRequire(import.meta.url)
 const __ocPluginModules = ${JSON.stringify({
-    "@opencode/plugin": "opencode:plugin-v2",
-    "@opencode/plugin/promise/plugin": "opencode:plugin-promise-plugin",
-    "@opencode/plugin/promise/tool": "opencode:plugin-promise-tool",
-    "@opencode/plugin/effect": "opencode:plugin-v2-effect",
-    "@opencode/plugin/effect/plugin": "opencode:plugin-v2-effect-plugin",
-    "@opencode/plugin/effect/tool": "opencode:plugin-v2-effect-tool",
+    "@opencode/plugin": "omai:plugin-v2",
+    "@opencode/plugin/promise/plugin": "omai:plugin-promise-plugin",
+    "@opencode/plugin/promise/tool": "omai:plugin-promise-tool",
+    "@opencode/plugin/effect": "omai:plugin-v2-effect",
+    "@opencode/plugin/effect/plugin": "omai:plugin-v2-effect-plugin",
+    "@opencode/plugin/effect/tool": "omai:plugin-v2-effect-tool",
   })}
 const __ocPluginSources = ${JSON.stringify({
-    "opencode:plugin-v2": promiseModule,
-    "opencode:plugin-promise-plugin": promisePluginModule,
-    "opencode:plugin-promise-tool": promiseToolModule,
-    "opencode:plugin-v2-effect": effectModule,
-    "opencode:plugin-v2-effect-plugin": effectPluginModule,
-    "opencode:plugin-v2-effect-tool": effectToolModule,
+    "omai:plugin-v2": promiseModule,
+    "omai:plugin-promise-plugin": promisePluginModule,
+    "omai:plugin-promise-tool": promiseToolModule,
+    "omai:plugin-v2-effect": effectModule,
+    "omai:plugin-v2-effect-plugin": effectPluginModule,
+    "omai:plugin-v2-effect-tool": effectToolModule,
   })}
 __cjs_mod__.registerHooks({
   resolve(__ocSpecifier, __ocContext, __ocNextResolve) {
@@ -186,7 +186,7 @@ __cjs_mod__.registerHooks({
   },
 })
 const __ocUid = typeof process.getuid === "function" ? process.getuid() : undefined
-const __ocCacheRoot = __ocPath.join(__ocTmpdir(), \`opencode-node-\${__ocUid ?? "user"}\`)
+const __ocCacheRoot = __ocPath.join(__ocTmpdir(), \`omai-node-\${__ocUid ?? "user"}\`)
 if (__ocIsSea()) {
   try {
     __ocMkdir(__ocCacheRoot, { mode: 0o700 })
@@ -221,18 +221,18 @@ if (__ocIsSea()) {
     }
   }
 }
-process.env.OPENCODE_NODE_ASSETS_DIR = __ocAssetRoot
+process.env.OMAI_NODE_ASSETS_DIR = __ocAssetRoot
 process.env.OTUI_ASSET_ROOT = __ocAssetRoot
-process.env.OPENCODE_NODE_PTY_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.nodePtyEntryAsset)})
-process.env.OPENCODE_PARCEL_WATCHER_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.parcelWatcherAsset)})
-process.env.OPENCODE_PHOTON_WASM_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(photonWasmAsset)})
+process.env.OMAI_NODE_PTY_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.nodePtyEntryAsset)})
+process.env.OMAI_PARCEL_WATCHER_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.parcelWatcherAsset)})
+process.env.OMAI_PHOTON_WASM_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(photonWasmAsset)})
 process.env.FFF_BINARY_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.fffAsset)})
-process.env.OPENCODE_FFF_FFI_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.fffFfiAsset)})
-if (__ocPersistentPty && !process.env.OPENCODE_PTY_BIN) process.env.OPENCODE_PTY_BIN = __ocPath.join(__ocAssetRoot, __ocPersistentPty)
+process.env.OMAI_FFF_FFI_PATH = __ocPath.join(__ocAssetRoot, ${JSON.stringify(input.target.fffFfiAsset)})
+if (__ocPersistentPty && !process.env.OMAI_PTY_BIN) process.env.OMAI_PTY_BIN = __ocPath.join(__ocAssetRoot, __ocPersistentPty)
 try {
-  globalThis.__OPENCODE_FFF_FFI = require(process.env.OPENCODE_FFF_FFI_PATH)
+  globalThis.__OMAI_FFF_FFI = require(process.env.OMAI_FFF_FFI_PATH)
 } catch {}
-globalThis.__OPENCODE_PHOTON_WASM_PATH = process.env.OPENCODE_PHOTON_WASM_PATH`
+globalThis.__OMAI_PHOTON_WASM_PATH = process.env.OMAI_PHOTON_WASM_PATH`
 }
 
 export type NodeBuildInput = {
@@ -256,12 +256,12 @@ export function mainConfig(input: NodeBuildInput): UserConfig {
     resolve,
     esbuild: { jsx: "automatic" },
     define: {
-      OPENCODE_VERSION: JSON.stringify(input.version),
-      OPENCODE_CLI_NAME: JSON.stringify("opencode2-node"),
-      OPENCODE_CHANNEL: JSON.stringify(input.channel),
-      OPENCODE_ARTIFACT: JSON.stringify("cli-node"),
-      ...(input.highlights ? { OPENCODE_RELEASE_HIGHLIGHTS: JSON.stringify(input.highlights) } : {}),
-      OPENCODE_LIBC: input.target.platform === "linux" ? JSON.stringify("glibc") : "undefined",
+      OMAI_VERSION: JSON.stringify(input.version),
+      OMAI_CLI_NAME: JSON.stringify("omai-node"),
+      OMAI_CHANNEL: JSON.stringify(input.channel),
+      OMAI_ARTIFACT: JSON.stringify("cli-node"),
+      ...(input.highlights ? { OMAI_RELEASE_HIGHLIGHTS: JSON.stringify(input.highlights) } : {}),
+      OMAI_LIBC: input.target.platform === "linux" ? JSON.stringify("glibc") : "undefined",
       FFF_LIBC: input.target.platform === "linux" ? JSON.stringify("gnu") : "undefined",
       "process.env.WS_NO_BUFFER_UTIL": JSON.stringify("1"),
     },
@@ -273,15 +273,15 @@ export function mainConfig(input: NodeBuildInput): UserConfig {
       emptyOutDir: false,
       minify: true,
       rollupOptions: {
-        output: output("opencode.mjs", nodePrelude(input)),
+        output: output("omai.mjs", nodePrelude(input)),
       },
     },
   })
 }
 
 export default mainConfig({
-  version: process.env.OPENCODE_VERSION ?? "local",
-  channel: process.env.OPENCODE_CHANNEL ?? "local",
+  version: process.env.OMAI_VERSION ?? "local",
+  channel: process.env.OMAI_CHANNEL ?? "local",
   assetHash: "local",
   target: nodeTarget(process.platform, process.arch),
 })

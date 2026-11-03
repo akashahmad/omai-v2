@@ -8,9 +8,9 @@ import { mockWorkspace } from "../utils/workspace"
 // The web app's version, which What's New compares with the version last seen.
 const current = pkg.version
 
-const SEEN = "opencode.global.dat:plugin.updater.seen"
+const SEEN = "omai.global.dat:plugin.updater.seen"
 
-const RELEASE_NOTES = "opencode.global.dat:plugin.updater.releaseNotes"
+const RELEASE_NOTES = "omai.global.dat:plugin.updater.releaseNotes"
 
 const cors = { "access-control-allow-origin": "*" }
 

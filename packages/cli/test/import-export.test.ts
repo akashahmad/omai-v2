@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { OPENCODE_VERSION } from "../src/version"
+import { OMAI_VERSION } from "../src/version"
 
 const info = {
   id: "ses_export_test",
@@ -43,7 +43,7 @@ const sanitizedTransfer = {
 }
 
 const status = () =>
-  Response.json({ version: OPENCODE_VERSION, pid: process.pid, urls: [], paths: { tmp: "/tmp/opencode" } })
+  Response.json({ version: OMAI_VERSION, pid: process.pid, urls: [], paths: { tmp: "/tmp/omai" } })
 
 function run(args: string[], stdin?: string) {
   const child = Bun.spawn([process.execPath, "run", "src/index.ts", ...args], {
@@ -151,7 +151,7 @@ test("export reports a missing session without a stack trace", async () => {
 })
 
 test("import sends the file unchanged to the resolved location", async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-import-"))
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omai-import-"))
   const file = path.join(root, "session.json")
   // The server upgrades transcripts exported by earlier releases, so legacy fields must reach it intact.
   const legacy = {
@@ -200,7 +200,7 @@ test("import sends the file unchanged to the resolved location", async () => {
 })
 
 test("import reports an existing session without a stack trace", async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-import-conflict-"))
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omai-import-conflict-"))
   const file = path.join(root, "session.json")
   await fs.writeFile(file, JSON.stringify(transfer))
   const server = Bun.serve({

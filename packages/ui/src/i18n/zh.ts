@@ -76,8 +76,6 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "充值",
 
   "dialog.usageExceeded.freeTier.title": "免费额度已用完",
-  "dialog.usageExceeded.freeTier.description": "每月 $10 订阅 OpenCode Go，可靠地使用最佳开源模型。",
-  "dialog.usageExceeded.freeTier.actionLabel": "订阅",
 
   "ui.sessionTurn.status.delegating": "正在委派工作",
   "ui.sessionTurn.status.planning": "正在规划下一步",

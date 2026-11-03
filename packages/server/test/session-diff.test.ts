@@ -18,7 +18,7 @@ setDefaultTimeout(30_000)
 
 it.live("serves turn diffs by user message with range validation", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-session-diff-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-session-diff-")))
     const ids = { user: SessionMessage.ID.create(), assistant: SessionMessage.ID.create() }
     // Deliver the prompt and one step the way the runner would, without a model.
     const execution = Layer.effect(

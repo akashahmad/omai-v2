@@ -37,7 +37,7 @@ test("creates a session in a new project and selects its model", async ({ page }
           },
         },
         {
-          id: "opencode-go",
+          id: "omai-go",
           name: "OpenCode Go",
           models: {
             "go-model-1": {
@@ -49,7 +49,7 @@ test("creates a session in a new project and selects its model", async ({ page }
           },
         },
       ],
-      connected: ["opencode", "opencode-go"],
+      connected: ["opencode", "omai-go"],
       default: { providerID: "opencode", modelID: "free-model" },
     }),
     sessions: [],
@@ -59,13 +59,13 @@ test("creates a session in a new project and selects its model", async ({ page }
   })
   await page.addInitScript(() => {
     localStorage.setItem(
-      "opencode.global.dat:model",
+      "omai.global.dat:model",
       JSON.stringify({
         user: [
           { providerID: "opencode", modelID: "free-model", visibility: "show" },
-          { providerID: "opencode-go", modelID: "go-model-1", visibility: "show" },
+          { providerID: "omai-go", modelID: "go-model-1", visibility: "show" },
         ],
-        recent: [{ providerID: "opencode-go", modelID: "go-model-1" }],
+        recent: [{ providerID: "omai-go", modelID: "go-model-1" }],
         variant: {},
       }),
     )

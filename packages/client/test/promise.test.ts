@@ -36,7 +36,6 @@ test("exposes every standard HTTP API group", () => {
     "generate",
     "voice",
     "migration",
-    "usage",
   ])
   expect(Object.keys(client.debug)).toEqual(["heapDump", "location"])
   expect(Object.keys(client.debug.location)).toEqual(["list", "evict"])
@@ -64,7 +63,6 @@ test("exposes every standard HTTP API group", () => {
     "schedule",
     "artifacts",
     "migration",
-    "usage",
     "config",
   ])
   expect(Object.keys(client.experimental.session)).toEqual([
@@ -77,7 +75,6 @@ test("exposes every standard HTTP API group", () => {
     "log",
   ])
   expect(Object.keys(client.experimental.voice)).toEqual(["models", "session"])
-  expect(Object.keys(client.experimental.usage)).toEqual(["limits"])
   expect(Object.keys(client.experimental.mcp)).toEqual(["add", "remove", "connect", "disconnect", "client"])
   expect(Object.keys(client.experimental.integration.wellknown)).toEqual(["add"])
   expect(Object.keys(client.experimental.file)).toEqual(["write", "watch", "unwatch"])
@@ -163,7 +160,6 @@ test("nests a method under client.experimental exactly when its route is experim
     "session.skill",
     "session.stats",
     "session.wait",
-    "usage.limits",
     "voice.models",
     "voice.session",
   ])
@@ -177,7 +173,7 @@ test("config.get returns ordered config entries for a location", async () => {
   const entries = [
     {
       type: "document" as const,
-      path: "/tmp/project/opencode.json",
+      path: "/tmp/project/omai.json",
       info: {
         permissions: [
           { action: "shell", resource: "*", effect: "ask" as const },
@@ -600,7 +596,7 @@ test("worktree operations use the explicit project even with default location he
   const requests: Request[] = []
   const client = OpenCode.make({
     baseUrl: "http://localhost:3000",
-    headers: { "x-opencode-directory": "/unrelated" },
+    headers: { "x-omai-directory": "/unrelated" },
     fetch: async (input, init) => {
       const request = new Request(input, init)
       requests.push(request)

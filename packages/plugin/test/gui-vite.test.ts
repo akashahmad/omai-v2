@@ -11,7 +11,7 @@ const dirs: string[] = []
 afterAll(() => Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true }))))
 
 const project = async (files: Record<string, string>) => {
-  const root = await mkdtemp(path.join(tmpdir(), "opencode-gui-vite-"))
+  const root = await mkdtemp(path.join(tmpdir(), "omai-gui-vite-"))
   dirs.push(root)
   await Promise.all(Object.entries(files).map(([file, text]) => Bun.write(path.join(root, file), text)))
 
@@ -48,5 +48,5 @@ test("the preset fails the build on an OpenCode, Effect or Solid module the app 
     "src/gui.tsx": 'import { Schema } from "effect/Schema"\nexport default { id: "acme", Schema }',
   })
 
-  await expect(bundle(root)).rejects.toThrow("effect/Schema is not a module the OpenCode app provides")
+  await expect(bundle(root)).rejects.toThrow("effect/Schema is not a module the O M A I + app provides")
 }, 60_000)

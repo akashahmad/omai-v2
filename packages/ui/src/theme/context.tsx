@@ -4,7 +4,7 @@ import { createEffect, onMount } from "solid-js"
 import { createStore } from "solid-js/store"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createSimpleContext } from "../context/helper"
-import oc2ThemeJson from "./themes/oc-2.json"
+import oc2ThemeJson from "./themes/omai.json"
 import { resolveThemeVariant, themeToCss } from "./resolve"
 import { resolveThemeVariantV2, themeV2ToCss } from "./v2/resolve"
 import type { DesktopTheme } from "./types"
@@ -12,13 +12,13 @@ import type { DesktopTheme } from "./types"
 export type ColorScheme = "light" | "dark" | "system"
 
 const STORAGE_KEYS = {
-  THEME_ID: "opencode-theme-id",
-  COLOR_SCHEME: "opencode-color-scheme",
-  THEME_CSS_LIGHT: "opencode-theme-css-light",
-  THEME_CSS_DARK: "opencode-theme-css-dark",
+  THEME_ID: "omai-theme-id",
+  COLOR_SCHEME: "omai-color-scheme",
+  THEME_CSS_LIGHT: "omai-theme-css-light",
+  THEME_CSS_DARK: "omai-theme-css-dark",
 } as const
 
-const THEME_STYLE_ID = "oc-theme"
+const THEME_STYLE_ID = "omai-theme"
 
 let files: Record<string, () => Promise<{ default: DesktopTheme }>> | undefined
 
@@ -50,7 +50,7 @@ function knownThemes() {
 }
 
 const names: Record<string, string> = {
-  "oc-2": "OpenCode",
+  "omai": "O M A I +",
   amoled: "AMOLED",
   aura: "Aura",
   ayu: "Ayu",
@@ -91,9 +91,9 @@ const names: Record<string, string> = {
 const oc2Theme = oc2ThemeJson as DesktopTheme
 
 function resolveStoredTheme(id: string | null | undefined, registered?: Record<string, DesktopTheme>) {
-  if (id === "oc-2" || (id && (knownThemes().has(id) || registered?.[id]))) return id
+  if (id === "omai" || (id && (knownThemes().has(id) || registered?.[id]))) return id
 
-  return "oc-2"
+  return "omai"
 }
 
 function read(key: string) {
@@ -151,7 +151,7 @@ function applyThemeCss(theme: DesktopTheme, themeId: string, mode: "light" | "da
   const css = themeToCss(tokens)
   const v2 = themeV2ToCss(resolveThemeVariantV2(variant, isDark))
 
-  if (themeId !== "oc-2") {
+  if (themeId !== "omai") {
     write(isDark ? STORAGE_KEYS.THEME_CSS_DARK : STORAGE_KEYS.THEME_CSS_LIGHT, `${css}\n  ${v2}`)
   }
 
@@ -162,7 +162,7 @@ function applyThemeCss(theme: DesktopTheme, themeId: string, mode: "light" | "da
   ${v2}
 }`
 
-  document.getElementById("oc-theme-preload")?.remove()
+  document.getElementById("theme-preload")?.remove()
   ensureThemeStyleElement().textContent = fullCss
   document.documentElement.dataset.theme = themeId
   document.documentElement.dataset.colorScheme = mode
@@ -175,7 +175,7 @@ function applyThemeCss(theme: DesktopTheme, themeId: string, mode: "light" | "da
 }
 
 function cacheThemeVariants(theme: DesktopTheme, themeId: string) {
-  if (themeId === "oc-2") return
+  if (themeId === "omai") return
 
   for (const mode of ["light", "dark"] as const) {
     const isDark = mode === "dark"
@@ -206,7 +206,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
     const [store, setStore] = createStore({
       themes: {
-        "oc-2": oc2Theme,
+        "omai": oc2Theme,
       } as Record<string, DesktopTheme>,
       themeId,
       colorScheme,
@@ -277,7 +277,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
         setStore("themeId", next)
 
-        if (next === "oc-2") {
+        if (next === "omai") {
           clear()
 
           return
@@ -342,7 +342,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         return
       }
 
-      if (next !== "oc-2" && !knownThemes().has(next) && !store.themes[next]) {
+      if (next !== "omai" && !knownThemes().has(next) && !store.themes[next]) {
         console.warn(`Theme "${id}" not found`)
 
         return
@@ -350,7 +350,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
       setStore("themeId", next)
 
-      if (next === "oc-2") {
+      if (next === "omai") {
         write(STORAGE_KEYS.THEME_ID, next)
         clear()
 
@@ -386,7 +386,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
         if (!next) return
 
-        if (next !== "oc-2" && !knownThemes().has(next) && !store.themes[next]) return
+        if (next !== "omai" && !knownThemes().has(next) && !store.themes[next]) return
         setStore("previewThemeId", next)
         void load(next).then((theme) => {
           if (!theme || store.previewThemeId !== next) return

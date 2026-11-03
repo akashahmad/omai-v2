@@ -20,7 +20,7 @@ import { ConfigEntryObserver } from "./entry-observer.js"
 const decodeCommand = Schema.decodeUnknownOption(ConfigCommand.Info)
 
 export const Plugin = define({
-  id: "opencode.config.command",
+  id: "omai.config.command",
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const fs = yield* FSUtil.Service

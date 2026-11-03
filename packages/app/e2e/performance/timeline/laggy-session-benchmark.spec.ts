@@ -126,14 +126,14 @@ for (const mode of ["compact", "ungrouped"] as const) {
       ({ detail, directory, server, sessionIDs, dirBase64 }) => {
         localStorage.setItem("settings.v3", JSON.stringify({ general: { timelineDetail: detail } }))
         localStorage.setItem(
-          "opencode.global.dat:server",
+          "omai.global.dat:server",
           JSON.stringify({
             projects: { local: [{ worktree: directory, expanded: true }] },
             lastProject: { local: directory },
           }),
         )
         localStorage.setItem(
-          "opencode.window.browser.dat:tabs",
+          "omai.window.browser.dat:tabs",
           JSON.stringify(sessionIDs.map((sessionId) => ({ type: "session", server, dirBase64, sessionId }))),
         )
       },

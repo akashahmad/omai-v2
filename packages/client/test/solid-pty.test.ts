@@ -27,7 +27,7 @@ describe("createPersistentPtyClient", () => {
     expect(request?.method).toBe("POST")
     expect(request?.url).toBe("https://server.example/api/experimental/persistent-pty/pty_1/connect-token")
     expect(request?.headers.get("authorization")).toBe("Basic credential")
-    expect(request?.headers.get("x-opencode-ticket")).toBe("1")
+    expect(request?.headers.get("x-omai-ticket")).toBe("1")
     expect(socketURL?.toString()).toBe(
       "wss://server.example/api/experimental/persistent-pty/pty_1/connect?ticket=persistent-ticket&cursor=42&attachment_id=attachment_1&takeover=true&input_protocol=1",
     )

@@ -71,9 +71,6 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "クレジットを追加",
 
   "dialog.usageExceeded.freeTier.title": "無料制限に達しました",
-  "dialog.usageExceeded.freeTier.description":
-    "OpenCode Go にサブスクライブして、最高のオープンソースモデルに安定してアクセスできます。月額 $10。",
-  "dialog.usageExceeded.freeTier.actionLabel": "サブスクライブ",
 
   "ui.sessionTurn.status.delegating": "作業を委任中",
   "ui.sessionTurn.status.planning": "次のステップを計画中",

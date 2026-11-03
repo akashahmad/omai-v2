@@ -38,7 +38,7 @@ const decodeVerdict = Schema.decodeUnknownOption(Schema.fromJsonString(Verdict))
 const USAGE = "Usage: /goal <objective> | pause | resume | clear"
 
 export const Plugin = define({
-  id: "opencode.goal",
+  id: "omai.goal",
   effect: Effect.fn(function* (ctx) {
     const read = Effect.fn("GoalPlugin.read")(function* (sessionID: string) {
       return Option.getOrUndefined(decodeState(yield* ctx.storage.get(PREFIX + sessionID)))

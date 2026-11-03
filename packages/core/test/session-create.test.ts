@@ -1128,12 +1128,12 @@ describe("Session.create", () => {
         const created = yield* session.create({
           location: Location.Ref.make({ directory: AbsolutePath.make(directory) }),
         })
-        yield* session.environment({ sessionID: created.id, variables: { OPENCODE_SESSION_ENV_TEST: "attached" } })
+        yield* session.environment({ sessionID: created.id, variables: { OMAI_SESSION_ENV_TEST: "attached" } })
 
         const command =
           process.platform === "win32"
-            ? "[Console]::Out.Write($env:OPENCODE_SESSION_ENV_TEST)"
-            : 'printf %s "$OPENCODE_SESSION_ENV_TEST"'
+            ? "[Console]::Out.Write($env:OMAI_SESSION_ENV_TEST)"
+            : 'printf %s "$OMAI_SESSION_ENV_TEST"'
         yield* session.shell({ sessionID: created.id, command })
 
         const messages = yield* session.messages({ sessionID: created.id, order: "asc" })

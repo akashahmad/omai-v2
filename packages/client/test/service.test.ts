@@ -73,7 +73,7 @@ test("adds configured environment variables when starting a service", async () =
       file: registration,
       version: "test",
       command: fixture.command("environment"),
-      env: { OPENCODE_SERVICE_ENV_TEST: "configured" },
+      env: { OMAI_SERVICE_ENV_TEST: "configured" },
     }),
   )
   const info = await Bun.file(registration).json()

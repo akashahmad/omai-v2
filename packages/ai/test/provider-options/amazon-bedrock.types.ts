@@ -12,7 +12,7 @@ ai.request({
     thinking: { type: "adaptive", display: "future-display" },
     guardrail: { identifier: "abc123", version: "DRAFT", trace: "future-trace", streamProcessingMode: "future-mode" },
     outputFormat: { type: "future-format", schema: { type: "object" } },
-    requestMetadata: { suite: "opencode-ai" },
+    requestMetadata: { suite: "omai-ai" },
   },
 })
 

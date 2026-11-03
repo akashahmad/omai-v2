@@ -68,9 +68,6 @@ export const dict = {
   "ui.sessionTurn.error.freeUsageExceeded": "Penggunaan percuma telah melebihi had",
   "ui.sessionTurn.error.addCredits": "Tambah kredit",
   "dialog.usageExceeded.freeTier.title": "Had percuma dicapai",
-  "dialog.usageExceeded.freeTier.description":
-    "Langgan OpenCode Go pada harga $10/bulan untuk akses yang lebih stabil kepada model sumber terbuka terbaik.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Langgan",
   "ui.sessionTurn.status.delegating": "Medelegasi tugasan",
   "ui.sessionTurn.status.planning": "Merancang langkah seterusnya",
   "ui.sessionTurn.status.gatheringContext": "Meneroka",

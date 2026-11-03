@@ -18,9 +18,8 @@ await mkdir(archiveDir, { recursive: true })
 await packDistribution({
   root,
   name: pkg.name,
-  command: "opencode",
-  legacyCommand: "opencode2",
-  binary: "opencode",
+  command: "omai",
+  binary: "omai",
   packagePrefix: "@opencode/cli-",
   archive: (target) => target.startsWith("linux-"),
 })
@@ -28,8 +27,8 @@ if (existsSync(path.join(root, "node"))) {
   await packDistribution({
     root: path.join(root, "node"),
     name: "@opencode/cli-node",
-    command: "opencode2-node",
-    binary: "opencode2-node",
+    command: "omai-node",
+    binary: "omai-node",
     packagePrefix: "@opencode/cli-node-",
     archive: () => true,
   })
@@ -81,7 +80,6 @@ async function packDistribution(input: {
         scripts: { postinstall: "node ./postinstall.mjs" },
         version,
         license: pkg.license,
-        repository: { type: "git", url: "git+https://github.com/anomalyco/opencode.git" },
         os: ["darwin", "linux", "win32"],
         cpu: ["arm64", "x64"],
         optionalDependencies: binaries,

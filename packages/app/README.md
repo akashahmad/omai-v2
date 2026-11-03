@@ -82,14 +82,14 @@ The beta SST stage deploys only the web app, using the `WebApp` StaticSiteV2 def
 the build channel and Sentry environment to `beta` without deploying the API, console, database, or billing
 infrastructure.
 
-`VITE_OPENCODE_SERVER_MODE` controls which server the web build provides at startup:
+`VITE_OMAI_SERVER_MODE` controls which server the web build provides at startup:
 
 | Mode               | Initial server                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------ |
 | `none`             | No initial server. The beta deployment uses this mode.                               |
 | `origin` (default) | The current page's origin. CLI builds explicitly use this mode for `opencode serve`. |
 
-In Vite development mode, `origin` uses `VITE_OPENCODE_SERVER_HOST` / `VITE_OPENCODE_SERVER_PORT`
+In Vite development mode, `origin` uses `VITE_OMAI_SERVER_HOST` / `VITE_OMAI_SERVER_PORT`
 (default: `http://localhost:4096`) instead of the frontend origin. Both modes restore user-added servers
 from storage. Desktop provides the local server it discovers or starts through native initialization.
 
@@ -119,7 +119,7 @@ video input; insecure pages and unavailable cameras show an explanation beside t
 
 The workflow reuses the repository's `CLOUDFLARE_API_TOKEN` and web Sentry settings. The Cloudflare token
 must cover SST's R2 state storage, KV assets, Workers, and custom-domain management in the account that
-owns `opencode.ai`. The beta GitHub environment must allow deployments from the `beta` branch; it does not
+owns `omai.ai`. The beta GitHub environment must allow deployments from the `beta` branch; it does not
 need AWS credentials.
 
 SST manages the beta site's custom domain. The first deployment creates its DNS record and TLS certificate.

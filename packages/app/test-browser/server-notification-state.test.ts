@@ -377,7 +377,7 @@ test("unread state and viewing follow the server's idle and viewed watermarks", 
 })
 
 test("unread state honours the old local list until its viewed state is carried to the server, then deletes it", async () => {
-  const key = "opencode.global.dat:notification"
+  const key = "omai.global.dat:notification"
   const lists: unknown[] = []
   const views: { sessionID: string; idle: number }[] = []
   const failures = { remaining: 1 }

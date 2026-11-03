@@ -304,10 +304,10 @@ export function createHostApis() {
           }
         : undefined,
     app: () => ({
-      name: "opencode",
+      name: "omai",
       version: platform.version ?? "",
-      // SAFETY: the build sets VITE_OPENCODE_CHANNEL to one of the release channels, or leaves it unset locally.
-      channel: (import.meta.env.VITE_OPENCODE_CHANNEL ?? "local") as App["channel"],
+      // SAFETY: the build sets VITE_OMAI_CHANNEL to one of the release channels, or leaves it unset locally.
+      channel: (import.meta.env.VITE_OMAI_CHANNEL ?? "local") as App["channel"],
       platform: platform.platform,
       packaged: platform.plugins?.packaged ?? false,
     }),

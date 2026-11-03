@@ -527,30 +527,6 @@ describe("MCP OAuth", () => {
   describe("client registration", () => {
     const cimd = { client_id_metadata_document_supported: true, token_endpoint_auth_methods_supported: ["none"] }
 
-    test("uses the client metadata document when the server supports public CIMD clients", async () => {
-      const { server, registrations, tokenRequests } = authorizationServer(cimd)
-      const credential = await Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const { authorization, url } = yield* start(server)
-            expect(url.searchParams.get("client_id")).toBe(McpOAuth.CLIENT_METADATA_URL)
-            const redirect = new URL(url.searchParams.get("redirect_uri")!)
-            redirect.searchParams.set("code", "accepted")
-            redirect.searchParams.set("state", url.searchParams.get("state")!)
-            yield* Effect.promise(() => fetch(redirect))
-            return yield* authorization.callback
-          }),
-        ),
-      ).finally(() => server.stop(true))
-
-      expect(registrations).toHaveLength(0)
-      expect(tokenRequests[0]?.get("client_id")).toBe(McpOAuth.CLIENT_METADATA_URL)
-      expect(McpOAuth.clientFromCredential(credential)).toEqual({
-        client_id: McpOAuth.CLIENT_METADATA_URL,
-        issuer: server.url.origin,
-      })
-    })
-
     test("registers dynamically when the server does not accept public clients", async () => {
       const { server, registrations } = authorizationServer({
         client_id_metadata_document_supported: true,

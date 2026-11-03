@@ -233,7 +233,7 @@ const headless = (app: App.Info) =>
   }) satisfies IntegrationOAuthMethodRegistration
 
 export const OpenAIPlugin = define({
-  id: "opencode.provider.openai",
+  id: "omai.provider.openai",
   effect: Effect.fn(function* (ctx) {
     const loading = Semaphore.makeUnsafe(1)
     let chatgpt: Credential.OAuth | undefined

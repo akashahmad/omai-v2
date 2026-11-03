@@ -6,7 +6,6 @@ import {
   Baseten,
   CloudflareWorkersAI,
   OpenAI,
-  OpenCode,
   OpenRouter,
   TypeSafeAI,
   VercelAIGateway,
@@ -137,73 +136,6 @@ describe("Decision", () => {
         ),
       ),
     ),
-  )
-
-  it.effect("sends a lone input object as the System One state and maps boolean choices back", () =>
-    ai.decision
-      .generate({
-        model: OpenCode.configure({ apiKey: "opencode-key", baseURL: "https://opencode.test/v1" }).decision("jev-1.13"),
-        input: { ticket: "hello" },
-        questions: [
-          {
-            name: "greeting",
-            type: "choice",
-            instructions: "Is this a greeting?",
-            choices: [{ value: true }, { value: false }],
-          },
-        ],
-      })
-      .pipe(
-        Effect.tap((response) =>
-          Effect.sync(() => {
-            const answer = response.answers[0]
-            if (answer.type !== "choice") throw new Error("expected a choice answer")
-            expect(answer.choice).toBe(true)
-            expect(answer.probabilities).toEqual([
-              { value: true, probability: 0.99 },
-              { value: false, probability: 0.01 },
-            ])
-            expect(response.usage).toEqual(
-              new DecisionUsage({ inputTokens: 10, outputTokens: 2, totalTokens: 12, cost: 0.0004 }),
-            )
-            expect(response.providerMetadata).toEqual({
-              opencode: { model: "jev-1.13.0", usage: { input_tokens: 10, output_tokens: 2, cost: 0.0004 } },
-            })
-          }),
-        ),
-        Effect.provide(
-          client((input) => {
-            expect(input.request.url).toBe("https://opencode.test/v1/systemone")
-            expect(input.request.headers.authorization).toBe("Bearer opencode-key")
-            expect(input.request.headers["typesafe-danger-zone-images"]).toBe("true")
-            expect(JSON.parse(input.text)).toEqual({
-              model: "jev-1.13",
-              state: { ticket: "hello" },
-              questions: {
-                greeting: {
-                  type: "choice",
-                  instructions: "Is this a greeting?",
-                  criteria: { true: null, false: null },
-                },
-              },
-            })
-            return Effect.succeed(
-              json(input, {
-                model: "jev-1.13.0",
-                answers: {
-                  greeting: {
-                    type: "choice",
-                    choice: "true",
-                    probabilities: { false: 0.01, true: 0.99 },
-                    confidence: 1,
-                  },
-                },
-                usage: { input_tokens: 10, output_tokens: 2, cost: 0.0004 },
-              }),
-            )
-          }),
-        ),
-      ),
   )
 
   it.effect("rejects a choice with both a boolean and a string of the same text for System One", () =>

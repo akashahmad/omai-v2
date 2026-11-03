@@ -281,8 +281,8 @@ describe("terminal model", () => {
   test("treats a server whose terminal daemon is unavailable like one without terminal support", async () => {
     const server = fakeServer()
     server.state.listError = new ServiceUnavailableError({
-      message: "opencode-pty is not available",
-      service: "opencode-pty",
+      message: "omai-pty is not available",
+      service: "omai-pty",
     })
     const { model, session } = setup(server)
 

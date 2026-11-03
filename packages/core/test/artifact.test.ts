@@ -22,10 +22,10 @@ import { permissionLayer } from "./lib/permission"
 import { codeModeListings, executeTool, registerToolPlugin, toolIdentity } from "./lib/tool"
 
 const toolPaths = [
-  "opencode.artifact_create",
-  "opencode.artifact_read",
-  "opencode.artifact_update",
-  "opencode.artifact_delete",
+  "omai.artifact_create",
+  "omai.artifact_read",
+  "omai.artifact_update",
+  "omai.artifact_delete",
 ]
 
 const buildLayer = (artifactsEnabled: boolean, dir: string) => {
@@ -60,7 +60,7 @@ const callCodeMode = (registry: Tool.Interface, sessionID: Session.ID, name: str
       type: "tool-call",
       id: `call-${name}`,
       name: "execute",
-      input: { code: `return await tools.opencode.${name}(${JSON.stringify(input)})` },
+      input: { code: `return await tools.omai.${name}(${JSON.stringify(input)})` },
     },
   }).pipe(
     Effect.map((result) => {
@@ -76,7 +76,7 @@ const it = testEffect(Layer.empty)
 describe("experimental.artifacts service and tools", () => {
   it.live("stays disabled and hides artifact tools when experimental.artifacts is unset", () =>
     Effect.gen(function* () {
-      const dir = (yield* tmpdirScoped("opencode-artifact-off-")).path
+      const dir = (yield* tmpdirScoped("omai-artifact-off-")).path
       yield* Effect.gen(function* () {
         const artifacts = yield* Artifact.Service
         const registry = yield* Tool.Service
@@ -101,7 +101,7 @@ describe("experimental.artifacts service and tools", () => {
 
   it.live("registers custom providers, routes overrides, and runs the 4 CRUD tools", () =>
     Effect.gen(function* () {
-      const dir = (yield* tmpdirScoped("opencode-artifact-on-")).path
+      const dir = (yield* tmpdirScoped("omai-artifact-on-")).path
 
       yield* Effect.gen(function* () {
         const artifacts = yield* Artifact.Service
@@ -144,7 +144,7 @@ describe("experimental.artifacts service and tools", () => {
         const listings = snap.codeModeCatalog ? codeModeListings(snap.codeModeCatalog) : []
         expect(listings.map((item) => item.path)).toEqual(expect.arrayContaining(toolPaths))
         const rawTools = yield* registry.list()
-        const createTool = rawTools.find((item) => item.id === "opencode_artifact_create")
+        const createTool = rawTools.find((item) => item.id === "omai_artifact_create")
         expect(createTool?.description).toContain(
           "Default provider (cloudflare [static, server-code, sqlite, durable-objects]): Artifacts deploy to Cloudflare with SQLite and Durable Objects.",
         )

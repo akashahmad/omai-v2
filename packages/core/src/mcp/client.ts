@@ -179,7 +179,7 @@ export const connect = Effect.fnUntraced(function* (
   // Remote only. A provider with no stored token and a no-op redirect ends in UnauthorizedError → needs_auth.
   authProvider?: OAuthClientProvider,
   elicitation?: ElicitationHandler,
-  clientInfo: Implementation = { name: "opencode", version: "unknown" },
+  clientInfo: Implementation = { name: "omai", version: "unknown" },
 ) {
   // The SDK takes list-changed handlers at construction, but consumers register after connect. On a
   // modern connection the SDK opens the subscriptions/listen stream behind these itself.
@@ -292,7 +292,7 @@ export const connect = Effect.fnUntraced(function* (
         args,
         cwd: config.cwd ? path.resolve(directory, config.cwd) : directory,
         environment: {
-          ...(command === "opencode" ? { BUN_BE_BUN: "1" } : {}),
+          ...(command === "omai" ? { BUN_BE_BUN: "1" } : {}),
           ...config.environment,
         },
       })
@@ -468,7 +468,7 @@ export const connect = Effect.fnUntraced(function* (
               {
                 name: input.name,
                 arguments: input.args ?? {},
-                ...(input.sessionID === undefined ? {} : { _meta: { "ai.opencode/sessionID": input.sessionID } }),
+                ...(input.sessionID === undefined ? {} : { _meta: { "ai.omai/sessionID": input.sessionID } }),
               },
               {
                 signal,

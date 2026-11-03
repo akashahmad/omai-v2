@@ -15,7 +15,7 @@ const legacyInput = 272_000
 const currentInput = 500_000
 
 export const OpenAIContextCapsPlugin = define({
-  id: "opencode.provider.openai-context-caps",
+  id: "omai.provider.openai-context-caps",
   effect: Effect.fn(function* (ctx) {
     let signedIn = false
 

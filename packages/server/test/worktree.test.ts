@@ -11,7 +11,7 @@ import { initRepo } from "../../core/test/fixture/git"
 
 it.live("list reads saved inventory even when its checkout is missing, without booting a location", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-list-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-list-")))
     const directory = path.join(tmp.path, "repo")
     yield* Effect.promise(async () => {
       await fs.mkdir(directory)
@@ -47,7 +47,7 @@ it.live("list reads saved inventory even when its checkout is missing, without b
 
 it.live("refresh discovers both clones while list alone never discovers external worktrees", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-clones-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-clones-")))
     const first = path.join(tmp.path, "first")
     const second = path.join(tmp.path, "second")
     const a = path.join(tmp.path, "a")
@@ -91,7 +91,7 @@ it.live("refresh discovers both clones while list alone never discovers external
 
 it.live("remove loads canonical strategies and enforces project ownership", () =>
   Effect.gen(function* () {
-    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-remove-")))
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-remove-")))
     const directory = path.join(tmp.path, "repo")
     const other = path.join(tmp.path, "other")
     const linked = path.join(tmp.path, "linked")
@@ -124,7 +124,7 @@ it.live(
   "lists, creates, and removes worktrees by project ID",
   () =>
     Effect.gen(function* () {
-      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-endpoint-")))
+      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-endpoint-")))
       const project = path.join(tmp.path, "project")
       const destination = path.join(tmp.path, "worktrees")
       yield* Effect.promise(() => fs.mkdir(project, { recursive: true }))
@@ -180,7 +180,7 @@ it.live(
   "uses project configuration independently of default location headers",
   () =>
     Effect.gen(function* () {
-      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-default-location-")))
+      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-default-location-")))
       const project = path.join(tmp.path, "project")
       const config = path.join(tmp.path, "config")
       const destination = path.join(tmp.path, "copies")
@@ -188,12 +188,12 @@ it.live(
         await fs.mkdir(project)
         await initRepo(project)
         await fs.mkdir(config)
-        await Bun.write(path.join(config, "opencode.json"), JSON.stringify({ worktree: { directory: destination } }))
+        await Bun.write(path.join(config, "omai.json"), JSON.stringify({ worktree: { directory: destination } }))
       })
       const server = yield* startServer(config)
       const api = OpenCode.make({
         baseUrl: server.base,
-        headers: { ...server.headers, "x-opencode-directory": encodeURIComponent("/unrelated-missing-directory") },
+        headers: { ...server.headers, "x-omai-directory": encodeURIComponent("/unrelated-missing-directory") },
       })
       yield* Effect.promise(async () => {
         const session = await api.session.create({ location: { directory: project } })
@@ -216,7 +216,7 @@ it.live(
   "uses canonical plugins for shared clones and recorded strategy removal",
   () =>
     Effect.gen(function* () {
-      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-plugins-")))
+      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-plugins-")))
       const first = path.join(tmp.path, "first")
       const second = path.join(tmp.path, "second")
       const nested = path.join(first, "nested")
@@ -230,9 +230,9 @@ it.live(
         await $`git remote set-url origin https://github.com/example/worktree-fixture.git`.cwd(second).quiet()
         await fs.mkdir(nested)
         await fs.mkdir(config)
-        await Bun.write(path.join(config, "opencode.json"), JSON.stringify({ worktree: { directory: destination } }))
+        await Bun.write(path.join(config, "omai.json"), JSON.stringify({ worktree: { directory: destination } }))
         await Bun.write(
-          path.join(first, "opencode.json"),
+          path.join(first, "omai.json"),
           JSON.stringify({
             plugins: [
               { package: path.join(import.meta.dir, "fixture/worktree-plugin"), options: { strategy: "test-copy" } },
@@ -298,7 +298,7 @@ it.live(
   "canonical plugin setup can create using registrations made so far",
   () =>
     Effect.gen(function* () {
-      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-worktree-delegate-")))
+      const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("omai-worktree-delegate-")))
       const source = path.join(tmp.path, "source")
       const destination = path.join(tmp.path, "copies")
       yield* Effect.promise(async () => {
@@ -308,7 +308,7 @@ it.live(
           await $`git remote add origin git@github.com:example/delegate-fixture.git`.cwd(directory).quiet()
         }
         await Bun.write(
-          path.join(source, "opencode.json"),
+          path.join(source, "omai.json"),
           JSON.stringify({
             worktree: { directory: destination },
             plugins: [

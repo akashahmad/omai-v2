@@ -388,7 +388,7 @@ describe("Claude sessions", () => {
       const parts = yield* TestTools.step(test.model, TestSessions.followup(), TestTools.tools, "generate", settings)
       const chat = claude.runs[0]!.received.find((message) => message.request?.subtype === "initialize").request
       const branch = claude.runs[1]!.received.find((message) => message.request?.subtype === "initialize").request
-      expect(chat.sdkMcpServers).toEqual(["opencode"])
+      expect(chat.sdkMcpServers).toEqual(["omai"])
       expect(branch.sdkMcpServers).toEqual(chat.sdkMcpServers)
       expect(chat.appendSystemPrompt).toContain("AGENT-ROLE")
       expect(chat.appendSystemPrompt).toContain("OPENCODE-INSTRUCTIONS")

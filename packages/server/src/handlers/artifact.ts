@@ -31,7 +31,7 @@ export const makeArtifact = Effect.gen(function* () {
     if (location?.directory !== undefined) return location.directory
     const query = new URL(request.url, "http://localhost").searchParams.get("location[directory]")
     if (query) return query
-    const header = request.headers["x-opencode-directory"]
+    const header = request.headers["x-omai-directory"]
     if (!header) return undefined
     try {
       return decodeURIComponent(header)

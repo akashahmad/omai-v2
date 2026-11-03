@@ -21,9 +21,9 @@ const ISOLATION_ENV = {
   MAX_MCP_OUTPUT_TOKENS: "200000",
   // Skips OAuth, so the subscription would not be used
   CLAUDE_CODE_SIMPLE: undefined,
-  // A shell-level effort override would take precedence over OpenCode's live effort settings.
+  // A shell-level effort override would take precedence over O M A I +'s live effort settings.
   CLAUDE_CODE_EFFORT_LEVEL: undefined,
-  // Caps every OpenCode tool call, which would fail subagents and permission prompts that run longer
+  // Caps every O M A I + tool call, which would fail subagents and permission prompts that run longer
   MCP_TOOL_TIMEOUT: undefined,
 }
 
@@ -61,13 +61,13 @@ export function base(input: {
     env: { ...input.io.env(), ...input.connection, ...ISOLATION_ENV },
     settingSources: [],
     settings: { disableAllHooks: true },
-    // Without summaries, OpenCode has no reasoning text to display
+    // Without summaries, O M A I + has no reasoning text to display
     thinking: { type: "adaptive", display: "summarized" },
     strictMcpConfig: true,
     skills: [],
     tools: [],
     permissionMode: "dontAsk",
-    allowedTools: ["mcp__opencode__*"],
+    allowedTools: ["mcp__omai__*"],
     verbatimPrompts: true,
   }
 }
@@ -101,7 +101,7 @@ export async function session(input: {
   if (input.maxOutputTokens !== undefined) {
     options.env = { ...options.env, CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(input.maxOutputTokens) }
   }
-  if (input.tools.length > 0) options.mcpServers = { opencode: await ToolServer.make(input.tools, input.pending) }
+  if (input.tools.length > 0) options.mcpServers = { omai: await ToolServer.make(input.tools, input.pending) }
   if (input.resume !== undefined) {
     options.resume = input.resume
     return options

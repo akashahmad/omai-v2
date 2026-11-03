@@ -32,9 +32,9 @@ test.each([
   )
   expect(config.webServer.reuseExistingServer).toBe(!built)
   expect(config.webServer.env).toEqual({
-    VITE_OPENCODE_TEST_FIXTURES: "1",
-    VITE_OPENCODE_SERVER_HOST: built ? "127.0.0.1" : "127.0.0.2",
-    VITE_OPENCODE_SERVER_PORT: built ? "4321" : "4322",
+    VITE_OMAI_TEST_FIXTURES: "1",
+    VITE_OMAI_SERVER_HOST: built ? "127.0.0.1" : "127.0.0.2",
+    VITE_OMAI_SERVER_PORT: built ? "4321" : "4322",
   })
 })
 

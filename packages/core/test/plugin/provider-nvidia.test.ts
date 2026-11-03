@@ -18,7 +18,7 @@ const addPlugin = Effect.fn(function* () {
 
 describe("NvidiaPlugin", () => {
   test("is registered so legacy referer headers can be applied", () => {
-    expect(ProviderPlugins.map((item) => item.id)).toContain("opencode.provider.nvidia")
+    expect(ProviderPlugins.map((item) => item.id)).toContain("omai.provider.nvidia")
   })
 
   it.effect("applies NVIDIA tracking headers only to nvidia", () =>
@@ -35,9 +35,8 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
       expect((yield* catalog.get(Provider.ID.make("nvidia")))?.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
-        "X-BILLING-INVOKE-ORIGIN": "OpenCode",
+        "X-Title": "omai",
+        "X-BILLING-INVOKE-ORIGIN": "omai",
       })
       expect((yield* catalog.get(Provider.ID.openrouter))?.headers).toBeUndefined()
     }),
@@ -55,9 +54,8 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
 
       expect((yield* catalog.get(Provider.ID.make("nvidia")))?.headers).toEqual({
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
-        "X-BILLING-INVOKE-ORIGIN": "OpenCode",
+        "X-Title": "omai",
+        "X-BILLING-INVOKE-ORIGIN": "omai",
       })
     }),
   )
@@ -75,8 +73,7 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
 
       expect((yield* catalog.get(Provider.ID.make("nvidia")))?.headers).toEqual({
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "opencode",
+        "X-Title": "omai",
         "X-BILLING-INVOKE-ORIGIN": "CustomOrigin",
       })
     }),

@@ -5,7 +5,7 @@ import { Schema } from "effect"
 export async function readSessionDraftText(page: Page, sessionID: string) {
   const raw = await page.evaluate(async (sessionID) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("opencode-drafts", 1)
+      const request = indexedDB.open("omai-drafts", 1)
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => reject(request.error)
     })

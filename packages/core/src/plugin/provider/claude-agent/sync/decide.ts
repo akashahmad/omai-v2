@@ -18,7 +18,7 @@ export function decide(prompt: LanguageModelV3Prompt, record?: SessionRecord.Rec
   // Changed histories need an isolated branch, or a rebuild when no safe checkpoint survives.
   if (matched < saved.length) return { kind: "changed", start: 0 } as const
 
-  // Claude's drained transcript owns the interrupted reply, not OpenCode's partial copy.
+  // Claude's drained transcript owns the interrupted reply, not O M A I +'s partial copy.
   while (record?.interrupted && groups[matched]?.role === "assistant") {
     const reply = prompt[groups[matched]!.start]!
     if (reply.role !== "assistant" || reply.content.some((part) => part.type === "tool-call")) break

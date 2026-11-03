@@ -798,8 +798,8 @@ function resolveDirectory(directory: string) {
 
 function nextPath(options: Options, data: string) {
   if (options.nextDatabasePath) return options.nextDatabasePath
-  if (process.env.OPENCODE_DB === ":memory:") return undefined
-  return path.join(data, "opencode-next.db")
+  if (process.env.OMAI_DB === ":memory:") return undefined
+  return path.join(data, "omai-next.db")
 }
 
 function openNextDatabase(sourcePath: string) {

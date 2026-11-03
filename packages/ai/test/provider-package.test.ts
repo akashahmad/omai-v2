@@ -374,7 +374,7 @@ describe("provider package entrypoints", () => {
     const AzureResponses = await import("@opencode/ai/providers/azure/responses")
     const settings = {
       apiKey: "fixture",
-      resourceName: "opencode-test",
+      resourceName: "omai-test",
       headers: { "x-application": "opencode" },
       body: { service_tier: "priority" },
     }
@@ -384,7 +384,7 @@ describe("provider package entrypoints", () => {
 
     expect(Azure.model("deployment", settings).route.id).toBe("azure-openai-responses")
     expect(responses.route.id).toBe("azure-openai-responses")
-    expect(responses.route.endpoint.baseURL).toBe("https://opencode-test.openai.azure.com/openai/v1")
+    expect(responses.route.endpoint.baseURL).toBe("https://omai-test.openai.azure.com/openai/v1")
     expect(responses.route.defaults.headers).toEqual({ "x-application": "opencode" })
     expect(responses.route.defaults.http?.body).toEqual({ service_tier: "priority" })
     expect(chat.route.id).toBe("azure-openai-chat")
@@ -394,7 +394,7 @@ describe("provider package entrypoints", () => {
     const Azure = await import("@opencode/ai/providers/azure")
     const deployment = Azure.model("custom-deployment", {
       apiKey: "fixture",
-      resourceName: "opencode-test",
+      resourceName: "omai-test",
       apiVersion: "2025-01-01-preview",
       useDeploymentBasedUrls: true,
     })
@@ -404,7 +404,7 @@ describe("provider package entrypoints", () => {
     })
 
     expect(deployment.route.endpoint).toMatchObject({
-      baseURL: "https://opencode-test.openai.azure.com/openai/deployments/custom-deployment",
+      baseURL: "https://omai-test.openai.azure.com/openai/deployments/custom-deployment",
       query: { "api-version": "2025-01-01-preview" },
     })
     expect(gateway.route.endpoint.baseURL).toBe("https://gateway.example/azure")

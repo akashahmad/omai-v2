@@ -83,26 +83,10 @@ const source = {
   "ui.sessionTurn.retry.attemptWaiting.other": "Attempt {{attempt}} - retrying in {{count}}s",
   "ui.sessionTurn.retry.attemptRetryingNow": "Attempt {{attempt}} - retrying",
   "ui.sessionTurn.retry.geminiHot": "gemini is way too hot right now",
-  "ui.sessionTurn.freeLimit.title": "You've used today's free messages.",
-  "ui.sessionTurn.freeLimit.lineReset": "You've used today's free messages. They reset at {{time}}.",
-  "ui.sessionTurn.budgetLimit.all":
-    "Workspace budget reached · paid models paused until {{time}} · free models still work",
-  "ui.sessionTurn.budgetLimit.allUntilReset":
-    "Workspace budget reached · paid models paused until it resets · free models still work",
-  "ui.sessionTurn.budgetLimit.models": "Model budget reached · this model is paused until {{time}}",
-  "ui.sessionTurn.budgetLimit.modelsUntilReset": "Model budget reached · this model is paused until it resets",
-  "ui.sessionTurn.budgetLimit.useFreeModel": "Use a free model",
-  "ui.sessionTurn.budgetLimit.switchModel": "Switch model",
-  "ui.sessionTurn.goLimit.title": "You've reached your OpenCode Go usage limit.",
-  "ui.sessionTurn.goLimit.lineReset": "You've reached your OpenCode Go usage limit. It resets at {{time}}.",
   "ui.sessionTurn.error.freeUsageExceeded": "Free usage exceeded",
   "ui.sessionTurn.error.addCredits": "Add credits",
 
   "dialog.usageExceeded.freeTier.title": "Free limit reached",
-  "dialog.usageExceeded.freeTier.description":
-    "Subscribe to OpenCode Go for reliable access to the best open-source models for $10/month.",
-  "dialog.usageExceeded.freeTier.reset": "Your free messages reset at {{time}}.",
-  "dialog.usageExceeded.freeTier.actionLabel": "Subscribe",
 
   "ui.sessionTurn.status.delegating": "Delegating work",
   "ui.sessionTurn.status.planning": "Planning next steps",

@@ -35,7 +35,7 @@ export default defineConfig({
     port: 3000,
   },
   build: {
-    ...(process.env.VITE_OPENCODE_TEST_FIXTURES === "1"
+    ...(process.env.VITE_OMAI_TEST_FIXTURES === "1"
       ? {
           rolldownOptions: {
             input: [
@@ -48,6 +48,7 @@ export default defineConfig({
       : {}),
     assetsDir: "_assets",
     target: "esnext",
-    sourcemap: true,
+    // Maps carry the original source, so they are only generated, and kept off the public bundle, for Sentry uploads.
+    sourcemap: sentry ? "hidden" : false,
   },
 })

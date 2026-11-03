@@ -8,7 +8,7 @@ Release notes for OpenCode V2, newest first.
 
 - **Worktree and Shell Mode Shortcuts**: Press `⌘⌥O` on macOS or `Ctrl+Alt+O` on Windows and Linux to choose a worktree, and `⌘⌥B` or `Ctrl+Alt+B` to choose its base branch. `⌘⇧X` or `Ctrl+Shift+X` now toggles shell mode in the composer. ([#60713](https://github.com/anomalyco/opencode/pull/60713))
 - **Send Quotes From the Comment Popup**: Hold `⌘` or `Ctrl` in the quote popup to turn its checkmark into send, or press `⌘Enter` or `Ctrl+Enter`, to send just that quote and comment while leaving the rest of the composer untouched. ([#60640](https://github.com/anomalyco/opencode/pull/60640))
-- **Percentage Compaction Buffer**: Set `"compaction": { "buffer": "20%" }` in `opencode.json` to keep a share of each model's context window free, so one setting fits models with small and large windows. Token counts still work. ([#60647](https://github.com/anomalyco/opencode/pull/60647))
+- **Percentage Compaction Buffer**: Set `"compaction": { "buffer": "20%" }` in `omai.json` to keep a share of each model's context window free, so one setting fits models with small and large windows. Token counts still work. ([#60647](https://github.com/anomalyco/opencode/pull/60647))
 
 ### Core
 
@@ -51,7 +51,7 @@ Release notes for OpenCode V2, newest first.
 ### Highlights
 
 - **Persistent Desktop Terminals**: Desktop terminals now belong to the session, survive server restarts with their scrollback, and stay synchronized with the TUI and other windows. Renamed terminals also keep their names across restarts. ([#60346](https://github.com/anomalyco/opencode/pull/60346))
-- **Publish Interactive Artifacts**: Enable `"experimental": { "artifacts": true }` in `opencode.json` to let agents publish, update, and serve HTML or static artifacts through the built-in local provider or plugin-provided storage. ([#60351](https://github.com/anomalyco/opencode/pull/60351))
+- **Publish Interactive Artifacts**: Enable `"experimental": { "artifacts": true }` in `omai.json` to let agents publish, update, and serve HTML or static artifacts through the built-in local provider or plugin-provided storage. ([#60351](https://github.com/anomalyco/opencode/pull/60351))
 - **Guided Claude Agent Setup**: Select **Claude Agent** from the provider picker to copy `claude auth login`, install Claude Code, and verify the connection before continuing to model selection. ([#60603](https://github.com/anomalyco/opencode/pull/60603))
 - **Choose a Base Branch Quickly**: While creating a worktree, open **Choose base branch** with `⌘⌥.` on macOS or `Ctrl+Alt+.` on Windows and Linux. The command is also available in the command palette and Settings › Shortcuts. ([#60579](https://github.com/anomalyco/opencode/pull/60579))
 
@@ -129,7 +129,7 @@ Release notes for OpenCode V2, newest first.
 
 #### Improvements
 
-- Added the built-in **Claude Agent** provider. Install Claude Code, run `claude auth login`, and select **Claude Agent** in `/connect`; `OPENCODE_CLAUDE_PATH` can override the Claude executable. Thanks [@Tarquinen](https://github.com/Tarquinen). ([#58782](https://github.com/anomalyco/opencode/pull/58782))
+- Added the built-in **Claude Agent** provider. Install Claude Code, run `claude auth login`, and select **Claude Agent** in `/connect`; `OMAI_CLAUDE_PATH` can override the Claude executable. Thanks [@Tarquinen](https://github.com/Tarquinen). ([#58782](https://github.com/anomalyco/opencode/pull/58782))
 - Added Code Mode JavaScript checks to experimental schedules, including statically authorized tool calls, persistent state, and custom wake messages. ([#60140](https://github.com/anomalyco/opencode/pull/60140))
 - Added separate managed-policy actions for connecting to integrations and using integrations, MCP servers, skills, and plugins. ([#60315](https://github.com/anomalyco/opencode/pull/60315))
 
@@ -783,7 +783,7 @@ The OpenCode GitHub Action is no longer published. Remove it from your workflows
 ### Highlights
 
 - **Clear Free-Limit Recovery**: When your free messages run out, Desktop and the TUI now show the reset time, restore your submitted prompt, and offer direct upgrade or model-switching actions instead of a generic error. ([#57466](https://github.com/anomalyco/opencode/pull/57466), [#57467](https://github.com/anomalyco/opencode/pull/57467), [#57471](https://github.com/anomalyco/opencode/pull/57471))
-- **Hide Free Models**: Set `OPENCODE_DISABLE_FREE_MODELS=1` or `true` to remove zero-cost models from OpenCode and OpenCode Go catalogs, defaults, and fallbacks. ([#57478](https://github.com/anomalyco/opencode/pull/57478))
+- **Hide Free Models**: Set `OMAI_DISABLE_FREE_MODELS=1` or `true` to remove zero-cost models from OpenCode and OpenCode Go catalogs, defaults, and fallbacks. ([#57478](https://github.com/anomalyco/opencode/pull/57478))
 - **Configurable Location Unloading**: Set `experimental.location_idle_timeout` to a duration such as `"4 hours"`, or to `false`, to control when inactive location services unload. ([#57476](https://github.com/anomalyco/opencode/pull/57476))
 - **Reliable Fresh Installs**: The installer now creates `~/.zshrc` or Fish’s `config.fish` when missing, adds OpenCode to `PATH`, and tells you to run `exec $SHELL`. ([#57348](https://github.com/anomalyco/opencode/pull/57348))
 
@@ -791,7 +791,7 @@ The OpenCode GitHub Action is no longer published. Remove it from your workflows
 
 #### Improvements
 
-- Added `OPENCODE_DISABLE_FREE_MODELS` for hiding free OpenCode and OpenCode Go models. ([#57478](https://github.com/anomalyco/opencode/pull/57478))
+- Added `OMAI_DISABLE_FREE_MODELS` for hiding free OpenCode and OpenCode Go models. ([#57478](https://github.com/anomalyco/opencode/pull/57478))
 - Added `experimental.location_idle_timeout`, accepting a duration string or `false`. ([#57476](https://github.com/anomalyco/opencode/pull/57476))
 
 #### Bug fixes
@@ -1026,7 +1026,7 @@ The transitional `session.compacted` event is removed from the public event surf
 #### Improvements
 
 - Load local glob patterns and remote URLs configured through `instructions`, and refresh them when configuration changes. ([#55539](https://github.com/anomalyco/opencode/pull/55539))
-- Honor `OPENCODE_DISABLE_CLAUDE_CODE` and `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS` when discovering `.claude` skills. ([#55774](https://github.com/anomalyco/opencode/pull/55774))
+- Honor `OMAI_DISABLE_CLAUDE_CODE` and `OMAI_DISABLE_CLAUDE_CODE_SKILLS` when discovering `.claude` skills. ([#55774](https://github.com/anomalyco/opencode/pull/55774))
 - Publish a configuration schema that accepts both V1 and V2 configuration shapes during migration. ([#55524](https://github.com/anomalyco/opencode/pull/55524))
 - Remove the retired session-sharing backend and unavailable `/share` command. ([#55716](https://github.com/anomalyco/opencode/pull/55716))
 

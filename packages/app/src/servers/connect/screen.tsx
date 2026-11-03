@@ -114,7 +114,7 @@ export function ConnectServerScreen(props: { url?: string } = {}) {
   return (
     <main data-component="connect-server" aria-labelledby="server-connect-title">
       <div class="server-connect-content">
-        <div class="server-connect-brand" role="img" aria-label="OpenCode">
+        <div class="server-connect-brand" role="img" aria-label="O M A I +">
           <Wordmark />
         </div>
         <header>
@@ -246,7 +246,7 @@ export function ConnectServerScreen(props: { url?: string } = {}) {
           <Show when={state.method === "link"}>
             <footer>
               <p>{language.t("server.connect.pair.link")}</p>
-              <code dir="ltr">opencode pair</code>
+              <code dir="ltr">omai pair</code>
             </footer>
           </Show>
         </Show>

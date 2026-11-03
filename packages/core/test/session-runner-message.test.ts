@@ -895,7 +895,7 @@ Earlier work
   })
 
   test("replays flat state under an OpenCode hosted model's route key", () => {
-    const opencode = Model.Ref.make({ id: Model.ID.make("claude-fable-5"), providerID: Provider.ID.opencode })
+    const opencode = Model.Ref.make({ id: Model.ID.make("claude-fable-5"), providerID: Provider.ID.make("opencode") })
     const messages = toLLMMessages(
       [
         SessionMessage.Assistant.make({

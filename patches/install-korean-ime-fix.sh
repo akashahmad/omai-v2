@@ -18,8 +18,8 @@ ORANGE='\033[38;5;214m'
 MUTED='\033[0;2m'
 NC='\033[0m'
 
-OPENCODE_DIR="${OPENCODE_DIR:-$HOME/.opencode}"
-OPENCODE_SRC="${OPENCODE_SRC:-$HOME/.opencode-src}"
+OMAI_DIR="${OMAI_DIR:-$HOME/.opencode}"
+OMAI_SRC="${OMAI_SRC:-$HOME/.opencode-src}"
 FORK_REPO="${FORK_REPO:-https://github.com/claudianus/opencode.git}"
 FORK_BRANCH="${FORK_BRANCH:-fix-zhipuai-coding-plan-thinking}"
 
@@ -39,18 +39,18 @@ need git
 need bun
 
 # ── 1. Clone or update fork ────────────────────────────────────────────
-if [ -d "$OPENCODE_SRC/.git" ]; then
-  info "Updating existing source at $OPENCODE_SRC ..."
-  git -C "$OPENCODE_SRC" fetch origin "$FORK_BRANCH"
-  git -C "$OPENCODE_SRC" checkout "$FORK_BRANCH"
-  git -C "$OPENCODE_SRC" reset --hard "origin/$FORK_BRANCH"
+if [ -d "$OMAI_SRC/.git" ]; then
+  info "Updating existing source at $OMAI_SRC ..."
+  git -C "$OMAI_SRC" fetch origin "$FORK_BRANCH"
+  git -C "$OMAI_SRC" checkout "$FORK_BRANCH"
+  git -C "$OMAI_SRC" reset --hard "origin/$FORK_BRANCH"
 else
-  info "Cloning fork (shallow) to $OPENCODE_SRC ..."
-  git clone --depth 1 --branch "$FORK_BRANCH" "$FORK_REPO" "$OPENCODE_SRC"
+  info "Cloning fork (shallow) to $OMAI_SRC ..."
+  git clone --depth 1 --branch "$FORK_BRANCH" "$FORK_REPO" "$OMAI_SRC"
 fi
 
 # ── 2. Verify the IME fix is present in source ────────────────────────
-PROMPT_FILE="$OPENCODE_SRC/packages/opencode/src/cli/cmd/tui/component/prompt/index.tsx"
+PROMPT_FILE="$OMAI_SRC/packages/opencode/src/cli/cmd/tui/component/prompt/index.tsx"
 if [ ! -f "$PROMPT_FILE" ]; then
   err "Prompt file not found: $PROMPT_FILE"
   exit 1
@@ -72,16 +72,16 @@ fi
 
 # ── 3. Install dependencies ────────────────────────────────────────────
 info "Installing dependencies (this may take a minute) ..."
-cd "$OPENCODE_SRC"
+cd "$OMAI_SRC"
 bun install --frozen-lockfile 2>/dev/null || bun install
 
 # ── 4. Build (current platform only) ──────────────────────────────────
 info "Building opencode for current platform ..."
-cd "$OPENCODE_SRC/packages/opencode"
+cd "$OMAI_SRC/packages/opencode"
 bun run build --single
 
 # ── 5. Install binary ──────────────────────────────────────────────────
-mkdir -p "$OPENCODE_DIR/bin"
+mkdir -p "$OMAI_DIR/bin"
 
 PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
@@ -90,23 +90,23 @@ ARCH=$(uname -m)
 [ "$PLATFORM" = "darwin" ] && true
 [ "$PLATFORM" = "linux" ] && true
 
-BUILT_BINARY="$OPENCODE_SRC/packages/opencode/dist/opencode-${PLATFORM}-${ARCH}/bin/opencode"
+BUILT_BINARY="$OMAI_SRC/packages/opencode/dist/opencode-${PLATFORM}-${ARCH}/bin/opencode"
 
 if [ ! -f "$BUILT_BINARY" ]; then
-  BUILT_BINARY=$(find "$OPENCODE_SRC/packages/opencode/dist" -name "opencode" -type f -executable 2>/dev/null | head -1)
+  BUILT_BINARY=$(find "$OMAI_SRC/packages/opencode/dist" -name "opencode" -type f -executable 2>/dev/null | head -1)
 fi
 
 if [ -f "$BUILT_BINARY" ]; then
-  if [ -f "$OPENCODE_DIR/bin/opencode" ]; then
-    cp "$OPENCODE_DIR/bin/opencode" "$OPENCODE_DIR/bin/opencode.bak.$(date +%Y%m%d%H%M%S)"
+  if [ -f "$OMAI_DIR/bin/opencode" ]; then
+    cp "$OMAI_DIR/bin/opencode" "$OMAI_DIR/bin/opencode.bak.$(date +%Y%m%d%H%M%S)"
   fi
-  cp "$BUILT_BINARY" "$OPENCODE_DIR/bin/opencode"
-  chmod +x "$OPENCODE_DIR/bin/opencode"
-  ok "Installed to $OPENCODE_DIR/bin/opencode"
+  cp "$BUILT_BINARY" "$OMAI_DIR/bin/opencode"
+  chmod +x "$OMAI_DIR/bin/opencode"
+  ok "Installed to $OMAI_DIR/bin/opencode"
 else
   err "Build failed - binary not found in dist/"
   info "Try running manually:"
-  echo "  cd $OPENCODE_SRC/packages/opencode && bun run build --single"
+  echo "  cd $OMAI_SRC/packages/opencode && bun run build --single"
   exit 1
 fi
 

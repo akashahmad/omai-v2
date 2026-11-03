@@ -8,9 +8,7 @@ import { useI18n } from "@opencode/ui/context/i18n"
 import { Option, Predicate, Schema } from "effect"
 import {
   For,
-  Match,
   Show,
-  Switch,
   createEffect,
   createMemo,
   onCleanup,
@@ -1173,104 +1171,10 @@ export function createSessionTimelineRowRenderer(input: {
       return value
     }
 
-    const usageLimit = createMemo(() => {
-      const kind = current().kind
-
-      if (kind !== "free-limit" && kind !== "go-limit") return
-
-      const keys =
-        kind === "go-limit"
-          ? ({ title: "ui.sessionTurn.goLimit.title", lineReset: "ui.sessionTurn.goLimit.lineReset" } as const)
-          : ({ title: "ui.sessionTurn.freeLimit.title", lineReset: "ui.sessionTurn.freeLimit.lineReset" } as const)
-
-      const at = current().resetAt
-
-      if (at === undefined || !Number.isFinite(at) || Number.isNaN(new Date(at).getTime())) return i18n.t(keys.title)
-
-      const now = Date.now()
-      const sameDay = new Date(at).toDateString() === new Date(now).toDateString() && at - now < 86_400_000
-
-      const time = new Intl.DateTimeFormat(
-        i18n.locale(),
-        sameDay ? { timeStyle: "short" } : { dateStyle: "medium", timeStyle: "short" },
-      ).format(at)
-
-      return i18n.t(keys.lineReset, { time })
-    })
-
-    // A budget pauses paid models, or only the ones it covers, until it resets at the start of a month.
-    const budgetLimit = createMemo(() => {
-      const kind = current().kind
-
-      if (kind !== "budget-limit" && kind !== "model-budget-limit") return
-      const at = current().resetAt
-
-      const time =
-        at === undefined
-          ? undefined
-          : new Intl.DateTimeFormat(i18n.locale(), {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-              timeZoneName: "shortOffset",
-            }).format(at)
-
-      if (kind === "budget-limit")
-        return {
-          text: time
-            ? i18n.t("ui.sessionTurn.budgetLimit.all", { time })
-            : i18n.t("ui.sessionTurn.budgetLimit.allUntilReset"),
-          action: i18n.t("ui.sessionTurn.budgetLimit.useFreeModel"),
-        }
-
-      return {
-        text: time
-          ? i18n.t("ui.sessionTurn.budgetLimit.models", { time })
-          : i18n.t("ui.sessionTurn.budgetLimit.modelsUntilReset"),
-        action: i18n.t("ui.sessionTurn.budgetLimit.switchModel"),
-      }
-    })
-
     return (
       <Frame row={current()}>
         <div data-slot="session-turn-message-container" class={`w-full ${padding()}`}>
-          <Switch fallback={<SessionError message={current().text} />}>
-            <Match when={budgetLimit()}>
-              {(notice) => (
-                <div
-                  role="status"
-                  class="text-[13px] font-[440] leading-text-compact tracking-[-0.04px] text-v2-text-text-muted"
-                >
-                  {notice().text}
-                  <Show when={input.actions?.chooseModel}>
-                    {(choose) => (
-                      <>
-                        <span aria-hidden="true">{" · "}</span>
-                        <button
-                          type="button"
-                          class="font-[530] text-v2-text-text-base hover:underline focus-visible:underline focus-visible:outline-none"
-                          onClick={() => choose()()}
-                        >
-                          {notice().action}
-                        </button>
-                      </>
-                    )}
-                  </Show>
-                </div>
-              )}
-            </Match>
-            <Match when={usageLimit()}>
-              {(text) => (
-                <div
-                  role="status"
-                  class="text-[13px] font-[440] leading-text-compact tracking-[-0.04px] text-v2-text-text-muted"
-                >
-                  {text()}
-                </div>
-              )}
-            </Match>
-          </Switch>
+          <SessionError message={current().text} />
         </div>
       </Frame>
     )

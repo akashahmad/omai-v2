@@ -46,7 +46,7 @@ export const toModelContent = (questions: ReadonlyArray<Question.Prompt>, answer
 }
 
 export const Plugin = {
-  id: "opencode.tool.question",
+  id: "omai.tool.question",
   effect: Effect.fn("QuestionTool.Plugin")(function* (ctx: Context) {
     const forms = yield* Form.Service
     const permission = yield* Permission.Service

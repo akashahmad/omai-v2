@@ -342,7 +342,7 @@ describe("Claude tool steps", () => {
     }),
   )
 
-  it.effect("an unavailable OpenCode server fails closed", () =>
+  it.effect("an unavailable tool server fails closed", () =>
     Effect.gen(function* () {
       const turn = FakeClaude.expectTurn()
       const init = turn.replies.find((message) => message.type === "system" && message.subtype === "init")
@@ -355,7 +355,7 @@ describe("Claude tool steps", () => {
       ])
       const test = yield* TestSessions.start(claude)
       const error = yield* TestTools.step(test.model, TestTools.prompt()).pipe(Effect.flip)
-      expect(String(error.cause)).toContain("OpenCode tool server did not connect")
+      expect(String(error.cause)).toContain("O M A I + tool server did not connect")
       expect(claude.runs).toHaveLength(1)
       yield* test.registry.close()
       claude.check()
