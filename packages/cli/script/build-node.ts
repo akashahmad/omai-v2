@@ -21,7 +21,7 @@ const NODE_VERSION = "26.4.0"
 const dir = path.resolve(import.meta.dirname, "..")
 const outdir = path.resolve(
   dir,
-  process.argv.find((arg) => arg.startsWith("--outdir="))?.slice("--outdir=".length) ?? "dist/node",
+  process.argv.find((arg) => arg.startsWith("--outdir="))?.slice("--outdir=".length) ?? "dist",
 )
 if (outdir === dir) throw new Error("--outdir must not be the package directory")
 if (outdir === path.join(dir, "dist-node")) {
@@ -91,7 +91,7 @@ async function assertTextImportsInlined(bundlePath: string) {
 }
 
 for (const target of targets) {
-  console.log(`building cli-node-${targetName(target)}`)
+  console.log(`building cli-${targetName(target)}`)
   const assets = await collectNodeAssets(target)
   await rm("dist-node", { recursive: true, force: true })
   const assetHash = await hashNodeAssets(assets)
@@ -117,8 +117,8 @@ for (const target of targets) {
   }
   if (bundleOnly) continue
 
-  const name = `cli-node-${targetName(target)}`
-  const binary = target.platform === "win32" ? "omai-node.exe" : "omai-node"
+  const name = `cli-${targetName(target)}`
+  const binary = target.platform === "win32" ? "omai.exe" : "omai"
   const output = path.join(outdir, name, "bin", binary)
   if (!builder) throw new Error("Node SEA builder is unavailable")
   await mkdir(path.dirname(output), { recursive: true })
@@ -228,7 +228,7 @@ async function resolveTargetNode(target: NodeTarget, host?: string) {
 }
 
 async function smoke(output: string) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "omai-node-smoke-"))
+  const root = await mkdtemp(path.join(os.tmpdir(), "omai-smoke-"))
   const executable = path.join(root, path.basename(output))
   await copyFile(output, executable)
   if (process.platform !== "win32") await chmod(executable, 0o755)

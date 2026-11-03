@@ -3,7 +3,6 @@ import { $ } from "bun"
 import pkg from "../package.json"
 import { Script } from "@opencode/script"
 import { archiveDir, npmDir } from "@opencode/script/pack"
-import { existsSync } from "fs"
 import { chmod, mkdir, rm, utimes } from "node:fs/promises"
 import path from "node:path"
 
@@ -23,16 +22,6 @@ await packDistribution({
   packagePrefix: "@opencode/cli-",
   archive: (target) => target.startsWith("linux-"),
 })
-if (existsSync(path.join(root, "node"))) {
-  await packDistribution({
-    root: path.join(root, "node"),
-    name: "@opencode/cli-node",
-    command: "omai-node",
-    binary: "omai-node",
-    packagePrefix: "@opencode/cli-node-",
-    archive: () => true,
-  })
-}
 
 async function packDistribution(input: {
   root: string

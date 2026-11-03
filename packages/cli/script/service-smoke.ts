@@ -8,13 +8,11 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 
-const nodeBuild = process.argv.includes("--node")
-const target = `cli${nodeBuild ? "-node" : ""}-${process.platform === "win32" ? "windows" : process.platform}-${process.arch}`
-const directory = path.join(import.meta.dir, "..", "dist", ...(nodeBuild ? ["node"] : []), target, "bin")
-const binary = path.join(
-  directory,
-  `${nodeBuild ? "omai-node" : "omai"}${process.platform === "win32" ? ".exe" : ""}`,
-)
+// --bun checks the Bun-compiled build in dist/bun; the shipped Node build is the default.
+const bunBuild = process.argv.includes("--bun")
+const target = `cli-${process.platform === "win32" ? "windows" : process.platform}-${process.arch}`
+const directory = path.join(import.meta.dir, "..", "dist", ...(bunBuild ? ["bun"] : []), target, "bin")
+const binary = path.join(directory, `omai${process.platform === "win32" ? ".exe" : ""}`)
 if (!(await Bun.file(binary).exists())) throw new Error(`Missing compiled CLI in ${directory}`)
 
 const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "omai-service-smoke-")))
@@ -58,15 +56,11 @@ try {
   await fs.writeFile(plugin, pluginSource())
   await waitForPlugin(info.url, headers, plugin)
 
-  const unauthorizedInfo = await fetch(new URL("/api/info", info.url), {
-    signal: AbortSignal.timeout(5_000),
-  })
-  if (unauthorizedInfo.status !== 401) throw new Error("Compiled service exposed info without authentication")
-  const unauthorizedOpenApi = await fetch(new URL("/openapi.json", info.url), {
-    signal: AbortSignal.timeout(5_000),
-  })
-  if (unauthorizedOpenApi.status !== 401)
-    throw new Error("Compiled service exposed application routes without authentication")
+  // The web app connects without a password, so the local service answers unauthenticated requests too.
+  const openInfo = await fetch(new URL("/api/info", info.url), { signal: AbortSignal.timeout(5_000) })
+  if (openInfo.status !== 200) throw new Error("Compiled service rejected an unauthenticated info request")
+  const openApi = await fetch(new URL("/openapi.json", info.url), { signal: AbortSignal.timeout(5_000) })
+  if (openApi.status !== 200) throw new Error("Compiled service rejected unauthenticated application routes")
   const stopRoute = await fetch(new URL("/api/service/stop", info.url), {
     method: "POST",
     headers: { ...headers, "content-type": "application/json" },

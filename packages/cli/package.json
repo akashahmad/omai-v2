@@ -14,10 +14,10 @@
     "./server-process": "./src/server-process.ts"
   },
   "scripts": {
-    "build": "bun run script/build.ts",
-    "build:node": "bun run script/build-node.ts",
+    "build": "bun run script/build-node.ts",
+    "build:bun": "bun run script/build.ts",
     "pack": "bun run script/pack.ts",
-    "pack:docker": "chmod +x dist/cli-linux-*-musl/bin/omai && mkdir -p ../../dist/docker && docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=../../dist/docker/omai-image.tar .",
+    "pack:docker": "chmod +x dist/cli-linux-*/bin/omai && mkdir -p ../../dist/docker && docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=../../dist/docker/omai-image.tar .",
     "dev": "bun run src/index.ts",
     "test": "bun test --timeout 30000 --only-failures",
     "typecheck": "bun check --no-script -b",

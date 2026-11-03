@@ -33,13 +33,11 @@ function run(target) {
 const envPath = process.env.OMAI_BIN_PATH
 const scriptDir = path.dirname(fs.realpathSync(__filename))
 const command = path.basename(__filename).replace(/\.cjs$/, "")
-const nodeBuild = command === "omai-node"
-const sourceCommand = nodeBuild ? "omai-node" : "omai"
 const cached = path.join(scriptDir, `.${command}`)
 const platform = { darwin: "darwin", linux: "linux", win32: "windows" }[os.platform()] || os.platform()
 const arch = { x64: "x64", arm64: "arm64", arm: "arm" }[os.arch()] || os.arch()
-const base = `@opencode/cli${nodeBuild ? "-node" : ""}-` + platform + "-" + arch
-const binary = platform === "windows" ? `${sourceCommand}.exe` : sourceCommand
+const base = "@opencode/cli-" + platform + "-" + arch
+const binary = platform === "windows" ? "omai.exe" : "omai"
 
 function supportsAvx2() {
   if (arch !== "x64") return false
@@ -81,7 +79,6 @@ function supportsAvx2() {
 }
 
 const names = (() => {
-  if (nodeBuild) return [base]
   const baseline = arch === "x64" && !supportsAvx2()
   if (platform === "linux") {
     const musl = (() => {

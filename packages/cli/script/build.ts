@@ -19,7 +19,7 @@ const dir = path.resolve(import.meta.dirname, "..")
 const binary = "omai"
 const outdir = path.resolve(
   dir,
-  process.argv.find((arg) => arg.startsWith("--outdir="))?.slice("--outdir=".length) ?? "dist",
+  process.argv.find((arg) => arg.startsWith("--outdir="))?.slice("--outdir=".length) ?? "dist/bun",
 )
 if (outdir === dir) throw new Error("--outdir must not be the package directory")
 process.chdir(dir)

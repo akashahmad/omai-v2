@@ -257,9 +257,9 @@ export function mainConfig(input: NodeBuildInput): UserConfig {
     esbuild: { jsx: "automatic" },
     define: {
       OMAI_VERSION: JSON.stringify(input.version),
-      OMAI_CLI_NAME: JSON.stringify("omai-node"),
+      OMAI_CLI_NAME: JSON.stringify("omai"),
       OMAI_CHANNEL: JSON.stringify(input.channel),
-      OMAI_ARTIFACT: JSON.stringify("cli-node"),
+      OMAI_ARTIFACT: JSON.stringify("cli"),
       ...(input.highlights ? { OMAI_RELEASE_HIGHLIGHTS: JSON.stringify(input.highlights) } : {}),
       OMAI_LIBC: input.target.platform === "linux" ? JSON.stringify("glibc") : "undefined",
       FFF_LIBC: input.target.platform === "linux" ? JSON.stringify("gnu") : "undefined",

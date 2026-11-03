@@ -49,7 +49,7 @@
     },
     "packages/app": {
       "name": "@opencode/app",
-      "version": "2.2.5",
+      "version": "1.0.0",
       "dependencies": {
         "@corvu/drawer": "catalog:",
         "@dnd-kit/abstract": "0.5.0",
@@ -106,8 +106,7 @@
       "name": "@opencode/cli",
       "version": "2.2.5",
       "bin": {
-        "opencode": "./bin/opencode.cjs",
-        "opencode2": "./bin/opencode2.cjs",
+        "omai": "./bin/omai.cjs",
       },
       "dependencies": {
         "@clack/core": "1.0.0-alpha.1",
