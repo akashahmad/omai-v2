@@ -215,8 +215,6 @@ onCleanup(onIdle(() => void Page.preload()))
 
 Pairing's shipping page uses a query, not `createLatest`. It passes the query's abort signal directly to the no-input Ipc method; options are the only argument. The generation in the key asks again when main comes back:
 
-<!-- source: src/pairing/page.tsx#screenActive -->
-
 ```tsx
 const screenActive = useQuery(() => ({
   queryKey: [ctx.id, "screen-active", main()?.generation],
@@ -385,8 +383,6 @@ const act = (name: "check" | "install") => {
 
 The pairing settings page waits for its main side only where it needs it. Pairing codes come from the local server's `ServerRef`, so they never wait for main; remote access and the display setting render only while main is active, so the page never offers a switch that cannot answer:
 
-<!-- source: src/pairing/page.tsx#main -->
-
 ```tsx
 // Remote access and the display setting need pairing's main side; codes come from the server, so they never wait.
 const main = () => {
@@ -431,8 +427,6 @@ session: BuiltinStore.session(
 ```
 
 SSH keeps a main store, imported from a key of the desktop settings file. `{ state: [namespace, key] }` names a key of another main storage namespace instead, and `file` another settings file:
-
-<!-- source: src/ssh/main.ts#saved -->
 
 ```ts
 // The saved hosts; stored before in the desktop settings file.
@@ -483,8 +477,6 @@ Pairing connects another device to this machine's server from anywhere, and keep
 
 1. **Define the contract.** `contract.ts` holds the tokens other code may import, here the Ipc between pairing's main and window entries. It carries only what needs the main process: remote access, a setting of the background service, and the display sleep blocker. The schemas type both sides and encode every value.
 
-<!-- source: src/pairing/contract.ts -->
-
 ```ts
 import { Schema } from "effect"
 import { Ipc } from "@opencode/plugin/gui"
@@ -514,8 +506,6 @@ export const Pairing = Ipc.define({
 
 2. **Write the definition.** Pairing declares only its copy: its Ipc is provided at runtime, and its state lives in main.
 
-<!-- source: src/pairing/index.ts -->
-
 ```ts
 import { Plugin } from "@opencode/plugin/gui"
 import en from "./i18n/en"
@@ -524,8 +514,6 @@ export default Plugin.define({ i18n: { en } })
 ```
 
 3. **Provide it from main.** Whether main keeps the display awake is a main store, read synchronously and imported once from the key the desktop kept it under before; a built-in names that older home through `builtinMainContext`. Remote access runs `opencode service` through `ctx.cli`, with the caller's signal for a read and `ctx.signal` for a change a closing window must not cancel. `ctx.onCleanup` releases the blocker when the instance goes away.
-
-<!-- source: src/pairing/main.ts -->
 
 ```ts
 import { execFile } from "node:child_process"
@@ -612,8 +600,6 @@ export default setup
 
 4. **Write the window entry.** Pairing exists only on desktop, so setup returns at once on the web. The settings page is heavy, so it loads behind `lazy()` and compiles while the app idles; its search entries are indexed without mounting it. The page receives the desktop's own server, found through `ctx.servers` by `builtin`, and `ctx.use(Pairing)`. The search entries for remote access and the display setting, like the settings themselves, exist only while main answers (see `main` under [Live and failure handling](#live-and-failure-handling)).
 
-<!-- source: src/pairing/renderer.tsx -->
-
 ```tsx
 import { lazy, onCleanup, Suspense } from "solid-js"
 import { Command, SettingsPage, type Plugin } from "@opencode/plugin/gui"
@@ -685,8 +671,6 @@ export default setup
 
 5. **Register it.** A built-in joins both lists under its id, each composed with `compose`. The main list names every built-in, so their ids stay reserved, and adds pairing's main entry:
 
-<!-- source: src/main.ts#builtins -->
-
 ```ts
 /** Built-in plugins with their main entries, by id. Lists every built-in so their ids stay reserved. */
 export const builtins = compose({
@@ -722,11 +706,7 @@ export const builtins = compose({
   file: { ...file, windowEntry: eager(fileRenderer) },
   review: { ...review, windowEntry: eager(reviewRenderer) },
   details: { ...details, windowEntry: eager(detailsRenderer) },
-  browser: { ...browser, windowEntry: eager(browserRenderer) },
-  pairing: { ...pairing, windowEntry: eager(pairingRenderer) },
   updater: { ...updater, windowEntry: eager(updaterRenderer) },
-  ssh: { ...ssh, windowEntry: eager(sshRenderer) },
-  wsl: { ...wsl, windowEntry: eager(wslRenderer) },
   "microsoft-office": { ...microsoftOffice, windowEntry: eager(microsoftOfficeRenderer) },
   sources: { ...sources, windowEntry: eager(sourcesRenderer) },
   goal: { ...goal, windowEntry: eager(goalRenderer) },

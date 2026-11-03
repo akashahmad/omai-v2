@@ -109,20 +109,6 @@ test("Don't show these in the future turns release notes off and closes What's N
   await expect.poll(() => stored(page, RELEASE_NOTES)).toEqual({ enabled: false })
 })
 
-test("a rejected update check shows one failure title without repeating it as a description", async ({ page }) => {
-  await mockWorkspace(page, { name: "UpdateCheck", sessions: [] })
-  await page.goto(
-    `/e2e/utils/settings-wsl.html?${new URLSearchParams({ server: SERVER, mode: "stopped", updater: "" })}`,
-  )
-  const settings = page.getByTestId("settings-screen")
-  const check = settings.getByRole("button", { name: "Check now", exact: true })
-  await expect(check).toBeEnabled()
-  await check.click()
-  await expect(page.getByText("Request failed", { exact: true })).toBeVisible()
-  await expect(page.getByText("Request failed", { exact: true })).toHaveCount(1)
-  await expect(page.getByText("You're up to date", { exact: true })).toHaveCount(0)
-})
-
 test("What's New opened after the attachment mounts waits for the routes, then keeps focus over restored Settings", async ({
   page,
 }) => {

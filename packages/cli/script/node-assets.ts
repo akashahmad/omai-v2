@@ -2,7 +2,6 @@ import { createHash } from "node:crypto"
 import { copyFile, mkdir, readFile, stat } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { getNodeAssets } from "@opentui/core/node-assets"
 import { attentionSoundAssets, type NodeTarget, photonWasmAsset } from "../src/node/target"
 import { collectFiles } from "./files"
 import { resolveOpencodePty } from "./opencode-pty"
@@ -27,11 +26,6 @@ export async function collectNodeAssets(target: NodeTarget) {
   const ptyEntry = fileURLToPath(import.meta.resolve(target.nodePtyPackage))
   const ptyRoot = path.resolve(path.dirname(ptyEntry), "..")
   const assets: NodeAsset[] = [
-    ...getNodeAssets({
-      platform: target.platform,
-      arch: target.arch,
-      ...(target.platform === "linux" ? { libc: "glibc" as const } : {}),
-    }),
     { key: target.parcelWatcherAsset, source: fileURLToPath(import.meta.resolve(target.parcelWatcherPackage)) },
     { key: target.fffAsset, source: fileURLToPath(import.meta.resolve(target.fffPackage)) },
     { key: target.fffFfiAsset, source: fileURLToPath(import.meta.resolve(target.fffFfiPackage)) },

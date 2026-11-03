@@ -18,5 +18,3 @@
 ## Tests
 
 - Use `testEffect(...)` from `test/lib/effect.ts` for tests that need Effect layers.
-- Provider tests replay cassettes: recorded HTTP exchanges stored as JSON in `test/fixtures/recordings/`, one file per scenario. Replay is the default and needs no API keys.
-- To record, unset `CI` and run with `RECORD=true` plus the provider's API key. Re-record only the cassette you are changing; recordings contain volatile IDs that create noisy diffs.

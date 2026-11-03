@@ -2,9 +2,7 @@ import path from "node:path"
 import { readFile } from "node:fs/promises"
 import { createRequire } from "node:module"
 import { defineConfig, type Plugin, type UserConfig } from "vite"
-import solid from "vite-plugin-solid"
 import { nodeExecArgv, nodeTarget, type NodeTarget, photonWasmAsset } from "./src/node/target"
-import { verifySimulationGraph } from "./script/verify-artifact"
 
 const dir = import.meta.dirname
 
@@ -56,15 +54,6 @@ function runtimeRequirePlugin(): Plugin {
       const transformed = code.replace("    var domino = require('@mixmark-io/domino');", "")
       if (transformed === code) this.error("Failed to rewrite Turndown's Domino require")
       return `import domino from "@mixmark-io/domino"\n${transformed}`
-    },
-  }
-}
-
-function simulationGraphPlugin(): Plugin {
-  return {
-    name: "opencode:simulation-graph",
-    generateBundle() {
-      verifySimulationGraph(this.getModuleIds())
     },
   }
 }
@@ -243,8 +232,7 @@ if (__ocPersistentPty && !process.env.OPENCODE_PTY_BIN) process.env.OPENCODE_PTY
 try {
   globalThis.__OPENCODE_FFF_FFI = require(process.env.OPENCODE_FFF_FFI_PATH)
 } catch {}
-globalThis.__OPENCODE_PHOTON_WASM_PATH = process.env.OPENCODE_PHOTON_WASM_PATH
-if (process.platform === "linux") process.env.OPENTUI_LIBC = "glibc"`
+globalThis.__OPENCODE_PHOTON_WASM_PATH = process.env.OPENCODE_PHOTON_WASM_PATH`
 }
 
 export type NodeBuildInput = {
@@ -264,13 +252,6 @@ export function mainConfig(input: NodeBuildInput): UserConfig {
       rawTextPlugin(input.modelsSnapshot),
       runtimeRequirePlugin(),
       fffNodePlugin(),
-      simulationGraphPlugin(),
-      solid({
-        solid: {
-          generate: "universal",
-          moduleName: "@opentui/solid",
-        },
-      }),
     ],
     resolve,
     esbuild: { jsx: "automatic" },

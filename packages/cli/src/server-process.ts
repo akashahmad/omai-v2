@@ -66,11 +66,14 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
     )
   return yield* Effect.scoped(
     Effect.gen(function* () {
-      const foreground = options.mode === "default"
       const serviceOptions = options.mode === "service" ? yield* ServiceConfig.options() : undefined
       const config = options.mode === "service" ? yield* ServiceConfig.read() : {}
       const hostname = options.hostname ?? config.hostname ?? "127.0.0.1"
-      const port = options.port ?? config.port ?? (options.mode === "service" ? ServiceConfig.defaultPort() : undefined)
+      // `serve` defaults to the port the web app's dev server connects to.
+      const port =
+        options.port ??
+        config.port ??
+        (options.mode === "service" ? ServiceConfig.defaultPort() : options.mode === "default" ? 4096 : undefined)
       const findIncumbent =
         serviceOptions !== undefined && port !== undefined
           ? Service.incumbent({ ...serviceOptions, url: serviceURL(hostname, port) })
@@ -88,13 +91,14 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
         delete process.env.OPENCODE_PASSWORD
         delete process.env.OPENCODE_SERVER_PASSWORD
       }
-      const password =
-        options.mode === "service"
-          ? config.password || randomBytes(32).toString("base64url")
-          : environmentPassword
-            ? Redacted.value(environmentPassword)
-            : randomBytes(32).toString("base64url")
-      if (!password) return yield* Effect.fail(new Error("Missing server password"))
+      // A password applies only when one is set. stdio clients always receive one, as the lease credential.
+      const password = environmentPassword
+        ? Redacted.value(environmentPassword)
+        : options.mode === "service"
+          ? config.password || undefined
+          : options.mode === "stdio"
+            ? randomBytes(32).toString("base64url")
+            : undefined
       const instanceID = randomUUID()
       const transform = yield* WebUi.handler()
       const remote = { urls: [] as ReadonlyArray<string> }
@@ -110,7 +114,6 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
           cors: options.cors ?? config.cors,
           password,
           pty: { handoff },
-          simulation: truthy(process.env.OPENCODE_SIMULATE),
           database: {
             path: databasePath(global.data),
           },
@@ -148,10 +151,9 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
           : {
               onListen: (address, shutdown) =>
                 Effect.gen(function* () {
-                  if (!config.password) yield* ServiceConfig.password(password)
                   return yield* ServiceRegistration.register({
                     address,
-                    password,
+                    password: password ?? "",
                     id: instanceID,
                     file: serviceOptions.file,
                     shutdown,
@@ -187,6 +189,10 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
         }),
       )
       if (server === undefined) return
+      if (config.remote !== undefined && !password)
+        return yield* Effect.fail(
+          new Error("Remote access needs a server password. Set one with `opencode service set password <password>`."),
+        )
       if (serviceOptions !== undefined && config.remote !== undefined && NetAddress.isInetAddress(server.address)) {
         const bound = NetAddress.formatIp(server.address.address)
         // A wildcard bind also listens on loopback, which is all the tunnel needs to reach.
@@ -206,7 +212,6 @@ const processEffect = Effect.fnUntraced(function* (options: Options) {
       }
       const url = HttpServer.formatAddress(server.address)
       console.log(options.mode === "stdio" ? JSON.stringify({ url }) : `server listening on ${url}`)
-      if (foreground && !environmentPassword) console.log(`server password ${password}`)
       return yield* options.mode === "service"
         ? server.shutdown
         : options.mode === "stdio"

@@ -3,33 +3,6 @@
 - This repository does not use Changesets. Do not add `.changeset` files; follow the existing release workflow instead.
 - The default branch is `dev`. Base branches and worktrees on `origin/dev`, target PRs at `dev`, and diff against `origin/dev` unless told otherwise.
 
-## Live TUI Testing
-
-- Run `bun run dev:live` from a development worktree to test its TUI against the currently elected `opencode` background server and live sessions.
-- Pass a directory after the script when needed, for example `bun run dev:live /path/to/project`.
-- The script discovers the server with `opencode service status`, injects its private local credential from `opencode service get password`, and uses the `dev` TUI storage channel so tabs and other client-local state match the installed client.
-- Prefer `dev:live` over plain `bun run dev` for this workflow. An implicit managed-service connection may replace the live server when the worktree client version differs; explicit `--server` warns and continues without replacing it.
-
-## Live Desktop Diagnostics
-
-- When attaching Playwright to a running desktop app, use `chromium.connectOverCDP(endpoint, { noDefaults: true })`.
-- Without `noDefaults`, Playwright applies light-mode media emulation during attachment. An app following the system theme then flashes light until the connection closes. The option also preserves the existing focus and other media preferences.
-- Do not emulate a color scheme or reduced-motion preference on the user's live window unless explicitly requested; use an isolated test context for those scenarios.
-
-## TUI Stories
-
-- When a user asks for a TUI story, add a fixture-driven story under `packages/tui/src/feature-plugins/system/storybook` and register it in `index.tsx`.
-- Render the real production component rather than a visual copy. Keep submissions and other side effects local to the story so it is safe to explore repeatedly.
-- Expose the meaningful state dimensions through story keybindings and list them in `StoryFooter`; include a reset command when combinations can leave the fixture in a confusing state.
-- Run a specific story with `OPENCODE_STORY=<story-id> bun run dev:live` from the development worktree, and exercise narrow and wide terminal sizes when layout is relevant.
-
-## TUI Theme Tokens
-
-- Choose theme tokens by semantic role, not by their current color. Do not use raw `theme.hue` values or borrow an unrelated semantic token to achieve a preferred appearance.
-- Use `text.feedback` and `background.feedback` only for outcome or status feedback such as errors, warnings, success messages, and informational messages. Use `formfield` states for form-control text, ordinals, and selection markers, and `action` states for actions.
-- If the theme does not expose a token for the required semantic role, extend the theme schema, defaults, resolution, and types with that role before using it in a component. Do not repurpose the nearest-looking existing token.
-- When changing the public theme token surface, verify the built-in light and dark defaults and the custom-theme fallback path in addition to the affected TUI component.
-
 ## Branch Names
 
 Use a short branch name of at most three words, separated by hyphens. Do not use slashes or type prefixes such as `feat/` or `fix/`.
@@ -40,9 +13,9 @@ Examples: `session-recovery`, `fix-scroll-state`, `regenerate-sdk`.
 
 Use conventional commit-style messages and PR titles: `type(scope): summary`.
 
-Valid types are `feat`, `fix`, `docs`, `chore`, `refactor`, and `test`. Scopes are optional; use the affected package or area when helpful, e.g. `core`, `opencode`, `tui`, `app`, `desktop`, `sdk`, or `plugin`.
+Valid types are `feat`, `fix`, `docs`, `chore`, `refactor`, and `test`. Scopes are optional; use the affected package or area when helpful, e.g. `core`, `server`, `cli`, `app`, or `plugin`.
 
-Examples: `fix(tui): simplify thinking toggle styling`, `docs: update contributing guide`, `chore(sdk): regenerate types`.
+Examples: `fix(app): simplify thinking toggle styling`, `docs: update contributing guide`, `chore(client): regenerate types`.
 
 For user-facing `feat`, `fix` and `perf` PRs, add a small looping animated SVG of the change under `### Visual` in the PR body (a `svg` code block, 240×72, for example a dock growing out of the composer or spinners turning in step). Draw with `currentColor` and opacity so it works in light and dark, make the unanimated state a good still (it is shown under reduced motion), animate with CSS or SMIL only, and keep it under 8 KB with no scripts or external references. The desktop beta's "What's new" dialog shows it.
 
@@ -185,7 +158,7 @@ const table = sqliteTable("session", {
 - Avoid mocks as much as possible, you shouldn't be using globalThis.\* at all unless it's the only option.
 - Test actual implementation, do not duplicate logic into tests
 - Tests cannot run from repo root (guard: `do-not-run-tests-from-root`); run from package directories such as `packages/core`.
-- Before writing or changing tests, read the matching skill in `.opencode/skills`: `unit-tests` (bun test), `tui-tests` (OpenTUI renderer tests), `app-e2e-tests` (Playwright in `packages/app/e2e`) or `component-tests` (Playwright on stories, `packages/stories`). They cover what has made tests slow or flaky in CI.
+- Before writing or changing tests, read the matching skill in `.opencode/skills`: `unit-tests` (bun test), `app-e2e-tests` (Playwright in `packages/app/e2e`) or `component-tests` (Playwright on stories, `packages/stories`). They cover what has made tests slow or flaky in CI.
 
 ## Checks
 

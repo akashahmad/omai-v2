@@ -17,7 +17,6 @@
     "./effect": "./src/effect/index.ts",
     "./host": "./src/host.ts",
     "./runtime": "./src/runtime.ts",
-    "./tui": "./src/tui/index.ts",
     "./gui": "./src/gui/index.ts",
     "./gui/main": "./src/gui/main.ts",
     "./gui/host": "./src/gui/host.ts",
@@ -50,24 +49,12 @@
     "effect": "catalog:"
   },
   "peerDependencies": {
-    "@opencode/theme": "workspace:*",
-    "@opentui/core": ">=0.8.1",
-    "@opentui/solid": ">=0.8.1",
     "electron": "*",
     "solid-js": ">=1.9.0",
     "vite": ">=6",
     "vite-plugin-solid": ">=2.11"
   },
   "peerDependenciesMeta": {
-    "@opencode/theme": {
-      "optional": true
-    },
-    "@opentui/core": {
-      "optional": true
-    },
-    "@opentui/solid": {
-      "optional": true
-    },
     "electron": {
       "optional": true
     },
@@ -82,9 +69,6 @@
     }
   },
   "devDependencies": {
-    "@opencode/theme": "workspace:*",
-    "@opentui/core": "catalog:",
-    "@opentui/solid": "catalog:",
     "@tsconfig/bun": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",

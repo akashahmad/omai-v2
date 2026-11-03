@@ -5,7 +5,6 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "setup:recording-env": "bun run script/setup-recording-env.ts",
     "test": "bun test --timeout 30000 --only-failures",
     "typecheck": "bun check --no-script && bun check --no-script -p tsconfig.types.json",
     "typecheck:tsc": "tsc --noEmit && tsc --noEmit -p tsconfig.types.json",
@@ -145,7 +144,6 @@
   "devDependencies": {
     "@clack/prompts": "1.0.0-alpha.1",
     "@effect/platform-node": "catalog:",
-    "@opencode/http-recorder": "workspace:*",
     "@tsconfig/bun": "catalog:",
     "@types/bun": "catalog:",
     "@typescript/native": "catalog:",

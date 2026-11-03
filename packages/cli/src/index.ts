@@ -12,7 +12,6 @@ import { OPENCODE_ARTIFACT, OPENCODE_CHANNEL, OPENCODE_LOCAL, OPENCODE_VERSION }
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { Global } from "@opencode/util/global"
 import { AppProcess } from "@opencode/util/process"
-import { Config } from "./config"
 import { Npm } from "@opencode/util/npm"
 import { EffectFlock } from "@opencode/util/effect-flock"
 import { Heap } from "./heap"
@@ -40,10 +39,8 @@ if (process.env.OPENCODE_SSH_ASKPASS_PORT) {
 }
 
 const Handlers = Runtime.handlers(Commands, {
-  $: () => import("./commands/handlers/default"),
   upgrade: () => import("./commands/handlers/upgrade"),
   uninstall: () => import("./commands/handlers/uninstall"),
-  acp: () => import("./commands/handlers/acp"),
   api: () => import("./commands/handlers/api"),
   auth: {
     list: () => import("./commands/handlers/auth/list"),
@@ -74,8 +71,6 @@ const Handlers = Runtime.handlers(Commands, {
   },
   models: () => import("./commands/handlers/models"),
   stats: () => import("./commands/handlers/stats"),
-  mini: () => import("./commands/handlers/mini"),
-  run: () => import("./commands/handlers/run"),
   pair: () => import("./commands/handlers/pair"),
   reload: () => import("./commands/handlers/reload"),
   session: {
@@ -130,7 +125,6 @@ Effect.gen(function* () {
     }).pipe(Effect.andThen(Effect.failCause(cause))),
   ),
   Effect.annotateLogs({ role: "cli" }),
-  Effect.provide(Config.layer),
   Effect.provide(Updater.layer),
   Effect.provide(
     LayerNode.compile(LayerNode.group([Global.node, AppProcess.node, Npm.node, EffectFlock.node]), {

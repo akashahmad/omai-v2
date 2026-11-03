@@ -6,12 +6,11 @@ import { mkdir, rm } from "fs/promises"
 import path from "path"
 import { Script } from "@opencode/script"
 import { embed } from "@opencode/script/highlights"
-import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
 import type { BunPlugin } from "bun"
 import pkg from "../package.json"
 import { discoverPluginRuntimeSpecifiers, pluginRuntimeLoaderCode } from "@opencode/plugin/runtime-modules"
 import { buildAppArchive } from "./app-assets"
-import { verifyArtifact, verifySimulationGraph } from "./verify-artifact"
+import { verifyArtifact } from "./verify-artifact"
 import { resolveOpencodePty } from "./opencode-pty"
 import { NativeArch } from "../../../script/native-arch"
 import { bundledModelsSnapshot, modelsSnapshotPlugin } from "../../core/script/models-snapshot"
@@ -32,7 +31,6 @@ const baselineFlag = process.argv.includes("--baseline")
 const requestedTarget = process.env.OPENCODE_TARGET
 const skipInstall = process.argv.includes("--skip-install")
 const skipWebUi = process.argv.includes("--skip-web-ui")
-const solidPlugin = createSolidTransformPlugin()
 const highlights = Script.preview ? undefined : embed(process.env.OPENCODE_RELEASE_NOTES)
 const releaseAssets = new Map<string, Promise<Map<string, string>>>()
 const modelsSnapshot = modelsSnapshotPlugin(await bundledModelsSnapshot())
@@ -70,8 +68,7 @@ const targets =
 if (!targets.length) throw new Error(`Unknown build target: ${requestedTarget}`)
 
 // Bun 1.4.4 skips native packages for the other libc by default, but the musl targets need them.
-if (!skipInstall)
-  await $`bun install --os="*" --cpu="*" --libc="*" @opentui/core@${pkg.dependencies["@opentui/core"]} @opencode/pty@${pkg.dependencies["@opencode/pty"]}`
+if (!skipInstall) await $`bun install --os="*" --cpu="*" --libc="*" @opencode/pty@${pkg.dependencies["@opencode/pty"]}`
 const appArchive = path.join(dir, ".cache", "bun-app-archive.bin")
 await Bun.write(appArchive, await buildAppArchive(Script.channel, { skipBuild: skipWebUi }))
 const appAssetsPlugin: BunPlugin = {
@@ -133,16 +130,6 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
       }))
     },
   }
-  const simulationInputs = new Set<string>()
-  const simulationGraphPlugin: BunPlugin = {
-    name: "opencode-simulation-graph",
-    setup(build) {
-      build.onLoad(
-        { filter: /packages[/\\]simulation[/\\]src[/\\](frontend[/\\](simulation|server)|control-server)\.ts$/ },
-        (args) => void simulationInputs.add(args.path),
-      )
-    },
-  }
   const parcelWatcherPackage = `@parcel/watcher-${item.os}-${item.arch}${item.os === "linux" ? `-${item.abi ?? "glibc"}` : ""}`
   const parcelWatcherPlugin: BunPlugin = {
     name: "parcel-watcher-binding",
@@ -162,11 +149,9 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
     tsconfig: "./tsconfig.json",
     plugins: [
       appAssetsPlugin,
-      solidPlugin,
       parcelWatcherPlugin,
       opencodePtyPlugin,
       pluginRuntimePlugin,
-      simulationGraphPlugin,
       modelsSnapshot,
     ],
     external: ["node-gyp"],
@@ -201,7 +186,6 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
       OPENCODE_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "undefined",
       // FFF_LIBC selects the fff native lib variant: "musl" or "gnu".
       FFF_LIBC: item.os === "linux" ? `'${item.abi ?? "gnu"}'` : "undefined",
-      ...(item.os === "linux" ? { "process.env.OPENTUI_LIBC": JSON.stringify(item.abi ?? "glibc") } : {}),
     },
   })
 
@@ -209,7 +193,6 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
     for (const log of result.logs) console.error(log)
     process.exit(1)
   }
-  verifySimulationGraph(simulationInputs)
   await NativeArch.verify(path.join(outdir, name, "bin", item.os === "win32" ? `${binary}.exe` : binary), item.arch)
 
   await Bun.write(

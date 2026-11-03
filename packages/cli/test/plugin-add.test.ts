@@ -17,7 +17,7 @@ test.each([
   { parts: ["tui", "gui"] as const, target: "server" },
   { parts: ["server"] as const, target: "server" },
   { parts: ["server", "tui", "gui"] as const, target: "server" },
-  { parts: ["tui"] as const, target: "tui" },
+  { parts: ["tui"] as const, target: undefined },
   { parts: [] as const, target: undefined },
 ])("configures a package with $parts parts in the $target config", async (input) => {
   await using root = await tmpdir()

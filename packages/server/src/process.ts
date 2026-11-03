@@ -15,7 +15,7 @@ import { HttpMiddleware, HttpRouter, HttpServerRequest, HttpServerResponse } fro
 import { NetAddress } from "effect/net"
 import { createServer } from "node:http"
 import { ServerAuth } from "./auth"
-import { isAllowedCorsOrigin } from "./cors"
+import { isAllowedCorsOrigin, isAllowedRequestOrigin } from "./cors"
 import { authorizedRequest, unauthorizedResponse } from "./middleware/authorization"
 import { withoutParentSpan } from "./request-tracing"
 import { createRoutes } from "./routes"
@@ -52,9 +52,13 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
   transform?: Transform,
   remoteURLs?: () => ReadonlyArray<string>,
 ) {
-  const password = options.password
-  if (!password) return yield* Effect.fail(new Error("Missing server password"))
+  const password = options.password || undefined
   const hostname = options.hostname ?? "127.0.0.1"
+  // Without a password anything that can reach the port can drive the server, so only this machine may.
+  if (!password && !isLoopback(hostname))
+    return yield* Effect.fail(
+      new Error(`Set OPENCODE_PASSWORD to listen on ${hostname}; without a password the server only listens on loopback`),
+    )
   const port = Option.fromNullishOr(options.port)
   const shutdown = yield* Latch.make()
   const status = yield* Status.make()
@@ -67,7 +71,7 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
   }
   const urls = () => [...localURLs(), ...(remoteURLs?.() ?? [])]
   const application = yield* Ref.make(Option.none<App>())
-  const app = dispatch(password, status, application, options.app?.version ?? "unknown", urls, Global.Path.tmp)
+  const app = dispatch(password, options, status, application, options.app?.version ?? "unknown", urls, Global.Path.tmp)
   // Request fibers may continue inbound trace context, but must not inherit the server startup parent.
   yield* bound.http
     .serve(
@@ -178,14 +182,24 @@ function addressInUse(error: unknown) {
 }
 
 function dispatch(
-  password: string,
+  password: string | undefined,
+  cors: ServerOptions,
   status: Status.Interface,
   application: Ref.Ref<Option.Option<App>>,
   version: string,
   urls: () => ReadonlyArray<string>,
   tmp: string,
 ): App {
-  const auth = ServerAuth.Config.of({ password: Option.some(password), username: "opencode" })
+  const auth = password ? ServerAuth.Config.of({ password: Option.some(password), username: "opencode" }) : undefined
+  // Without a password, a page on another site could still send requests, so only allowed origins get through. The
+  // Host must also be loopback: a site that rebinds its own name to 127.0.0.1 would otherwise count as same-host.
+  const authorized = (request: HttpServerRequest.HttpServerRequest) =>
+    auth
+      ? authorizedRequest(request, auth)
+      : Effect.succeed(
+          isLoopback(hostOf(request.headers.host)) &&
+            isAllowedRequestOrigin(request.headers.origin, request.headers.host, cors),
+        )
   return Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest
     const url = new URL(request.url, "http://localhost")
@@ -193,14 +207,14 @@ function dispatch(
     const app = yield* Ref.get(application)
     const ready = state.type === "ready" && Option.isSome(app)
     if (request.method === "GET" && url.pathname === "/api/info" && !ready) {
-      if (!(yield* authorizedRequest(request, auth))) return unauthorizedResponse(request)
+      if (!(yield* authorized(request))) return unauthorizedResponse(request)
       return yield* infoResponse(status, version, urls, tmp)
     }
     if (
       !isPairingConnectURL(url) &&
       (!ready ||
         (!hasPtyConnectTicketURL(url) && !hasPersistentPtyConnectTicketURL(url) && !hasMcpClientTicketURL(url))) &&
-      !(yield* authorizedRequest(request, auth))
+      !(yield* authorized(request))
     )
       return unauthorizedResponse(request)
     if (ready) return yield* app.value
@@ -248,3 +262,12 @@ function unavailable(status: Status.State) {
 const installRestartContinuity = Effect.fnUntraced(function* (restart: SessionRestart.Interface) {
   yield* Effect.forkScoped(restart.resumeSuspendedSessions)
 })
+
+function hostOf(host: string | undefined) {
+  if (!host) return ""
+  return URL.parse(`http://${host}`)?.hostname ?? ""
+}
+
+function isLoopback(hostname: string) {
+  return hostname === "localhost" || hostname === "::1" || hostname === "[::1]" || hostname.startsWith("127.")
+}

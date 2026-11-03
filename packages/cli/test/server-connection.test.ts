@@ -145,8 +145,6 @@ test("global --server and --standalone flags parse in any position for server-co
     [["debug", "--server", url, "heap-dump"], "opencode debug heap-dump"],
     [["--server", url, "models"], "opencode models"],
     [["models", "--server", url], "opencode models"],
-    [["--server", url, "run", "hello"], "opencode run"],
-    [["run", "hello", "--server", url], "opencode run"],
   ]
 
   for (const [args, expectedPath] of serverCases) {

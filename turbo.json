@@ -4,8 +4,6 @@
     "patches/**",
     "bunfig.toml",
     ".npmrc",
-    ".github/actions/setup-bun/**",
-    ".github/workflows/check-test.yml",
     "package.json"
   ],
   "globalEnv": ["CI", "OPENCODE_DISABLE_SHARE"],
@@ -26,28 +24,14 @@
     "@opencode/cli#typecheck:tsc": {
       "dependsOn": ["transit", "@opencode/core#typecheck:tsc"]
     },
-    "@opencode/sdk#typecheck:tsc": {
-      "dependsOn": ["transit", "@opencode/core#typecheck:tsc"]
-    },
     "@opencode/server#typecheck:tsc": {
       "dependsOn": ["transit", "@opencode/core#typecheck:tsc"]
-    },
-    "@opencode/simulation#typecheck:tsc": {
-      "dependsOn": ["transit", "@opencode/core#typecheck:tsc"]
-    },
-    "@opencode/tui#typecheck:tsc": {
-      "dependsOn": ["transit", "@opencode/core#typecheck:tsc"]
-    },
-    "test:components": {
-      "outputs": [],
-      "cache": false
     },
     "build": {
       "dependsOn": ["transit"],
       "outputs": ["dist/**"]
     },
-    // Workspace packages export their sources, so tests never wait for a dependency's build; the build job in
-    // check-test.yml checks the library builds. No package has a transit script: it runs nothing and only folds every
+    // Workspace packages export their sources, so tests never wait for a dependency's build. No package has a transit script: it runs nothing and only folds every
     // workspace dependency into the test hash.
     "transit": {
       "dependsOn": ["^transit"]
@@ -55,13 +39,6 @@
     // Every package with a test script runs here, so a new suite cannot be left out of CI.
     "test": {
       "dependsOn": ["transit"],
-      "outputs": []
-    },
-    "@opencode/desktop#test": {
-      "outputs": [],
-      "cache": false
-    },
-    "@opencode/sdk#verify:package": {
       "outputs": []
     }
   }

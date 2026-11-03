@@ -234,7 +234,7 @@ export const get = Effect.fn("cli.service-config.get")(function* (key?: string, 
       return port === undefined ? "" : String(port)
     }
     case "password": {
-      return yield* password()
+      return (yield* read()).password ?? ""
     }
     case "cors": {
       return JSON.stringify((yield* read()).cors ?? [], null, 2)

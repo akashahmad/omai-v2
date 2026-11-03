@@ -39,7 +39,7 @@ import { Watcher } from "@opencode/core/filesystem/watcher"
 import { FileWatch } from "@opencode/core/filesystem/file-watch"
 import { HttpRouter } from "effect/http"
 import { HttpApiBuilder } from "effect/http-api"
-import { Context, Effect, Layer, Option } from "effect"
+import { Context, Layer, Option } from "effect"
 import { Api } from "./api"
 import { ServerAuth } from "./auth"
 import { CorsConfig } from "./cors"
@@ -159,16 +159,7 @@ function makeRoutes<AuthError, AuthServices>(
     ]
     return AppNodeBuilder.build(applicationServices, replacements)
   }
-  const serviceLayer = options.simulation
-    ? Layer.unwrap(
-        Effect.gen(function* () {
-          const { simulationReplacements } = yield* Effect.promise(() => import("@opencode/simulation/backend"))
-          const simulation = yield* simulationReplacements({ version: App.make(options.app).version })
-          return build([...overrides, ...simulation])
-        }),
-      )
-    : build(overrides)
-  return serviceLayer.pipe(
+  return build(overrides).pipe(
     Layer.flatMap((context) => {
       const services = Layer.succeedContext(context)
       const requestServices = Layer.merge(

@@ -32,7 +32,6 @@
     "@opencode/core": "workspace:*",
     "@opencode/protocol": "workspace:*",
     "@opencode/schema": "workspace:*",
-    "@opencode/simulation": "workspace:*",
     "@opencode/util": "workspace:*",
     "effect": "catalog:"
   },

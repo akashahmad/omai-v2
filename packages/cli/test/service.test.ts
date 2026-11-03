@@ -422,7 +422,9 @@ test("concurrent service processes elect one server", async () => {
     ).toEqual(losers.map(() => 0))
     expect(winner?.exitCode).toBe(null)
     expect(new URL(info.url).port).toBe(String(port))
-    expect((await Bun.file(config).json()).password).toBe(info.password)
+    // Without a configured password the service runs without one and persists none.
+    expect(info.password).toBe("")
+    expect((await Bun.file(config).json()).password).toBeUndefined()
     expect(await Bun.file(registration + ".lock").exists()).toBe(false)
     expect(
       await fetch(new URL("/api/info", info.url), {
@@ -476,8 +478,8 @@ test("configured managed service port overrides the channel default", async () =
   try {
     const info = await waitForInfo(registration)
     expect(new URL(info.url).port).toBe(String(port))
-    expect(info.password).not.toBe("")
-    expect((await Bun.file(config).json()).password).toBe(info.password)
+    expect(info.password).toBe("")
+    expect((await Bun.file(config).json()).password).toBe("")
     await Effect.runPromise(Service.stop({ file: registration }).pipe(Effect.provide(NodeFileSystem.layer)))
     await owner.exited
   } finally {

@@ -19,7 +19,7 @@ Bun.plugin({
     build.onLoad({ filter: /[\\/]project-avatar[\\/]project-avatar\.tsx$/ }, async (args) => ({
       contents: transformSync(await Bun.file(args.path).text(), {
         filename: args.path,
-        presets: [solid.resolve("babel-preset-solid"), solid.resolve("@babel/preset-typescript")],
+        presets: [solid.resolve("babel-preset-solid"), require.resolve("@babel/preset-typescript")],
       }).code,
       loader: "js",
     }))

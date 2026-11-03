@@ -2,8 +2,8 @@ import { sentryVitePlugin } from "@sentry/vite-plugin"
 import { fileURLToPath } from "node:url"
 import { defineConfig } from "vite"
 import desktopPlugin, { channel } from "./vite.js"
-import { icons } from "./vite.icons"
-import { serviceWorker } from "./vite.pwa"
+import { icons } from "./vite.icons.ts"
+import { serviceWorker } from "./vite.pwa.ts"
 
 const sentry =
   process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
@@ -40,7 +40,6 @@ export default defineConfig({
           rolldownOptions: {
             input: [
               "index.html",
-              "e2e/utils/settings-wsl.html",
               "e2e/utils/app-direction.html",
               "e2e/utils/windows-menu.html",
             ],

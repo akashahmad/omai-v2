@@ -1,8 +1,7 @@
 import { confirm, log, multiselect, password, select, text, type Option } from "@clack/prompts"
 import { Effect, Schema } from "effect"
 import { Form } from "@opencode/schema/form"
-import { formValidateValue } from "@opencode/tui/util/form"
-import type { FormAnswer, FormField, FormFields } from "@opencode/client"
+import type { FormAnswer, FormField, FormFields, FormValue } from "@opencode/client"
 import { openUrl, prompt, requireInteractive } from "../../../ui/prompt"
 
 const skip = Symbol("skip")
@@ -193,4 +192,59 @@ function validateText(field: Exclude<FormField, { type: "boolean" | "external" |
   }
   if (field.format === "date-time" && Number.isNaN(Date.parse(value))) return "Expected a date and time"
   return undefined
+}
+
+function formValidateValue(field: Exclude<FormField, { type: "external" }>, value: FormValue | undefined): string | undefined {
+  if (value === undefined) return field.required ? "Answer required" : undefined
+  if (field.required && (value === "" || (Array.isArray(value) && value.length === 0)))
+    return field.type === "multiselect" ? "Select at least one option" : "Answer required"
+  if (field.type === "string") {
+    if (typeof value !== "string") return "Expected text"
+    if (field.minLength !== undefined && value.length < field.minLength)
+      return `Must be at least ${field.minLength} characters`
+    if (field.maxLength !== undefined && value.length > field.maxLength)
+      return `Must be at most ${field.maxLength} characters`
+    if (field.pattern !== undefined) {
+      try {
+        if (!new RegExp(field.pattern).test(value)) return `Must match pattern: ${field.pattern}`
+      } catch {
+        return `Invalid pattern: ${field.pattern}`
+      }
+    }
+    if (field.format === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Expected an email address"
+    if (field.format === "uri" && !validURL(value)) return "Expected a URL"
+    if (field.format === "date" && !validDate(value)) return "Expected a date (YYYY-MM-DD)"
+    if (field.format === "date-time" && Number.isNaN(new Date(value).getTime())) return "Expected a date and time"
+    if (field.options && !field.custom && !field.options.some((option) => option.value === value))
+      return "Select an available option"
+    return
+  }
+  if (field.type === "number" || field.type === "integer") {
+    if (typeof value !== "number" || !Number.isFinite(value)) return "Expected a number"
+    if (field.type === "integer" && !Number.isInteger(value)) return "Expected an integer"
+    if (typeof field.minimum === "number" && value < field.minimum) return `Must be at least ${field.minimum}`
+    if (typeof field.maximum === "number" && value > field.maximum) return `Must be at most ${field.maximum}`
+    return
+  }
+  if (field.type === "boolean") return typeof value === "boolean" ? undefined : "Expected yes or no"
+  if (!Array.isArray(value)) return "Expected selections"
+  if (field.minItems !== undefined && value.length < field.minItems) return `Select at least ${field.minItems}`
+  if (field.maxItems !== undefined && value.length > field.maxItems) return `Select at most ${field.maxItems}`
+  if (!field.custom && value.some((item) => !field.options.some((option) => option.value === item)))
+    return "Select only available options"
+}
+
+function validURL(value: string) {
+  try {
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function validDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }

@@ -9,7 +9,6 @@ import { Host } from "@opencode/plugin/host"
 import { Commands } from "../../commands"
 import { Runtime } from "../../../framework/runtime"
 import { resolveConfigPath } from "../mcp/add"
-import { Config } from "../../../config"
 
 export default Runtime.handler(
   Commands.commands.plugin.commands.add,
@@ -18,36 +17,23 @@ export default Runtime.handler(
       return yield* Effect.fail(new Error("Plugin target must be an npm registry package or Git package specifier"))
     const npm = yield* Npm.Service
     const installed = yield* npm.add(input.package)
-    const target = configurationTarget(Host.resolve(installed))
-    if (!target)
-      return yield* Effect.fail(new Error(`Plugin package has no server, GUI, or TUI entrypoint: ${input.package}`))
+    if (!configurationTarget(Host.resolve(installed)))
+      return yield* Effect.fail(new Error(`Plugin package has no server or GUI entrypoint: ${input.package}`))
 
-    if (target === "server") {
-      const global = yield* Global.Service
-      const configPath = yield* Effect.promise(() => resolveConfigPath(global.config))
-      const changed = yield* Effect.promise(() => writePluginConfig(configPath, input.package))
-      process.stdout.write(
-        changed
-          ? `Plugin "${input.package}" installed and added to ${configPath}${EOL}`
-          : `Plugin "${input.package}" is already configured in ${configPath}${EOL}`,
-      )
-      return
-    }
-
-    const config = yield* Config.Service
-    yield* config.update((draft) => {
-      if (configured(draft.plugins, input.package)) return
-      draft.plugins = [...(draft.plugins ?? []), input.package]
-    })
-    process.stdout.write(`TUI plugin "${input.package}" installed and added to ${config.path}${EOL}`)
+    const global = yield* Global.Service
+    const configPath = yield* Effect.promise(() => resolveConfigPath(global.config))
+    const changed = yield* Effect.promise(() => writePluginConfig(configPath, input.package))
+    process.stdout.write(
+      changed
+        ? `Plugin "${input.package}" installed and added to ${configPath}${EOL}`
+        : `Plugin "${input.package}" is already configured in ${configPath}${EOL}`,
+    )
   }),
 )
 
-// The server lists packages with a server or GUI part, and the TUI loads their TUI parts from that list; the desktop
-// app reads GUI parts only from the global opencode.json. Only a TUI-only package belongs in the TUI's own config.
+// The server lists packages with a server or GUI part; the web app loads their GUI parts from that list.
 export function configurationTarget(entrypoints: Host.Entrypoints) {
   if (entrypoints.server || entrypoints.gui) return "server" as const
-  if (entrypoints.tui) return "tui" as const
 }
 
 export async function writePluginConfig(configPath: string, spec: string) {

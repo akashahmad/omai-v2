@@ -1,13 +1,11 @@
 import { EOL } from "node:os"
-import { Cause, Effect, Exit } from "effect"
+import { Effect } from "effect"
 import { OpenCode } from "@opencode/client"
 import { Service } from "@opencode/client/effect/service"
-import { Npm } from "@opencode/util/npm"
-import { Config } from "../../../config"
 import { ServerConnection } from "../../../services/server-connection"
 
 export interface Item {
-  readonly runtime: "Server" | "TUI"
+  readonly runtime: "Server"
   readonly target: string
   readonly name: string
   readonly version?: string
@@ -42,40 +40,7 @@ export const inspect = Effect.fn("cli.plugin.inspect")(function* (selected?: str
     ]
   })
 
-  const config = yield* Config.Service
-  const info = yield* config.get()
-  const configured = [
-    ...new Set(
-      (info.plugins ?? []).flatMap((entry) => {
-        const target = typeof entry === "string" ? entry : entry.package
-        if (target.startsWith("-") || target === "*" || target.endsWith(".*") || target.startsWith("opencode.")) return []
-        return [target]
-      }),
-    ),
-  ]
-  const tuiTargets = yield* Effect.promise(async () => {
-    const installable = await Promise.all(configured.map((target) => Npm.isInstallablePackage(target)))
-    return configured.filter((target, index) => installable[index] && (selected === undefined || target === selected))
-  })
-  const npm = yield* Npm.Service
-  const tuiItems = yield* Effect.forEach(
-    tuiTargets,
-    (target) =>
-      Effect.gen(function* () {
-        const installed = yield* npm.resolve(target)
-        const outdated = yield* npm.check(target).pipe(Effect.exit)
-        return {
-          runtime: "TUI" as const,
-          target,
-          name: target,
-          ...(installed.version ? { version: displayVersion(installed.version) } : {}),
-          outdated: Exit.isSuccess(outdated) && outdated.value,
-          ...(Exit.isFailure(outdated) ? { error: Cause.pretty(outdated.cause) } : {}),
-        }
-      }),
-    { concurrency: "unbounded" },
-  )
-  const items = [...serverItems, ...tuiItems]
+  const items = serverItems
   if (selected !== undefined && !items.length) return yield* Effect.fail(new Error(`Plugin is not configured: ${selected}`))
   return { client, location, items }
 })
@@ -85,7 +50,7 @@ export function displayVersion(version: string) {
 }
 
 export function format(items: readonly Item[]) {
-  return ["Server", "TUI"]
+  return ["Server"]
     .flatMap((runtime) => {
       const rows = items.filter((item) => item.runtime === runtime)
       if (!rows.length) return []

@@ -72,16 +72,6 @@ const bundleNestedWorkerDeps = {
   },
 }
 
-// The components lab globs every story, and the dependency scan cannot parse a .tsx story that calls import.meta.glob
-// itself. The lab is a development tool, so its dependencies are found when it first opens rather than at startup.
-/** @type {import("rolldown").Plugin} */
-const skipComponentsLab = {
-  name: "opencode-desktop:skip-components-lab",
-  resolveId(id) {
-    if (id === "@/components-lab/lab") return { id, external: true }
-  },
-}
-
 export const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL
 
@@ -117,7 +107,7 @@ export default [
         },
         optimizeDeps: {
           exclude: [...workerDeps, ...officeDeps],
-          rolldownOptions: { plugins: [bundleNestedWorkerDeps, skipComponentsLab] },
+          rolldownOptions: { plugins: [bundleNestedWorkerDeps] },
         },
       }
     },
@@ -132,6 +122,13 @@ export default [
   },
   ...tailwind,
   solidPlugin(),
+  {
+    // The Solid plugin keeps JSX for its own compiler, but Vite's dependency scan reads a file that uses
+    // import.meta.glob as plain JavaScript once transformed, so the scan alone compiles JSX away. It only collects imports.
+    name: "opencode-desktop:scan-jsx",
+    enforce: "post",
+    config: () => ({ optimizeDeps: { rolldownOptions: { transform: { jsx: { runtime: "classic" } } } } }),
+  },
 ]
 
 export function inlineThemePreload(html) {
