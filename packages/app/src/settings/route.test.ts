@@ -97,8 +97,8 @@ describe("settings route", () => {
         loaded: true,
         servers: [local, { key: "wsl:Debian", connected: false, starting: false }],
       }),
-    ).toEqual({ type: "root", tab: "projects", server: "wsl:Debian" })
-    expect(settingsViewRedirect({ view, loaded: true, servers: [local] })).toEqual({ type: "root", tab: "projects" })
+    ).toEqual({ type: "root", tab: "servers", server: "wsl:Debian" })
+    expect(settingsViewRedirect({ view, loaded: true, servers: [local] })).toEqual({ type: "root", tab: "general" })
   })
 
   test("falls back for invalid scope and tab combinations", () => {

@@ -23,14 +23,14 @@ export function sessionPanelWidthMax(input: { available: number; split: boolean;
   return Math.max(SESSION_PANEL_WIDTH_FIT, input.available - pane)
 }
 
-// The same limit in CSS, against the pane row's width less its 8px gap, so the chat panel follows the row on the frame
+// The same limit in CSS, against the pane row's width less its 4px gap, so the chat panel follows the row on the frame
 // it resizes, e.g. while the left sidebar moves, rather than after a ResizeObserver callback.
 export function sessionPanelWidthCss(input: { width: number; split: boolean; resized: boolean }) {
   const minimum = input.resized ? SESSION_PANEL_WIDTH_MIN : SESSION_PANEL_WIDTH_FIT
   const pane = input.resized ? SIDE_PANE_WIDTH_MIN : input.split ? REVIEW_PANE_WIDTH_FIT_SPLIT : REVIEW_PANE_WIDTH_FIT
 
   // The outer floor raises a width stored below the minimum, e.g. dragged before it rose.
-  return `max(${SESSION_PANEL_WIDTH_MIN}px, min(${input.width}px, max(${minimum}px, 100% - ${pane + 8}px)))`
+  return `max(${SESSION_PANEL_WIDTH_MIN}px, min(${input.width}px, max(${minimum}px, 100% - ${pane + 4}px)))`
 }
 
 // `available` is undefined until the layout row is first measured; render the

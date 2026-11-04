@@ -597,11 +597,7 @@ export function ActiveSessionComposerRegion(props: {
           }
         >
           {(current) => (
-            <SessionLocationMissing
-              sessionID={current.sessionID}
-              projectID={current.projectID}
-              directory={current.directory}
-            />
+            <SessionLocationMissing sessionID={current.sessionID} directory={current.directory} />
           )}
         </Show>
       }

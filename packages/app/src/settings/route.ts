@@ -3,8 +3,6 @@ export type SettingsRootTab =
   | "appearance"
   | "notifications"
   | "shortcuts"
-  | "projects"
-  | "workspaces"
   | "providers"
   | "models"
   | "extensions"
@@ -18,9 +16,9 @@ declare const pluginTab: unique symbol
 export type SettingsPluginTab = string & { readonly [pluginTab]: true }
 
 /** Root pages that show one server's settings: the selected server, or the default one. */
-export type SettingsServerTab = "projects" | "workspaces" | "providers" | "models" | "extensions"
+export type SettingsServerTab = "providers" | "models" | "extensions"
 
-export type SettingsProjectTab = "general" | "workspaces" | "extensions"
+export type SettingsProjectTab = "general" | "extensions"
 
 type SettingsViewState = {
   target?: string
@@ -48,8 +46,6 @@ const rootTabs: Record<SettingsRootTab, true> = {
   appearance: true,
   notifications: true,
   shortcuts: true,
-  projects: true,
-  workspaces: true,
   providers: true,
   models: true,
   extensions: true,
@@ -60,7 +56,6 @@ const rootTabs: Record<SettingsRootTab, true> = {
 
 const projectTabs: Record<SettingsProjectTab, true> = {
   general: true,
-  workspaces: true,
   extensions: true,
 }
 
@@ -134,10 +129,10 @@ export function settingsViewRedirect(input: {
 
   if (view.type === "root") return server ? undefined : { ...view, server: undefined }
 
-  if (!server) return { type: "root", tab: "projects" }
+  if (!server) return { type: "root", tab: "general" }
 
-  // A starting WSL or SSH server connects shortly; only an unavailable one leaves the project page.
-  if (!server.connected && !server.starting) return { type: "root", tab: "projects", server: server.key }
+  // A starting WSL or SSH server connects shortly; only an unavailable one leaves the project page, for its server.
+  if (!server.connected && !server.starting) return { type: "root", tab: "servers", server: server.key }
 }
 
 export function isRootTab(value: string): value is SettingsRootTab {

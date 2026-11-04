@@ -14,17 +14,11 @@ import {
 import { TextInput } from "@opencode/ui/text-input"
 import { createTypeahead } from "@opencode/ui/typeahead"
 import { createEventListener } from "@solid-primitives/event-listener"
-import { getFilename } from "@opencode/util/path"
-import { createEffect, createMemo, createResource, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createEffect, createMemo, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { createStore } from "solid-js/store"
 import type { PromptProject, PromptProjectController, PromptServer } from "@/new-session/project/selector"
-import type { NewSessionWorkspaceController } from "@/new-session/workspace/controller"
 import { useLanguage } from "@/runtime/i18n/language"
-import { useServerSDK } from "@/runtime/server/client"
-import { ServerConnection, useServers } from "@/runtime/server/registry"
-import { useGlobal } from "@/runtime/server/runtime"
 import { useCommand } from "@/shell/commands/command"
-import { workspaceSelectionDirectories } from "@/workspaces/paths"
 import "@/shell/commands/dialog.css"
 import "@/shell/palette-menu.css"
 import "./dialog.css"
@@ -34,102 +28,36 @@ type LocationEntry =
   | { id: string; type: "add" }
   | { id: string; type: "other" }
   | { id: string; type: "server"; server: PromptServer }
-  | { id: string; type: "workspace"; value: string; directory: string }
 
 /**
- * Opens the new-session location dialog: added projects across ready servers, a separate list of other server projects,
- * and the worktree destinations for each Git project. Adding a project picks the server when there are several.
+ * Opens the new-session location dialog: added projects across ready servers and a separate list of other server
+ * projects. Adding a project picks the server when there are several.
  */
-export function useNewSessionLocationDialog(input: {
-  project: PromptProjectController
-  workspace: NewSessionWorkspaceController
-  onDone: () => void
-}) {
+export function useNewSessionLocationDialog(input: { project: PromptProjectController; onDone: () => void }) {
   const dialog = useDialog()
 
-  /** Pass `project` to open straight on that project's worktree step; stepping back still reaches the projects. */
-  return (options?: { project?: PromptProject; onWorkspace?: (value: string) => void }) => {
-    void dialog.show(
-      () => (
-        <NewSessionLocationDialog
-          project={input.project}
-          workspace={input.workspace}
-          drilled={options?.project}
-          onWorkspace={options?.onWorkspace}
-        />
-      ),
-      input.onDone,
-    )
+  return () => {
+    void dialog.show(() => <NewSessionLocationDialog project={input.project} />, input.onDone)
   }
 }
 
-function NewSessionLocationDialog(props: {
-  project: PromptProjectController
-  workspace: NewSessionWorkspaceController
-  drilled?: PromptProject
-  onWorkspace?: (value: string) => void
-}) {
+function NewSessionLocationDialog(props: { project: PromptProjectController }) {
   const dialog = useDialog()
   const language = useLanguage()
   const command = useCommand()
-  const global = useGlobal()
-  const servers = useServers()
-  const serverSDK = useServerSDK()
 
   const [store, setStore] = createStore<{
-    drilled?: PromptProject
-    direct: boolean
     /** Picking the server to add a project to. */
     picking?: boolean
     /** Browsing server projects this client has not added. */
     others: boolean
     query: string
-    /** The projects view to restore when stepping back out of a project or the server step. */
+    /** The projects view to restore when stepping back out of the server step. */
     back?: { query: string; active: string; others: boolean }
   }>({
     query: "",
     others: false,
-    drilled: props.drilled,
-    direct: !!props.drilled,
-    back: props.drilled ? { query: "", active: projectEntryID(props.drilled), others: false } : undefined,
   })
-
-  const connection = (project: PromptProject) =>
-    project.server ? servers.list.find((item) => ServerConnection.key(item) === project.server!.key) : serverSDK.server
-
-  const context = (project: PromptProject) => {
-    const target = connection(project)
-
-    return target ? global.ensureServerCtx(target) : undefined
-  }
-
-  const [listed, listedActions] = createResource(
-    () => store.drilled,
-    async (project) => ({
-      projectID: project.id,
-      items:
-        (await context(project)
-          ?.sdk.api.worktree.list({ projectID: project.id! })
-          .catch(() => undefined)) ??
-        project.worktrees ??
-        [],
-    }),
-  )
-
-  // `latest` only skips Suspense once the resource has resolved at least once. Before that it behaves like a plain
-  // read, which suspends the dialog and makes it flash on the first drill into a project.
-  const listedItems = (project: PromptProject) => {
-    if (listed.state !== "ready" && listed.state !== "refreshing") return project.worktrees ?? []
-    const loaded = listed.latest
-
-    return loaded?.projectID === project.id ? loaded.items : (project.worktrees ?? [])
-  }
-
-  onCleanup(
-    serverSDK.event.listen((event) => {
-      if (event.type === "worktree.updated" && event.data.projectID === store.drilled?.id) void listedActions.refetch()
-    }),
-  )
 
   const matches = (...values: (string | undefined)[]) => {
     const query = store.query.trim().toLowerCase()
@@ -167,37 +95,13 @@ function NewSessionLocationDialog(props: {
       .map((server) => ({ id: `server:${server.key}`, type: "server" as const, server })),
   )
 
-  const workspaceEntries = createMemo<LocationEntry[]>(() => {
-    const project = store.drilled
-
-    if (!project) return []
-    const directories = workspaceSelectionDirectories(project, listedItems(project))
-
-    return [
-      { id: "main", type: "workspace" as const, value: "main", directory: project.worktree },
-      { id: "create", type: "workspace" as const, value: "create", directory: project.worktree },
-      ...directories.map((directory) => ({
-        id: `worktree:${directory}`,
-        type: "workspace" as const,
-        value: directory,
-        directory,
-      })),
-    ].filter((entry) => matches(workspaceTitle(project, entry.value), entry.directory))
-  })
-
   const entries = () => {
-    if (store.drilled) return workspaceEntries()
-
     if (store.picking) return serverEntries()
 
     return projectEntries()
   }
 
-  const drillable = (project: PromptProject) => !!project.id && project.vcs === "git"
-
   const title = () => {
-    if (store.drilled) return language.t("session.new.workspace.runIn")
-
     if (store.picking) return language.t("session.new.location.servers")
 
     if (store.others) return language.t("session.new.location.otherProjects")
@@ -206,8 +110,6 @@ function NewSessionLocationDialog(props: {
   }
 
   const placeholder = () => {
-    if (store.drilled) return language.t("session.new.workspace.search.placeholder")
-
     if (store.picking) return language.t("session.new.location.servers.search")
 
     return language.t("session.new.project.search")
@@ -252,26 +154,8 @@ function NewSessionLocationDialog(props: {
     onCleanup(() => cancelAnimationFrame(frame))
   })
 
-  function workspaceTitle(project: PromptProject, value: string) {
-    if (value === "main") return displayName(project)
-
-    if (value === "create") return language.t("workspace.new")
-
-    return getFilename(value)
-  }
-
-  function drill(project: PromptProject) {
-    setStore({
-      drilled: project,
-      query: "",
-      back: { query: store.query, active: projectEntryID(project), others: store.others },
-    })
-    inputRef?.focus()
-  }
-
   function pick() {
     setStore({
-      drilled: undefined,
       picking: true,
       query: "",
       back: { query: store.query, active: "add", others: store.others },
@@ -280,13 +164,11 @@ function NewSessionLocationDialog(props: {
   }
 
   function back() {
-    const active = store.drilled || store.picking ? store.back?.active : "other"
+    const active = store.picking ? store.back?.active : "other"
     setStore({
-      drilled: undefined,
       picking: undefined,
-      direct: false,
-      others: store.drilled || store.picking ? (store.back?.others ?? false) : false,
-      query: store.drilled || store.picking ? (store.back?.query ?? "") : "",
+      others: store.picking ? (store.back?.others ?? false) : false,
+      query: store.picking ? (store.back?.query ?? "") : "",
       back: undefined,
     })
     typeahead.setActive(active)
@@ -323,21 +205,7 @@ function NewSessionLocationDialog(props: {
       return
     }
 
-    if (entry.type === "project") {
-      props.project.select(entry.project)
-      dialog.close()
-
-      return
-    }
-
-    const project = store.drilled
-
-    if (!project) return
-
-    if (props.project.isSelected(project)) props.workspace.selection.set(entry.value)
-
-    if (!props.project.isSelected(project)) props.project.select(project, entry.value)
-    props.onWorkspace?.(entry.value)
+    props.project.select(entry.project)
     dialog.close()
   }
 
@@ -349,13 +217,6 @@ function NewSessionLocationDialog(props: {
     const active = activeEntry()
     const forward = language.direction() === "rtl" ? "ArrowLeft" : "ArrowRight"
     const backward = language.direction() === "rtl" ? "ArrowRight" : "ArrowLeft"
-
-    if (event.key === forward && atEnd && active?.type === "project" && drillable(active.project)) {
-      event.preventDefault()
-      drill(active.project)
-
-      return
-    }
 
     if (event.key === forward && atEnd && active?.type === "add" && choosesServer()) {
       event.preventDefault()
@@ -371,16 +232,8 @@ function NewSessionLocationDialog(props: {
       return
     }
 
-    if (event.key === "Escape" && store.direct && store.drilled) {
-      event.preventDefault()
-      event.stopPropagation()
-      dialog.close()
-
-      return
-    }
-
     if (
-      (store.drilled || store.picking || store.others) &&
+      (store.picking || store.others) &&
       ((event.key === backward && atStart) || (event.key === "Backspace" && !target.value) || event.key === "Escape")
     ) {
       event.preventDefault()
@@ -409,7 +262,7 @@ function NewSessionLocationDialog(props: {
             leadingIcon={<Icon name="magnifying-glass" />}
             role="combobox"
             aria-expanded="true"
-            data-owns-escape={store.drilled || store.picking || store.others ? "" : undefined}
+            data-owns-escape={store.picking || store.others ? "" : undefined}
             aria-controls={typeahead.listID}
             aria-activedescendant={typeahead.activeID()}
             onInput={(event) => setStore("query", event.currentTarget.value)}
@@ -438,39 +291,17 @@ function NewSessionLocationDialog(props: {
               </Show>
               <Show
                 when={entries().length > 0}
-                fallback={
-                  // The worktree list may still be loading; hold the row's height without flashing a label.
-                  <div class="command-palette-state" classList={{ invisible: !!store.drilled && listed.loading }}>
-                    {language.t("palette.empty")}
-                  </div>
-                }
+                fallback={<div class="command-palette-state">{language.t("palette.empty")}</div>}
               >
                 <For each={entries()}>
                   {(entry, index) => (
                     <>
-                      <Show
-                        when={
-                          store.query.trim() &&
-                          !store.drilled &&
-                          !store.picking &&
-                          !store.others &&
-                          entry.id === firstOther()
-                        }
-                      >
+                      <Show when={store.query.trim() && !store.picking && !store.others && entry.id === firstOther()}>
                         <div class="command-palette-group-title">
                           {language.t("session.new.location.otherProjects")}
                         </div>
                       </Show>
-                      <Show
-                        when={
-                          index() > 0 &&
-                          (entry.type === "add" ||
-                            (entry.type === "workspace" &&
-                              entry.value !== "main" &&
-                              entry.value !== "create" &&
-                              ["main", "create"].includes(entries()[index() - 1]!.id)))
-                        }
-                      >
+                      <Show when={index() > 0 && entry.type === "add"}>
                         <div class="new-session-location-action-divider" role="separator" />
                       </Show>
                       <button
@@ -478,10 +309,7 @@ function NewSessionLocationDialog(props: {
                         id={typeahead.optionID(entry)}
                         class="command-palette-row palette-menu-row"
                         data-size="compact"
-                        classList={{
-                          "new-session-location-option": entry.type === "other" || entry.type === "add",
-                          "new-session-location-workspace": entry.type === "workspace",
-                        }}
+                        classList={{ "new-session-location-option": entry.type === "other" || entry.type === "add" }}
                         role="option"
                         aria-selected={activeEntry()?.id === entry.id}
                         data-active={activeEntry()?.id === entry.id ? "" : undefined}
@@ -496,14 +324,7 @@ function NewSessionLocationDialog(props: {
                       >
                         <Switch>
                           <Match when={entry.type === "project" && entry}>
-                            {(item) => (
-                              <ProjectRow
-                                project={item().project}
-                                path={item().project.worktree}
-                                onDrill={drillable(item().project) ? () => drill(item().project) : undefined}
-                                drillLabel={language.t("session.new.location.worktrees")}
-                              />
-                            )}
+                            {(item) => <ProjectRow project={item().project} path={item().project.worktree} />}
                           </Match>
                           <Match when={entry.type === "other"}>
                             <div class="command-palette-row-main new-session-location-other">
@@ -547,30 +368,6 @@ function NewSessionLocationDialog(props: {
                               </div>
                             )}
                           </Match>
-                          <Match when={entry.type === "workspace" && store.drilled && entry}>
-                            {(item) => (
-                              <Show
-                                when={item().value === "main"}
-                                fallback={
-                                  <WorkspaceRow
-                                    title={workspaceTitle(store.drilled!, item().value)}
-                                    value={item().value}
-                                    description={
-                                      item().value === "create"
-                                        ? language.t("session.new.workspace.new.tooltip")
-                                        : item().directory
-                                    }
-                                  />
-                                }
-                              >
-                                <ProjectRow
-                                  project={store.drilled!}
-                                  path={item().directory}
-                                  drillLabel={language.t("session.new.location.worktrees")}
-                                />
-                              </Show>
-                            )}
-                          </Match>
                         </Switch>
                       </button>
                     </>
@@ -585,29 +382,26 @@ function NewSessionLocationDialog(props: {
   )
 }
 
-function ProjectRow(props: { project: PromptProject; path: string; onDrill?: () => void; drillLabel: string }) {
+function ProjectRow(props: { project: PromptProject; path: string }) {
   return (
-    <>
-      <div class="command-palette-row-main">
-        <ProjectAvatar
-          class="shrink-0"
-          fallback={displayName(props.project)}
-          src={getProjectAvatarSource(props.project.id, props.project.icon)}
-          variant={getProjectAvatarVariant(props.project.icon?.color)}
-          generated={getProjectAvatarGenerated(props.project)}
-        />
-        <div class="command-palette-row-text">
-          <span class="new-session-location-name">
-            <span class="command-palette-title palette-menu-title">{displayName(props.project)}</span>
-            <ServerTag server={props.project.server} />
-          </span>
-          <span class="command-palette-description" dir="ltr">
-            {props.path}
-          </span>
-        </div>
+    <div class="command-palette-row-main">
+      <ProjectAvatar
+        class="shrink-0"
+        fallback={displayName(props.project)}
+        src={getProjectAvatarSource(props.project.id, props.project.icon)}
+        variant={getProjectAvatarVariant(props.project.icon?.color)}
+        generated={getProjectAvatarGenerated(props.project)}
+      />
+      <div class="command-palette-row-text">
+        <span class="new-session-location-name">
+          <span class="command-palette-title palette-menu-title">{displayName(props.project)}</span>
+          <ServerTag server={props.project.server} />
+        </span>
+        <span class="command-palette-description" dir="ltr">
+          {props.path}
+        </span>
       </div>
-      <Show when={props.onDrill}>{(onDrill) => <DrillButton label={props.drillLabel} onDrill={onDrill()} />}</Show>
-    </>
+    </div>
   )
 }
 
@@ -638,30 +432,6 @@ function ServerTag(props: { server?: PromptServer }) {
         </Badge>
       )}
     </Show>
-  )
-}
-
-function workspaceIcon(value: string) {
-  if (value === "main") return "monitor"
-
-  if (value === "create") return "plus"
-
-  return "outline-worktree"
-}
-
-function WorkspaceRow(props: { title: string; value: string; description: string }) {
-  return (
-    <>
-      <div class="command-palette-row-main">
-        <Icon name={workspaceIcon(props.value)} class="command-palette-row-icon" />
-        <div class="command-palette-row-text">
-          <span class="command-palette-title palette-menu-title">{props.title}</span>
-          <span class="command-palette-description" dir="ltr">
-            {props.description}
-          </span>
-        </div>
-      </div>
-    </>
   )
 }
 

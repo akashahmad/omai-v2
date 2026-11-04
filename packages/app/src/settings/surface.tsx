@@ -207,16 +207,10 @@ export const { use: useSettingsSurface, provider: SettingsSurfaceProvider } = cr
       subtab(subtab: SettingsView["subtab"]) {
         show({ ...view(), subtab, target: undefined })
       },
+      // Settings views replace one another in history, so going back leaves Settings for the page that opened it:
+      // the projects page for a project's settings.
       back() {
-        const current = view()
-
-        if (current.type === "root") {
-          command.trigger("common.goBack")
-
-          return
-        }
-
-        show({ type: "root", tab: "projects", server: current.server })
+        command.trigger("common.goBack")
       },
       close() {
         if (open()) command.trigger("common.goBack")

@@ -23,7 +23,7 @@ export function createSessionScreenLayout(session: SessionModel, input: { wide: 
 
     if (width === undefined) return undefined
 
-    return width - 8
+    return width - 4
   })
 
   const splitSide = createMemo(() => tabsOpen() && input.wide())

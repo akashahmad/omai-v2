@@ -102,6 +102,8 @@ export interface BuiltinSlotMap extends SlotMap {
   readonly "session.location.branch.menu": SlotMap["session.location.menu"]
   /** Items after the host's copy and reveal actions in the session directory's path submenu. Requires an owning screen. */
   readonly "session.location.path.menu": SlotMap["session.location.menu"]
+  /** The narrow file tree column at the session's end edge, shown while the user has it open. */
+  readonly "session.files": SlotMap["session.panel.end"]
   /**
    * Replaces the project menu's current location row; one contribution owns it. Without one the host shows a static
    * row.

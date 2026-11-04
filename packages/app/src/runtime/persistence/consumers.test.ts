@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { Schema } from "effect"
-import { WorkspaceOnboardingSchema, ProviderTipSchema } from "@/new-session/view"
+import { ProviderTipSchema } from "@/new-session/view"
 import { ModelSelectionSchema } from "@/providers/models/selection"
 import { Persistence } from "@/runtime/persistence/schema"
 import { FileViewsSchema } from "@/workspaces/files/view-cache"
@@ -31,11 +31,6 @@ const collapsed = [
 
 describe("persisted consumer schemas", () => {
   test.each([
-    stored("workspace onboarding", WorkspaceOnboardingSchema, { used: false }, [
-      [{}, { used: false }],
-      [{ used: "true" }, { used: false }],
-      [{ used: true }, { used: true }],
-    ]),
     stored("provider tip", ProviderTipSchema, { dismissedAt: 0 }, [
       [{}, { dismissedAt: 0 }],
       [{ dismissedAt: "yesterday" }, { dismissedAt: 0 }],

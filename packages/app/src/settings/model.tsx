@@ -11,10 +11,6 @@ import { ScopedKey, type ServerScope } from "@/runtime/server/scope"
 
 export type Settings = typeof settingsSchema.Type
 
-export type WorkspaceDefaultDestination = Settings["workspaces"]["defaultDestination"]
-
-export type WorkspaceLastUsed = Settings["workspaces"]["lastUsed"][string]
-
 export type FollowUpBehavior = Settings["general"]["followUpBehavior"]
 
 export type BackgroundActivity = Settings["general"]["backgroundActivity"]
@@ -147,12 +143,16 @@ const appearanceSchema = Persistence.struct({
   // "inbox" is experimental: the vertical layout with a server-wide session inbox in place of tabs.
   tabLayout: Schema.Literals(["horizontal", "vertical", "inbox"]),
   sidebarOpen: Persistence.optional(Schema.Boolean),
+  fileTreeOpen: Persistence.optional(Schema.Boolean),
+  sessionsPanelWidth: Persistence.optional(Schema.Finite),
+  fileTreeWidth: Persistence.optional(Schema.Finite),
   reduceMotion: Schema.Literals(["system", "on", "off"]),
 })
 
 const permissionsSchema = Persistence.struct({
-  // The default for every project.
-  autoApprove: Schema.Boolean,
+  // The default for every project. Renamed from `autoApprove` when the default became on, so installs that saved the
+  // old off default start with auto-accept on; projects keep any choice made for them below.
+  autoAccept: Schema.Boolean,
   // Projects that override the default, keyed by server scope and project ID. Absent projects use the default.
   autoApproveProjects: Persistence.record(
     Schema.Boolean.pipe(Schema.catchDecoding(() => Effect.succeed(Option.none()))),
@@ -311,7 +311,7 @@ export const defaultSettings: Settings = {
   },
   appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: "horizontal", reduceMotion: "system" },
   keybinds: {},
-  permissions: { autoApprove: false, autoApproveProjects: {} },
+  permissions: { autoAccept: true, autoApproveProjects: {} },
   workspaces: { defaultDestination: "last-used", lastUsed: {} },
   notifications: { agent: false, permissions: true, questions: true, errors: false },
   sounds: {
@@ -374,10 +374,7 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
       document.documentElement.dataset.timelineWidth = timelineWidth()
     })
 
-    const autoApproveDefault = withFallback(
-      () => store.permissions?.autoApprove,
-      defaultSettings.permissions.autoApprove,
-    )
+    const autoApproveDefault = withFallback(() => store.permissions?.autoAccept, defaultSettings.permissions.autoAccept)
 
     // A project's explicit choice, or undefined when it uses the default.
     const autoApproveOverride = (project: ScopedKey | undefined) =>
@@ -464,6 +461,18 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         setSidebarOpen(value: boolean) {
           setStore("appearance", "sidebarOpen", value)
         },
+        fileTreeOpen: withFallback(() => store.appearance?.fileTreeOpen, false),
+        setFileTreeOpen(value: boolean) {
+          setStore("appearance", "fileTreeOpen", value)
+        },
+        sessionsPanelWidth: withFallback(() => store.appearance?.sessionsPanelWidth, 200),
+        setSessionsPanelWidth(value: number) {
+          setStore("appearance", "sessionsPanelWidth", value)
+        },
+        fileTreeWidth: withFallback(() => store.appearance?.fileTreeWidth, 240),
+        setFileTreeWidth(value: number) {
+          setStore("appearance", "fileTreeWidth", value)
+        },
         reduceMotion,
         setReduceMotion(value: ReduceMotion) {
           setStore("appearance", "reduceMotion", value)
@@ -490,7 +499,7 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
       permissions: {
         autoApproveDefault,
         setAutoApproveDefault(value: boolean) {
-          setStore("permissions", "autoApprove", value)
+          setStore("permissions", "autoAccept", value)
         },
         autoApproveOverride,
         // Undefined makes the project use the default again.
@@ -511,29 +520,6 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
           return Object.entries(store.permissions?.autoApproveProjects ?? {}).some(
             ([key, value]) => value && key.startsWith(prefix),
           )
-        },
-      },
-      workspaces: {
-        defaultDestination: withFallback(
-          () => store.workspaces?.defaultDestination,
-          defaultSettings.workspaces.defaultDestination,
-        ),
-        setDefaultDestination(value: WorkspaceDefaultDestination) {
-          setStore("workspaces", (current) => ({
-            ...defaultSettings.workspaces,
-            ...current,
-            defaultDestination: value,
-          }))
-        },
-        lastUsed(scope: ServerScope, projectID: string) {
-          return store.workspaces?.lastUsed?.[ScopedKey.from(scope, projectID)]
-        },
-        setLastUsed(scope: ServerScope, projectID: string, value: WorkspaceLastUsed) {
-          setStore("workspaces", (current) => ({
-            ...defaultSettings.workspaces,
-            ...current,
-            lastUsed: { ...current?.lastUsed, [ScopedKey.from(scope, projectID)]: value },
-          }))
         },
       },
       notifications: {

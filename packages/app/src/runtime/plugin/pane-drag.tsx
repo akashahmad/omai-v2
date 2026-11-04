@@ -169,7 +169,7 @@ export function createPaneDrag(input: {
                   class="absolute"
                   classList={{
                     "bg-v2-icon-icon-accent rounded-full": target().strip,
-                    "rounded-[10px] border border-v2-icon-icon-accent bg-[color-mix(in_srgb,var(--v2-icon-icon-accent)_12%,transparent)]":
+                    "rounded-[6px] border border-v2-icon-icon-accent bg-[color-mix(in_srgb,var(--v2-icon-icon-accent)_12%,transparent)]":
                       !target().strip,
                   }}
                   style={{

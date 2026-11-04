@@ -289,44 +289,6 @@
   color: var(--v2-icon-icon-contrast);
 }
 
-.project-settings-startup {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-block: 20px;
-}
-
-.project-settings-startup-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.project-settings-startup-title {
-  color: var(--v2-text-text-base);
-  font-size: 13px;
-  font-weight: 530;
-  line-height: var(--line-height-compact);
-}
-
-.project-settings-startup-description,
-.project-settings-startup-hint {
-  color: var(--v2-text-text-muted);
-  font-size: 13px;
-  font-weight: 440;
-  line-height: var(--line-height-base);
-}
-
-.project-settings-startup-hint code {
-  padding-inline: 4px;
-  border-radius: 4px;
-  background: var(--v2-background-bg-layer-02);
-  color: var(--v2-text-text-base);
-  font-family: var(--font-family-mono);
-  font-size: 12px;
-  unicode-bidi: isolate;
-}
-
 :root[data-motion="reduce"] {
   .project-settings-icon-overlay,
   .project-settings-color,

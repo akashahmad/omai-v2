@@ -15,14 +15,16 @@ import {
 } from "solid-js"
 import { createStore } from "solid-js/store"
 import { ResizeHandle } from "@opencode/ui/resize-handle"
+import { EdgePanel } from "@/shell/edge-panel"
 import type { BackgroundTask, MountedSession, SessionScreen } from "@opencode/plugin/gui"
 import { MessageTimeline } from "@/session/timeline/message-timeline"
+import { SessionEmptyState } from "@/session/empty-state"
 import { ComposerDropzone } from "@/composer/dropzone"
 import { useSettings } from "@/settings/model"
 import type { SessionModel } from "@/session/model"
 import { SESSION_PANEL_WIDTH_MIN } from "@/session/session-panel-width"
 import { SessionPanelFrame } from "@/session/session-frame"
-import { PluginLinks } from "@/runtime/plugin/render"
+import { PluginLinks, PluginSlot } from "@/runtime/plugin/render"
 import { createPanelSidebar, createRegion, MobilePanel } from "@/runtime/plugin/panels"
 import { createMobileViews, MobileViewTabs } from "@/runtime/plugin/mobile"
 import { usePluginAttachment } from "@/runtime/plugin/host-apis"
@@ -150,6 +152,13 @@ function SessionScreenContent(props: {
       return info ? server.ctx.projects.forSession(info) : undefined
     }),
   }
+
+  // A session with nothing said yet: no transcript and no prompt waiting to be delivered.
+  const conversationEmpty = createMemo(() => {
+    const id = session.identity.params.id
+
+    return !!id && session.history.messages().length === 0 && server.ctx.data.session.pending.list(id).length === 0
+  })
 
   // The chat keeps its open width as the far end of a close's travel.
   const chatOpenWidth = createMemo<string>((previous) => (sideVisible() ? screen.panel.width() : previous), "100%")
@@ -420,9 +429,19 @@ function SessionScreenContent(props: {
           </Match>
           <Match when={session.identity.params.id}>
             <Show when={isDesktop() && !messagesReady()}>
-              <SessionIdentityHeader sessionID={session.identity.params.id ?? ""} session={session.data.info()} />
+              <SessionIdentityHeader
+                sessionID={session.identity.params.id ?? ""}
+                session={session.data.info()}
+                centered={screen.centered()}
+              />
             </Show>
             <Show when={messagesReady() && session.identity.params.id}>{timelineView()}</Show>
+            <Show when={messagesReady() && conversationEmpty()}>
+              <SessionEmptyState
+                directory={location.directory()}
+                updated={location.project()?.time?.updated ?? session.data.info()?.time.updated}
+              />
+            </Show>
           </Match>
         </Switch>
       </div>
@@ -450,96 +469,128 @@ function SessionScreenContent(props: {
 
   return (
     <>
-      <div class="flex-1 min-h-0 flex flex-col gap-2 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
-        <div ref={screen.panel.ref} data-pane-row class="relative flex-1 min-h-0 flex flex-col md:flex-row gap-2">
-          {/* Keep the control outside panel animations. */}
-          <Show when={isDesktop() && messagesReady() && session.identity.params.id}>
-            <div
-              class="absolute end-3 top-0 z-30 h-12 flex items-center"
-              data-slot="session-review-toggle"
-              onPointerDown={hideTimelineScrollbar}
-              onClick={hideTimelineScrollbar}
-            >
-              <SessionReviewToggle
-                onToggle={region.toggle}
-                glyph={(fill) => {
-                  sideGlyph = fill
-                  paintSideGlyph()
-                }}
-              />
-            </div>
-          </Show>
+      <div class="flex-1 min-h-0 flex flex-col gap-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+        <div class="flex flex-1 min-h-0">
           <div
-            ref={chat}
-            class="relative z-10 min-w-0 shrink-0 flex flex-col min-h-0 h-full flex-1 md:flex-none"
-            data-slot="session-chat-panel"
-            data-scrollbar-hidden={store.timelineScrollbarHidden}
-            onPointerMove={revealTimelineScrollbar}
-            onPointerDown={revealTimelineScrollbar}
-            on:wheel={{ passive: true, handleEvent: revealTimelineScrollbar }}
-            onKeyDown={revealTimelineScrollbar}
+            ref={screen.panel.ref}
+            data-pane-row
+            class="relative flex-1 min-w-0 min-h-0 flex flex-col md:flex-row gap-1"
           >
-            <Show when={!!session.identity.params.id}>
-              <SessionPanelFrame raised>
-                <ErrorBoundary fallback={sessionErrorFallback}>{sessionPanelContent()}</ErrorBoundary>
-              </SessionPanelFrame>
-            </Show>
-            <Show when={windowDragEnabled(platform)}>
-              <SessionHeaderDrag pane={chat} gap={headerGap()} />
-            </Show>
-
-            {/* Hidden rather than unmounted: removing it makes the transcript frame the last child, and structural
-                selectors in the transcript then restyle every element in it as the side panel starts to close. */}
-            <div classList={{ hidden: !screen.panel.resizable() }} onPointerDown={() => screen.size.start()}>
-              <ResizeHandle
-                class="-end-1"
-                direction="horizontal"
-                size={screen.panel.resizedWidth()}
-                min={SESSION_PANEL_WIDTH_MIN}
-                max={screen.panel.max()}
-                onResize={(width) => {
-                  screen.size.touch()
-                  session.layout.view().session.resize(width)
-                }}
-                onDraggingChange={setPanelResizing}
-              />
-            </div>
-          </div>
-
-          <Show when={sideMotion.present() || store.sideMounted}>
-            <div
-              ref={sidePresence}
-              data-slot="session-side-panel-presence"
-              class={`z-0 min-w-0 h-full overflow-visible ${
-                !sideMotion.present()
-                  ? // Out of the row, so a closed panel takes no space or gap.
-                    "absolute inset-y-0 end-0 w-0 [content-visibility:hidden]"
-                  : "relative flex-1"
-              }`}
-            >
+            {/* Keep the control outside panel animations. */}
+            <Show when={isDesktop() && messagesReady() && session.identity.params.id}>
               <div
-                ref={sideContent}
-                data-slot="session-side-panel-content"
-                class="absolute inset-y-0 start-0 size-full [contain:layout_style] will-change-[opacity]"
-                style={{ "--session-side-content-width": screen.side.contentWidth() }}
+                class="absolute end-3 top-0 z-30 h-12 flex items-center"
+                data-slot="session-review-toggle"
+                onPointerDown={hideTimelineScrollbar}
+                onClick={hideTimelineScrollbar}
               >
-                <div data-slot="session-side-region" class="absolute inset-0 min-h-0 overflow-visible">
-                  <Show when={store.sideMounted}>
-                    <div data-slot="session-side-region-presence" class="absolute inset-0">
-                      <SideRegion
-                        screen={props.screen}
-                        view={props.view()}
-                        region={region}
-                        sidebar={sidebar}
-                        present={sideMotion.present()}
-                        size={screen.size}
-                        drag={drag}
-                      />
-                    </div>
-                  </Show>
-                </div>
+                <SessionReviewToggle
+                  onToggle={region.toggle}
+                  glyph={(fill) => {
+                    sideGlyph = fill
+                    paintSideGlyph()
+                  }}
+                />
+              </div>
+            </Show>
+            <div
+              ref={chat}
+              class="relative z-10 min-w-0 shrink-0 flex flex-col min-h-0 h-full flex-1 md:flex-none"
+              data-slot="session-chat-panel"
+              data-scrollbar-hidden={store.timelineScrollbarHidden}
+              onPointerMove={revealTimelineScrollbar}
+              onPointerDown={revealTimelineScrollbar}
+              on:wheel={{ passive: true, handleEvent: revealTimelineScrollbar }}
+              onKeyDown={revealTimelineScrollbar}
+            >
+              <Show when={!!session.identity.params.id}>
+                <SessionPanelFrame raised working={session.data.working()}>
+                  <ErrorBoundary fallback={sessionErrorFallback}>{sessionPanelContent()}</ErrorBoundary>
+                </SessionPanelFrame>
+              </Show>
+              <Show when={windowDragEnabled(platform)}>
+                <SessionHeaderDrag pane={chat} gap={headerGap()} />
+              </Show>
+
+              {/* Hidden rather than unmounted: removing it makes the transcript frame the last child, and structural
+                selectors in the transcript then restyle every element in it as the side panel starts to close. */}
+              <div classList={{ hidden: !screen.panel.resizable() }} onPointerDown={() => screen.size.start()}>
+                <ResizeHandle
+                  class="-end-1"
+                  direction="horizontal"
+                  size={screen.panel.resizedWidth()}
+                  min={SESSION_PANEL_WIDTH_MIN}
+                  max={screen.panel.max()}
+                  onResize={(width) => {
+                    screen.size.touch()
+                    session.layout.view().session.resize(width)
+                  }}
+                  onDraggingChange={setPanelResizing}
+                />
               </div>
             </div>
+
+            <Show when={sideMotion.present() || store.sideMounted}>
+              <div
+                ref={sidePresence}
+                data-slot="session-side-panel-presence"
+                class={`z-0 min-w-0 h-full overflow-visible ${
+                  !sideMotion.present()
+                    ? // Out of the row, so a closed panel takes no space or gap.
+                      "absolute inset-y-0 end-0 w-0 [content-visibility:hidden]"
+                    : "relative flex-1"
+                }`}
+              >
+                <div
+                  ref={sideContent}
+                  data-slot="session-side-panel-content"
+                  class="absolute inset-y-0 start-0 size-full [contain:layout_style] will-change-[opacity]"
+                  style={{ "--session-side-content-width": screen.side.contentWidth() }}
+                >
+                  <div data-slot="session-side-region" class="absolute inset-0 min-h-0 overflow-visible">
+                    <Show when={store.sideMounted}>
+                      <div data-slot="session-side-region-presence" class="absolute inset-0">
+                        <SideRegion
+                          screen={props.screen}
+                          view={props.view()}
+                          region={region}
+                          sidebar={sidebar}
+                          present={sideMotion.present()}
+                          size={screen.size}
+                          drag={drag}
+                        />
+                      </div>
+                    </Show>
+                  </div>
+                </div>
+              </div>
+            </Show>
+          </div>
+          {/* The rail's file tree: a narrow card of its own at the end edge, outside the panes' width math. */}
+          <Show when={isDesktop()}>
+            <EdgePanel
+              id="session-files-panel"
+              label={language.t("rail.files")}
+              open={!!session.identity.params.id && settings.appearance.fileTreeOpen()}
+              side="end"
+              gap={4}
+              width={settings.appearance.fileTreeWidth()}
+              min={180}
+              max={480}
+              onResize={settings.appearance.setFileTreeWidth}
+            >
+              <PluginSlot
+                at="session.files"
+                input={{
+                  get session() {
+                    return props.view()
+                  },
+                  get screen() {
+                    return props.screen
+                  },
+                }}
+              />
+            </EdgePanel>
           </Show>
         </div>
 
@@ -570,7 +621,7 @@ function SessionScreenContent(props: {
               id="bottom-panel"
               aria-label={language.t("session.panel.bottom")}
               inert={!bottomOpen() || undefined}
-              class="size-full min-w-0 flex flex-col overflow-hidden bg-v2-background-bg-base rounded-[10px] shadow-[var(--v2-elevation-raised)]"
+              class="size-full min-w-0 flex flex-col overflow-hidden bg-v2-background-bg-base rounded-[6px] shadow-[var(--v2-elevation-raised)]"
             >
               <PaneTabs
                 pane={region.pane("bottom")}

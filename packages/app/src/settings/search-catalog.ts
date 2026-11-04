@@ -25,19 +25,6 @@ export const clientSettings: Entry<SettingsRootTab>[] = [
   { tab: "general", label: "settings.general.row.language.title", target: "settings-language" },
   {
     tab: "general",
-    label: "settings.general.row.interfaceMode.title",
-    target: "settings-tab-layout",
-    keywords: "top side tabs inbox sidebar mode layout vertical horizontal focus pro",
-  },
-  {
-    tab: "general",
-    label: "settings.workspaces.default.title",
-    target: "settings-workspace-destination",
-    description: "settings.workspaces.default.description",
-    keywords: "worktree workspace default destination",
-  },
-  {
-    tab: "general",
     label: "command.permissions.autoaccept.enable",
     target: "settings-auto-accept-permissions",
     description: "settings.permissions.autoAccept.default.description",
@@ -239,8 +226,6 @@ export const clientSettings: Entry<SettingsRootTab>[] = [
 
 // Pages showing the selected server, and rows of its card on the Servers page.
 export const serverSettings: Entry<SettingsServerTab | "servers">[] = [
-  { tab: "projects", label: "settings.tab.projects" },
-  { tab: "workspaces", label: "settings.tab.workspaces", keywords: "workspaces disk usage cleanup delete" },
   { tab: "providers", label: "settings.providers.title", keywords: "connect api key credentials" },
   { tab: "models", label: "settings.models.title", keywords: "model picker visibility" },
   { tab: "extensions", label: "settings.tab.extensions" },
@@ -276,7 +261,6 @@ export const projectSettings: Entry<SettingsProjectTab>[] = [
     target: "settings-project-auto-accept-permissions",
     keywords: "permissions approve allow auto accept",
   },
-  { tab: "workspaces", label: "settings.tab.workspaces", keywords: "workspaces disk usage cleanup delete" },
   { tab: "extensions", label: "settings.tab.extensions" },
   {
     tab: "extensions",

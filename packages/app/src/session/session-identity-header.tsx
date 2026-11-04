@@ -47,14 +47,24 @@ import "./session-identity-header.css"
 
 const SessionHeaderCollapse = createContext<() => number>(() => 0)
 
-export function SessionTitleHeader(props: ParentProps) {
+export function SessionTitleHeader(props: ParentProps<{ centered?: boolean }>) {
   return (
     <>
       {/* The bottom inset reserves room for the fade without covering rows stuck below the bar. */}
-      <div data-session-title class="pointer-events-none sticky top-0 z-30 w-full pb-4">
-        <div class="pointer-events-auto flex items-center bg-v2-background-bg-base pe-3 ps-2.5">
-          <CollapsedSidebarToggleSpace />
-          <div class="min-w-0 flex-1">{props.children}</div>
+      <div
+        data-session-title
+        data-centered={props.centered ? "" : undefined}
+        class="pointer-events-none sticky top-0 z-30 w-full pb-4"
+      >
+        <div class="pointer-events-auto bg-v2-background-bg-base">
+          {/* Centred, the bar keeps to the column the composer and the transcript share. */}
+          <div
+            class="flex w-full items-center pe-3 ps-2.5"
+            classList={{ "md:max-w-session md:mx-auto": props.centered }}
+          >
+            <CollapsedSidebarToggleSpace />
+            <div class="min-w-0 flex-1">{props.children}</div>
+          </div>
         </div>
       </div>
       {/* Stuck timeline headers stack above this fade, so it only fades content scrolling under the bar. */}
@@ -539,7 +549,7 @@ export function useOpenSessionRoute() {
   }
 }
 
-export function SessionIdentityHeader(props: { sessionID: string; session?: SessionInfo }) {
+export function SessionIdentityHeader(props: { sessionID: string; session?: SessionInfo; centered?: boolean }) {
   const server = useServer()
   const tabs = useTabs()
   const language = useLanguage()
@@ -611,7 +621,7 @@ export function SessionIdentityHeader(props: { sessionID: string; session?: Sess
 
   return (
     <Show when={title() || parentTitle()}>
-      <SessionTitleHeader>
+      <SessionTitleHeader centered={props.centered}>
         <SessionHeaderLayout
           title={title()}
           location={

@@ -1,13 +1,11 @@
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Icon } from "@opencode/ui/icon"
-import { Slash } from "@opencode/ui/slash"
 import { Keybind } from "@opencode/ui/keybind"
 import { useCommand } from "@/shell/commands/command"
-import { Show, createMemo, createSignal, type JSX } from "solid-js"
+import { Show, createMemo, createSignal } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { getFilename } from "@opencode/util/path"
 import {
   displayName,
   getProjectAvatarGenerated,
@@ -32,15 +30,9 @@ import { useProviders } from "@/providers/catalog/providers"
 import { NEW_SESSION_CONTENT_WIDTH } from "@/new-session/layout"
 import { Persist, persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
-import type { NewSessionWorkspaceController } from "./workspace/controller"
-import { NewSessionBranch } from "./workspace/selector"
-import { Logo } from "@opencode/ui/logo"
+import { BrandIcon } from "@/shell/brand-icon"
 
 const providerTipDismissalDuration = 30 * 24 * 60 * 60 * 1000
-
-export const WorkspaceOnboardingSchema = Persistence.struct({
-  used: Schema.Boolean,
-})
 
 export const ProviderTipSchema = Persistence.struct({
   dismissedAt: Schema.Finite,
@@ -49,28 +41,13 @@ export const ProviderTipSchema = Persistence.struct({
 export function NewSessionView(props: {
   composer: ComposerModel
   project: PromptProjectController
-  workspace: NewSessionWorkspaceController
   location: ReturnType<typeof useNewSessionLocationDialog>
 }) {
-  const [onboarding, setOnboarding, , onboardingReady] = persisted(
-    Persist.global("workspace-onboarding"),
-    WorkspaceOnboardingSchema,
-    { used: false },
-  )
-
-  const location = (project?: PromptProject) =>
-    props.location({
-      project,
-      onWorkspace: (value) => {
-        if (value !== "main") setOnboarding("used", true)
-      },
-    })
-
   return (
     <div class="@container relative flex flex-col min-h-0 h-full flex-1">
       <div
         data-component="new-session"
-        class="relative isolate flex-1 min-h-0 overflow-hidden rounded-[10px] bg-v2-background-bg-base shadow-[var(--v2-elevation-raised)]"
+        class="relative isolate flex-1 min-h-0 overflow-hidden rounded-[6px] bg-v2-background-bg-base shadow-[var(--v2-elevation-raised)]"
       >
         <ComposerDropzone
           active={props.composer.state.drag === "active"}
@@ -81,9 +58,9 @@ export function NewSessionView(props: {
             <div
               data-component="new-session-wordmark"
               aria-hidden="true"
-              class="pointer-events-none mx-auto w-full max-w-[520px] text-v2-background-bg-inverse"
+              class="pointer-events-none mx-auto flex w-full justify-center"
             >
-              <Logo class="w-full" />
+              <BrandIcon class="size-20 rounded-[12px]" />
             </div>
             <div class="mt-8 flex flex-col gap-3">
               <div data-slot="new-session-composer" class="flex flex-col gap-1">
@@ -91,17 +68,7 @@ export function NewSessionView(props: {
                   <Composer model={props.composer} />
                 </div>
                 <Show when={props.project.selected()}>
-                  {(project) => (
-                    <NewSessionLocation
-                      project={project()}
-                      workspace={props.workspace.bar.visible() ? props.workspace.selection.value() : "main"}
-                      root={props.workspace.project.root()}
-                      branch={<NewSessionBranch workspace={props.workspace} onDone={props.composer.restoreFocus} />}
-                      onboarding={onboardingReady() && !onboarding.used && props.workspace.bar.visible()}
-                      onClick={() => location()}
-                      onWorktree={project().id && project().vcs === "git" ? () => location(project()) : undefined}
-                    />
-                  )}
+                  {(project) => <NewSessionLocation project={project()} onClick={() => props.location()} />}
                 </Show>
               </div>
               <Show when={props.project.empty()}>
@@ -226,46 +193,13 @@ function fitPath(value: string, width: number, font: string) {
 const TRIGGER =
   "flex h-7 items-center gap-1.5 rounded-sm text-start ps-1.5 pe-2 text-v2-text-text-muted transition-colors hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-text-text-base focus-visible:outline-none"
 
-/** The composer tray: project and worktree pickers, Git context, and the session's directory. */
-function NewSessionLocation(props: {
-  project: PromptProject
-  /** "main", "create", or a worktree directory. */
-  workspace: string
-  root: string
-  branch?: JSX.Element
-  onboarding: boolean
-  onClick: () => void
-  /** Opens the project's worktree step; without it the project has no worktrees to choose. */
-  onWorktree?: () => void
-}) {
+/** The composer tray: the project picker and the session's directory. */
+function NewSessionLocation(props: { project: PromptProject; onClick: () => void }) {
   const language = useLanguage()
   const command = useCommand()
   const [layout, setLayout] = createStore({ width: 0, font: "" })
 
-  command.register("new-session-worktree", () => [
-    {
-      id: "session.location.select",
-      title: language.t("session.location.worktree"),
-      category: language.t("command.category.workspace"),
-      keybind: "mod+alt+o",
-      disabled: !props.onWorktree,
-      onSelect: props.onWorktree,
-    },
-  ])
-
-  const worktree = () => {
-    if (props.workspace === "main") return
-
-    if (props.workspace === "create") return language.t("workspace.new")
-
-    return getFilename(props.workspace)
-  }
-
-  const path = () => {
-    if (props.workspace === "create") return
-
-    return props.workspace === "main" ? props.root : props.workspace
-  }
+  const path = () => props.project.worktree
 
   const fitted = createMemo(() => fitPath(path() ?? "", layout.width, layout.font))
 
@@ -304,69 +238,7 @@ function NewSessionLocation(props: {
               <span class="min-w-0 truncate">{displayName(props.project)}</span>
             </button>
           </Tooltip>
-          <Show when={props.onWorktree}>
-            {(onWorktree) => (
-              <>
-                <Slash gap={2} />
-                <Tooltip
-                  appearance={props.onboarding ? "large" : undefined}
-                  placement="top"
-                  openDelay={800}
-                  value={
-                    <div class="flex flex-col gap-1 text-start">
-                      <Show when={props.onboarding}>
-                        <div class="flex items-center gap-1.5 font-[530] text-v2-text-text-base">
-                          <Icon name="outline-worktree" size="small" class="shrink-0 text-v2-text-text-accent" />
-                          <span>{language.t("workspace.onboarding.title")}</span>
-                        </div>
-                        <span class="font-[440] text-v2-text-text-muted">
-                          {language.t("workspace.onboarding.description")}
-                        </span>
-                      </Show>
-                      <span
-                        class="flex items-center justify-between gap-2"
-                        classList={{ "font-[440] text-v2-text-text-muted": props.onboarding }}
-                      >
-                        {language.t("session.location.worktree")}
-                        <Show when={command.keybindParts("session.location.select").length}>
-                          <Keybind keys={command.keybindParts("session.location.select")} variant="neutral" />
-                        </Show>
-                      </span>
-                    </div>
-                  }
-                  contentClass={props.onboarding ? "max-w-[280px]" : undefined}
-                  class="flex min-w-12 shrink-[1000]"
-                >
-                  <button
-                    type="button"
-                    data-action="prompt-worktree"
-                    aria-haspopup="dialog"
-                    aria-description={language.t("session.location.worktree")}
-                    class={`${TRIGGER} min-w-0`}
-                    onClick={onWorktree()}
-                  >
-                    <Icon
-                      name={props.workspace === "create" ? "plus" : worktree() ? "outline-worktree" : "monitor"}
-                      size="small"
-                      class="shrink-0 text-v2-icon-icon-muted"
-                    />
-                    <span class="min-w-0 truncate">
-                      {worktree() ?? language.t("session.new.workspace.triggerLocal")}
-                    </span>
-                    <Show when={props.onboarding}>
-                      <span
-                        data-slot="workspace-onboarding-dot"
-                        aria-hidden="true"
-                        class="size-1.5 shrink-0 rounded-full bg-v2-text-text-accent"
-                      />
-                    </Show>
-                  </button>
-                </Tooltip>
-              </>
-            )}
-          </Show>
         </div>
-        {props.branch}
       </div>
       {/* An open tooltip can outlive this row; keep its path instead of a stale Show accessor. */}
       <Show when={path()} keyed>

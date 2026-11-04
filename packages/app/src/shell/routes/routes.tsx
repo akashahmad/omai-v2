@@ -1,6 +1,8 @@
 import { Route, useParams } from "@solidjs/router"
 import { createMemo, lazy, Show, Suspense, type ParentProps } from "solid-js"
 import { Home } from "@/home/route"
+import { ProjectsLanding } from "@/projects/landing"
+import { AllProjects } from "@/projects/all"
 import { ServerProvider } from "@/runtime/server/current"
 import { useGlobal } from "@/runtime/server/runtime"
 import { ServerConnection, useServers } from "@/runtime/server/registry"
@@ -43,7 +45,9 @@ export function preloadRoute(url: string) {
 export function AppRoutes() {
   return (
     <Route component={AppLayout}>
-      <Route path="/" component={Home} />
+      <Route path="/" component={ProjectsLanding} />
+      <Route path="/projects" component={AllProjects} />
+      <Route path="/sessions" component={Home} />
       <Route path="/settings" component={SettingsScreen} />
       <Route
         path="/server/:serverKey/session/:id"

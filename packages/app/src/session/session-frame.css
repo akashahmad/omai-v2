@@ -1,0 +1,38 @@
+/* A working session's top edge: a brand-coloured sweep over a faint track, still under reduced motion. */
+[data-slot="session-working-bar"] {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: color-mix(in srgb, #03386a 25%, transparent);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, #03386a 35%, #03386a 65%, transparent);
+    animation: session-working-sweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@keyframes session-working-sweep {
+  from {
+    translate: -100% 0;
+  }
+
+  to {
+    translate: 250% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="session-working-bar"]::after {
+    animation: none;
+    inset-inline: 0;
+    width: auto;
+  }
+}

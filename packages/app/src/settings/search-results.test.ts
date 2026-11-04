@@ -54,7 +54,7 @@ describe("settings search index", () => {
     expect(targets({})).not.toContain("settings-zoom")
     expect(targets({})).not.toContain("settings-experimental-browser")
     expect(targets({})).not.toContain("settings-show-project-icon")
-    expect(targets({})).toContain("settings-tab-layout")
+    expect(targets({})).toContain("settings-language")
     expect(targets({ desktop: true })).toContain("settings-pinch-zoom")
     expect(targets({ desktop: true })).toContain("settings-zoom")
     expect(targets({ browser: true })).not.toContain("settings-experimental-browser")
@@ -96,9 +96,9 @@ describe("settings search index", () => {
 
 describe("settings search ranking", () => {
   test("prioritizes top-level pages and omits generic project-setting copies", () => {
-    expect(rankSettings("work", index({ servers: [servers[0]] })).map((item) => item.title)).toEqual([
-      "Worktrees",
-      "Default environment",
+    expect(rankSettings("exten", index({ servers: [servers[0]] })).map((item) => item.title)).toEqual([
+      "Extensions",
+      "Plugins",
     ])
     expect(rankSettings("mcps", index()).map((item) => item.view)).toEqual([
       { type: "root", server: "local", tab: "extensions", target: undefined, subtab: "mcps" },

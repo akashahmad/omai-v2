@@ -111,7 +111,7 @@ export function SideRegion(props: {
         aria-label={language.t("session.panel.reviewAndFiles")}
         aria-hidden={!tabsOpen()}
         data-focused={props.region.focus.focused() || undefined}
-        class="relative h-full shrink-0 min-w-0 flex overflow-hidden bg-v2-background-bg-base rounded-[10px] shadow-[var(--v2-elevation-raised)] outline-none"
+        class="relative h-full shrink-0 min-w-0 flex overflow-hidden bg-v2-background-bg-base rounded-[6px] shadow-[var(--v2-elevation-raised)] outline-none"
         classList={{ "flex-1": tabsVisible() }}
         style={{ width: panelWidth() }}
       >

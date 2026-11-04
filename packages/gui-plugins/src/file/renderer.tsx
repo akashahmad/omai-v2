@@ -413,6 +413,19 @@ const setup: Plugin.Setup<typeof File> = (ctx) => {
     }),
   )
 
+  const FilesPanel = lazy(() => styled(import("./files-panel")))
+
+  ctx.add(BuiltinSlot, {
+    at: "session.files",
+    render: (input) => (
+      <FileProvider>
+        <Suspense>
+          <FilesPanel session={input.session} screen={input.screen} />
+        </Suspense>
+      </FileProvider>
+    ),
+  })
+
   const OpenInAppButton = lazy(() => import("./open-in-app"))
 
   const OpenInAppMenuItem = lazy(() =>

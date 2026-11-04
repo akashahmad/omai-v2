@@ -122,3 +122,15 @@
   font-size: 13px;
   line-height: var(--line-height-compact);
 }
+
+/* A centred bar clears the review toggle at the panel's end once the column leaves 40px beside it, so it stops
+   reserving the toggle's room and its actions line up with the composer's edge. */
+[data-session-title][data-centered] {
+  container: session-title / inline-size;
+}
+
+@container session-title (min-width: 824px) {
+  [data-slot="session-header-spacer"] {
+    display: none;
+  }
+}

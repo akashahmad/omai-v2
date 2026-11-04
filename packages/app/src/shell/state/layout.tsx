@@ -64,7 +64,8 @@ export type LayoutRoute =
 export const currentRoute = (pathname: string, search: string): LayoutRoute => {
   const parts = pathname.split("/").filter(Boolean)
 
-  if (parts.length === 0) return { type: "home" }
+  // The projects pages and the session list are Home surfaces.
+  if (parts.length === 0 || parts[0] === "projects" || parts[0] === "sessions") return { type: "home" }
 
   if (parts[0] === "settings") return { type: "settings" }
 

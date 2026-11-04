@@ -1,8 +1,7 @@
 import { createEffect, onCleanup } from "solid-js"
 import { createStore } from "solid-js/store"
-import { useDialog } from "@opencode/ui/context/dialog"
 import { Tooltip } from "@opencode/ui/tooltip"
-import { Logo } from "@opencode/ui/logo"
+import { BrandIcon } from "@/shell/brand-icon"
 import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
 import { showToast } from "@/shell/notifications/toast"
@@ -10,7 +9,6 @@ import { showToast } from "@/shell/notifications/toast"
 export function SettingsAbout(props: { active: boolean }) {
   const language = useLanguage()
   const platform = usePlatform()
-  const dialog = useDialog()
   const [copy, setCopy] = createStore({ pending: false, copied: false, forceCopied: false })
   const version = () => (platform.version ? `v${platform.version}` : language.t("settings.about.devVersion"))
   const versionLabel = () => language.t("settings.about.version", { version: version() })
@@ -43,19 +41,6 @@ export function SettingsAbout(props: { active: boolean }) {
       .finally(() => setCopy("pending", false))
   }
 
-  const showNotices = async () => {
-    // The license texts load only when someone reads them.
-    const loaded = await import("./notices/dialog").catch(() => undefined)
-
-    if (!loaded) {
-      showToast({ variant: "error", title: language.t("settings.about.notices.loadFailed") })
-
-      return
-    }
-
-    void dialog.show(() => <loaded.default />)
-  }
-
   return (
     <div class="settings-about-content">
       <div class="settings-about-intro">
@@ -82,16 +67,11 @@ export function SettingsAbout(props: { active: boolean }) {
         </div>
       </div>
 
-      <Logo class="w-60 max-w-full" />
+      <BrandIcon label="O M A I +" class="size-20 rounded-[12px]" />
 
       <div class="settings-about-details">
         <p>{language.t("settings.about.description")}</p>
-        <p>{language.t("settings.about.typeset")}</p>
-        <p>
-          <button type="button" class="settings-about-link" onClick={() => void showNotices()}>
-            {language.t("settings.about.notices.title")}
-          </button>
-        </p>
+        <p class="max-w-[440px] text-v2-text-text-muted">{language.t("settings.about.summary")}</p>
       </div>
     </div>
   )

@@ -15,7 +15,7 @@
   margin-block: var(--shell-top-inset, 8px) var(--shell-bottom-inset, 8px);
   justify-content: center;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 6px;
   background: var(--v2-background-bg-base);
   box-shadow: var(--v2-elevation-raised);
   outline: none;

@@ -6,7 +6,7 @@ export function SessionHeaderSpacer(props: { visible: boolean }) {
 
   return (
     <Show when={isDesktop() && props.visible}>
-      <div class="size-7 shrink-0" aria-hidden />
+      <div data-slot="session-header-spacer" class="size-7 shrink-0" aria-hidden />
     </Show>
   )
 }

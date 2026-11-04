@@ -8,7 +8,7 @@ import type { LocalProject } from "@/shell/state/layout"
 import { ServerConnection } from "@/runtime/server/registry"
 import { showToast } from "@/shell/notifications/toast"
 
-type ProjectPatch = Pick<ProjectUpdateInput, "name" | "icon" | "commands">
+type ProjectPatch = Pick<ProjectUpdateInput, "name" | "icon">
 
 export function createEditProjectModel(props: { project: LocalProject; server: ServerConnection.Any }) {
   const language = useLanguage()
@@ -21,7 +21,6 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     name: defaultName(),
     color: props.project.icon?.color,
     iconOverride: props.project.icon?.override,
-    startup: props.project.commands?.start ?? "",
     dragOver: false,
     iconHover: false,
     saving: 0,
@@ -29,7 +28,6 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
 
   const saved = {
     name: props.project.name ?? "",
-    startup: store.startup.trim(),
     color: store.color,
     iconOverride: store.iconOverride,
   }
@@ -71,15 +69,6 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     })
   }
 
-  const saveStartup = () => {
-    const value = store.startup.trim()
-
-    if (!store.saving && value === saved.startup) return
-    persist({ commands: { start: value } }, () => {
-      saved.startup = value
-    })
-  }
-
   const saveIcon = (color = store.color, override = store.iconOverride) => {
     if (!store.saving && color === saved.color && override === saved.iconOverride) return
     persist({ icon: { color: color ?? "", override: override ?? "" } }, () => {
@@ -109,7 +98,6 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     folderName,
     defaultName,
     saveName,
-    saveStartup,
     setColor(value: string | undefined) {
       setStore("color", value)
       saveIcon(value, store.iconOverride)

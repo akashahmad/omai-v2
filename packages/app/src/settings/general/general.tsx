@@ -10,7 +10,6 @@ import {
   type BackgroundActivity,
   type FollowUpBehavior,
   type TimelineWidth,
-  type WorkspaceDefaultDestination,
   useSettings,
 } from "@/settings/model"
 import { formatKeybind } from "@/shell/commands/command"
@@ -18,7 +17,6 @@ import { SettingsList } from "@/settings/list"
 import { SettingsRow } from "@/settings/row"
 import { createShellOptions } from "./behavior"
 import type { ShellSettingsController } from "./controllers"
-import { InterfaceModeSetting } from "./interface-mode"
 import "@/settings/settings.css"
 
 const AutoApprovePermissionsSetting: Component = () => {
@@ -36,35 +34,6 @@ const AutoApprovePermissionsSetting: Component = () => {
           onChange={(checked) => settings.permissions.setAutoApproveDefault(checked)}
         />
       </div>
-    </SettingsRow>
-  )
-}
-
-const WorkspaceDestinationSetting: Component = () => {
-  const language = useLanguage()
-  const settings = useSettings()
-
-  const options = createMemo((): { value: WorkspaceDefaultDestination; label: string }[] => [
-    { value: "last-used", label: language.t("settings.workspaces.default.lastUsed") },
-    { value: "local", label: language.t("settings.workspaces.default.local") },
-    { value: "new", label: language.t("settings.workspaces.default.new") },
-  ])
-
-  return (
-    <SettingsRow
-      title={language.t("settings.workspaces.default.title")}
-      description={language.t("settings.workspaces.default.description")}
-    >
-      <Select
-        data-action="settings-workspace-destination"
-        options={options()}
-        current={options().find((option) => option.value === settings.workspaces.defaultDestination())}
-        value={(option) => option.value}
-        label={(option) => option.label}
-        placement="bottom-end"
-        gutter={6}
-        onSelect={(option) => option && settings.workspaces.setDefaultDestination(option.value)}
-      />
     </SettingsRow>
   )
 }
@@ -263,11 +232,9 @@ export const SettingsGeneral: Component = () => {
   const GeneralSection = () => (
     <div class="settings-section">
       <h3 class="settings-section-title">{language.t("settings.general.section.general")}</h3>
-      <InterfaceModeSetting />
       <SettingsList>
         <LanguageSetting />
 
-        <WorkspaceDestinationSetting />
         <AutoApprovePermissionsSetting />
 
         <SettingsRow

@@ -6,7 +6,6 @@ import {
   PROJECT_AVATAR_VARIANTS,
 } from "@opencode/ui/project-avatar"
 import { Select } from "@opencode/ui/select"
-import { Textarea } from "@opencode/ui/textarea"
 import { TextInput } from "@opencode/ui/text-input"
 import { For, Show, createMemo, type Component } from "solid-js"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -163,28 +162,6 @@ export const SettingsProjectGeneral: Component<{
 
           <AutoAcceptPermissionsSetting project={props.project} server={props.server} />
 
-          <div class="project-settings-startup">
-            <div class="project-settings-startup-copy">
-              <span class="project-settings-startup-title">{language.t("dialog.project.edit.worktree.startup")}</span>
-              <span class="project-settings-startup-description">
-                {language.t("project.settings.worktree.startup.description")}
-              </span>
-            </div>
-            <Textarea
-              class="!w-full [&_[data-slot=textarea-v2-textarea]]:font-mono"
-              rows={5}
-              value={model.store.startup}
-              placeholder={language.t("dialog.project.edit.worktree.startup.placeholder")}
-              aria-label={language.t("dialog.project.edit.worktree.startup")}
-              spellcheck={false}
-              onInput={(event) => model.setStore("startup", event.currentTarget.value)}
-              onBlur={model.saveStartup}
-            />
-            <div class="project-settings-startup-hint flex flex-col">
-              <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.base"))}</span>
-              <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.new"))}</span>
-            </div>
-          </div>
         </SettingsList>
       </div>
     </>
@@ -237,8 +214,3 @@ const AutoAcceptPermissionsSetting: Component<{ project: LocalProject; server: S
   )
 }
 
-function inlineVariables(text: string) {
-  return text
-    .split(/(\$[A-Z][A-Z0-9_]*)/g)
-    .map((part, index) => (index % 2 === 0 ? part : <code dir="ltr">{part}</code>))
-}
