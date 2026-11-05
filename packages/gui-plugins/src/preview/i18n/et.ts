@@ -13,10 +13,6 @@ export default {
   more: "Rohkem eelvaate valikuid",
   "publish.button": "Avalda",
   "publish.title": "Avalda internetis",
-  "publish.description":
-    "Juurutage oma projekt ja tehke see avalikult kättesaadavaks. Kui juurutamine on lõpetatud, luuakse jagatav URL.",
-  "publish.action": "Juuruta internetti",
-  "publish.soon": "Avaldamine on peagi tulekul.",
   back: "Tagasi",
   forward: "Edasi",
   reload: "Laadi uuesti",

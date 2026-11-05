@@ -4,23 +4,35 @@ import { Icon } from "@opencode/ui/icon"
 import type { IconName } from "@opencode/plugin/gui"
 import { CheckpointsPanel } from "./checkpoints/panel"
 import type { CheckpointView } from "./checkpoints/view"
+import { DomainsPanel } from "./domains/panel"
+import type { DomainsView } from "./domains/view"
 import { GitPanel } from "./git/panel"
 import type { GitView } from "./git/view"
+import { PublishPanel } from "./publish/panel"
+import type { PublishView } from "./publish/view"
 import { SeoPanel } from "./seo/panel"
 import type { AuditView } from "./seo/view"
 
-type Tool = "seo" | "git" | "checkpoints"
+type Tool = "seo" | "git" | "checkpoints" | "publish" | "domains"
 
 const TOOLS: ReadonlyArray<{ id: Tool; icon: IconName; label: string }> = [
+  { id: "publish", icon: "cloud-upload", label: "publish.name" },
+  { id: "domains", icon: "globe", label: "domains.name" },
   { id: "seo", icon: "glasses", label: "seo.name" },
-  { id: "git", icon: "branch", label: "git.name" },
   { id: "checkpoints", icon: "outline-rotate-clockwise", label: "checkpoints.name" },
+  { id: "git", icon: "branch", label: "git.name" },
 ]
 
 /** The Tools section: the list of project tools beside the one on screen, as the settings pages lay out. */
-export default function ToolsPanel(props: { audit: AuditView; git: GitView; checkpoints: CheckpointView }) {
+export default function ToolsPanel(props: {
+  audit: AuditView
+  git: GitView
+  checkpoints: CheckpointView
+  publish: PublishView
+  domains: DomainsView
+}) {
   const ctx = usePlugin()
-  const [tool, setTool] = createSignal<Tool>("seo")
+  const [tool, setTool] = createSignal<Tool>("publish")
 
   return (
     <div data-component="tools-panel" class="@container flex h-full min-h-0">
@@ -57,6 +69,12 @@ export default function ToolsPanel(props: { audit: AuditView; git: GitView; chec
           </Match>
           <Match when={tool() === "checkpoints"}>
             <CheckpointsPanel view={props.checkpoints} />
+          </Match>
+          <Match when={tool() === "publish"}>
+            <PublishPanel view={props.publish} />
+          </Match>
+          <Match when={tool() === "domains"}>
+            <DomainsPanel view={props.domains} onPublish={() => setTool("publish")} />
           </Match>
         </Switch>
       </div>

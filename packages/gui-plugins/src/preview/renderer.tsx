@@ -5,6 +5,7 @@ import { BuiltinPanel, BuiltinSlot, BuiltinTimelineCover, onIdle, type BuiltinPa
 import type PreviewDefinition from "./index"
 import { uuid } from "@opencode/util/uuid"
 import { previewViews } from "./view"
+import { publishStates } from "./publish"
 import { askNote } from "./visual/ask"
 import { ImageDialog } from "./visual/image-dialog"
 
@@ -36,6 +37,13 @@ const setup: Plugin.Setup<typeof PreviewDefinition> = (ctx) => {
       deselect: ctx.t("visual.tool.deselect"),
     }),
   })
+
+  // The sessions whose shell tab is still open; the publishing state of the others is dropped.
+  const publish = publishStates(getOwner(), () =>
+    [...ctx.sessions.list().map((session) => session.key), ctx.sessions.current()?.key].filter(
+      (key) => key !== undefined,
+    ),
+  )
 
   const Inspector = lazy(() => import("./visual/inspector"))
 
@@ -89,7 +97,7 @@ const setup: Plugin.Setup<typeof PreviewDefinition> = (ctx) => {
     render: (input) => (
       <Show when={input.section === "preview" && input.session.project}>
         <Suspense>
-          <PreviewToolbar view={view(() => input.session)} />
+          <PreviewToolbar view={view(() => input.session)} publish={publish(() => input.session)} />
         </Suspense>
       </Show>
     ),

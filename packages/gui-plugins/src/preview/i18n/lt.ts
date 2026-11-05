@@ -13,10 +13,6 @@ export default {
   more: "Daugiau peržiūros parinkčių",
   "publish.button": "Publikuoti",
   "publish.title": "Publikuoti internete",
-  "publish.description":
-    "Įdiekite projektą ir padarykite jį viešai pasiekiamą. Baigus diegimą bus sugeneruotas bendrinamas URL.",
-  "publish.action": "Įdiegti internete",
-  "publish.soon": "Publikavimas netrukus.",
   back: "Atgal",
   forward: "Pirmyn",
   reload: "Įkelti iš naujo",

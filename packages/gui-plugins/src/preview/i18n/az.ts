@@ -13,10 +13,6 @@ export default {
   more: "Daha çox önizləmə seçimi",
   "publish.button": "Dərc et",
   "publish.title": "İnternetdə dərc et",
-  "publish.description":
-    "Layihəni yerləşdir və onu hamı üçün əlçatan et. Yerləşdirmə başa çatdıqda paylaşıla bilən URL yaradılacaq.",
-  "publish.action": "İnternetə yerləşdir",
-  "publish.soon": "Dərc etmə tezliklə əlavə olunacaq.",
   back: "Geri",
   forward: "İrəli",
   reload: "Yenidən yüklə",

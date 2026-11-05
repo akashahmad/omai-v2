@@ -13,10 +13,6 @@ export default {
   more: "その他のプレビューオプション",
   "publish.button": "公開",
   "publish.title": "インターネットに公開",
-  "publish.description":
-    "プロジェクトをデプロイして一般公開します。デプロイが完了すると、共有可能な URL が生成されます。",
-  "publish.action": "インターネットにデプロイ",
-  "publish.soon": "公開機能は近日提供予定です。",
   back: "戻る",
   forward: "進む",
   reload: "再読み込み",

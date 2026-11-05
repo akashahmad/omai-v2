@@ -13,10 +13,6 @@ export default {
   more: "Flere alternativer for forhåndsvisning",
   "publish.button": "Publiser",
   "publish.title": "Publiser på Internett",
-  "publish.description":
-    "Distribuer prosjektet ditt og gjør det offentlig tilgjengelig. En delbar URL genereres når distribusjonen er fullført.",
-  "publish.action": "Distribuer på Internett",
-  "publish.soon": "Publisering kommer snart.",
   back: "Tilbake",
   forward: "Frem",
   reload: "Last inn på nytt",

@@ -13,10 +13,6 @@ export default {
   more: "추가 미리보기 옵션",
   "publish.button": "게시",
   "publish.title": "인터넷에 게시",
-  "publish.description":
-    "프로젝트를 배포하고 누구나 접근할 수 있게 합니다. 배포가 완료되면 공유 가능한 URL이 생성됩니다.",
-  "publish.action": "인터넷에 배포",
-  "publish.soon": "게시 기능이 곧 제공됩니다.",
   back: "뒤로",
   forward: "앞으로",
   reload: "새로고침",

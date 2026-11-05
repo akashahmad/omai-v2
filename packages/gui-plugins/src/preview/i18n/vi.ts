@@ -13,10 +13,6 @@ export default {
   more: "Thêm tùy chọn xem trước",
   "publish.button": "Xuất bản",
   "publish.title": "Xuất bản lên Internet",
-  "publish.description":
-    "Triển khai dự án của bạn và công khai cho mọi người truy cập. Một URL có thể chia sẻ sẽ được tạo khi quá trình triển khai hoàn tất.",
-  "publish.action": "Triển khai lên Internet",
-  "publish.soon": "Tính năng xuất bản sắp ra mắt.",
   back: "Quay lại",
   forward: "Tiến tới",
   reload: "Tải lại",

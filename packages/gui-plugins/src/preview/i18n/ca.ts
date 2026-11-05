@@ -13,10 +13,6 @@ export default {
   more: "Més opcions de previsualització",
   "publish.button": "Publica",
   "publish.title": "Publica a Internet",
-  "publish.description":
-    "Desplega el projecte i fes-lo accessible públicament. Quan acabi el desplegament, es generarà un URL per compartir.",
-  "publish.action": "Desplega a Internet",
-  "publish.soon": "La publicació arribarà aviat.",
   back: "Enrere",
   forward: "Endavant",
   reload: "Torna a carregar",

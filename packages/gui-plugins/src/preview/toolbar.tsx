@@ -1,11 +1,12 @@
 import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { usePlugin } from "@opencode/plugin/gui"
-import { useDialog } from "@opencode/ui/context/dialog"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
+import { Loader } from "@opencode/ui/loader"
 import { Menu } from "@opencode/ui/menu"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { PublishDialog } from "./publish-dialog"
+import type { PublishState } from "./publish"
 import { ZOOM_OPTIONS, type Device, type PreviewView } from "./view"
 
 const NEXT_DEVICE: Record<Device, Device> = { desktop: "tablet", tablet: "mobile", mobile: "desktop" }
@@ -14,9 +15,8 @@ const NEXT_DEVICE: Record<Device, Device> = { desktop: "tablet", tablet: "mobile
 const COMPACT_WIDTH = 380
 
 /** The preview's controls in the right panel's toolbar: device, address, open in browser, zoom, options, Publish. */
-export function PreviewToolbar(props: { view: PreviewView }) {
+export function PreviewToolbar(props: { view: PreviewView; publish: PublishState }) {
   const ctx = usePlugin()
-  const dialog = useDialog()
   const view = props.view
   const [width, setWidth] = createSignal(Number.POSITIVE_INFINITY)
   const [search, setSearch] = createSignal("")
@@ -288,10 +288,24 @@ export function PreviewToolbar(props: { view: PreviewView }) {
             type="button"
             data-action="preview-publish"
             class="flex items-center gap-1.5 h-7 px-2 rounded-full cursor-pointer transition-colors hover:bg-v2-overlay-simple-overlay-hover text-12-medium text-v2-text-text-base"
-            onClick={() => dialog.show(() => <PublishDialog />)}
+            onClick={() => ctx.dialogs.open(() => <PublishDialog publish={props.publish} />)}
             aria-label={ctx.t("publish.button")}
           >
-            <Icon name="cloud-upload" size="small" />
+            <Switch fallback={<Icon name="cloud-upload" size="small" />}>
+              <Match when={props.publish.running()}>
+                <Loader width={14} height={14} />
+              </Match>
+              <Match when={props.publish.live()}>
+                {/* The site is live: the cloud carries a small green dot. */}
+                <span class="relative flex">
+                  <Icon name="cloud-upload" size="small" />
+                  <span
+                    aria-hidden="true"
+                    class="absolute -top-0.5 -end-0.5 size-[7px] rounded-full bg-[#3f8f6a] shadow-[0_0_0_1.5px_var(--v2-background-bg-base)]"
+                  />
+                </span>
+              </Match>
+            </Switch>
             <span class="whitespace-nowrap" classList={{ hidden: compact() }}>
               {ctx.t("publish.button")}
             </span>

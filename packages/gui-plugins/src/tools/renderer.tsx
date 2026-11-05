@@ -4,24 +4,29 @@ import type { Plugin } from "@opencode/plugin/gui"
 import { BuiltinPanel, onIdle, type BuiltinPanelTab } from "@opencode/plugin/gui/builtin"
 import type ToolsDefinition from "./index"
 import { checkpointViews } from "./checkpoints/view"
+import { domainsViews } from "./domains/view"
 import { gitViews } from "./git/view"
+import { publishViews } from "./publish/view"
 import { auditViews } from "./seo/view"
 
 /**
- * The right panel's Tools section: project tools such as the website audit, Git and Checkpoints. They run on the
- * server, so their views live per session and outlive the panel.
+ * The right panel's Tools section: project tools such as the website audit, Git, Checkpoints, Publishing and Domains. They run
+ * on the server, so their views live per session and outlive the panel.
  */
 const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
   const layout = ctx.layout
   const sessions = ctx.sessions
   const audit = auditViews(getOwner())
 
-  // The sessions whose shell tab is still open; the Git and Checkpoints views of the others are dropped.
+  // The sessions whose shell tab is still open; the Git, Checkpoints, Publishing and Domains views of the others are
+  // dropped.
   const open = () =>
     [...sessions.list().map((session) => session.key), sessions.current()?.key].filter((key) => key !== undefined)
 
   const git = gitViews(getOwner(), open)
   const checkpoints = checkpointViews(getOwner(), open)
+  const publish = publishViews(getOwner(), open)
+  const domains = domainsViews(getOwner(), open)
 
   const ToolsPanel = lazy(() => import("./panel"))
 
@@ -66,6 +71,8 @@ const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
               return ctx.locale.locale()
             },
           })}
+          publish={publish(() => props.session, ctx.t)}
+          domains={domains(() => props.session)}
         />
       </Suspense>
     ),

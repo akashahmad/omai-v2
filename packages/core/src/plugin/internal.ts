@@ -60,6 +60,8 @@ import { Mcp } from "../mcp/index.js"
 import { Npm } from "@opencode/util/npm"
 import { Permission } from "../permission.js"
 import { PreviewThumbnail } from "../preview/thumbnail.js"
+import { PublishDomains } from "../publish/domains.js"
+import { PublishService } from "../publish/service.js"
 import { Reference } from "../reference.js"
 import { WebSearch } from "../websearch.js"
 import { Ripgrep } from "../ripgrep.js"
@@ -103,6 +105,7 @@ import { IdentityPlugin } from "./identity.js"
 import { PlanPlugin } from "./plan.js"
 import { GoalPlugin } from "./goal.js"
 import { CheckpointsPlugin } from "./checkpoints.js"
+import { PublishPlugin } from "./publish.js"
 import { GitToolPlugin } from "./git-tool.js"
 import { PreviewPlugin } from "./preview.js"
 import { ModelsDevPlugin } from "./models-dev.js"
@@ -152,6 +155,8 @@ const services = [
   Permission.Service,
   PreviewThumbnail.Service,
   Checkpoints.Service,
+  PublishService.Service,
+  PublishDomains.Service,
   Form.Service,
   ReadToolFileSystem.Service,
   Reference.Service,
@@ -212,6 +217,8 @@ export const requirements = LayerNode.group([
   Permission.node,
   PreviewThumbnail.node,
   Checkpoints.node,
+  PublishService.node,
+  PublishDomains.node,
   Form.node,
   ReadToolFileSystem.node,
   Reference.node,
@@ -252,6 +259,7 @@ const pre = [
   PreviewPlugin.Plugin,
   GitToolPlugin.Plugin,
   CheckpointsPlugin.Plugin,
+  PublishPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,

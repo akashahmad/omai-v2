@@ -13,10 +13,6 @@ export default {
   more: "Más opciones de vista previa",
   "publish.button": "Publicar",
   "publish.title": "Publicar en Internet",
-  "publish.description":
-    "Despliega tu proyecto y hazlo accesible públicamente. Cuando termine el despliegue, se generará una URL para compartir.",
-  "publish.action": "Desplegar en Internet",
-  "publish.soon": "La publicación llegará pronto.",
   back: "Atrás",
   forward: "Adelante",
   reload: "Recargar",

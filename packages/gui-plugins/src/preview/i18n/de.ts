@@ -13,10 +13,6 @@ export default {
   more: "Weitere Vorschauoptionen",
   "publish.button": "Veröffentlichen",
   "publish.title": "Im Internet veröffentlichen",
-  "publish.description":
-    "Stelle dein Projekt bereit und mache es öffentlich zugänglich. Nach Abschluss der Bereitstellung wird eine teilbare URL erstellt.",
-  "publish.action": "Im Internet bereitstellen",
-  "publish.soon": "Veröffentlichen kommt bald.",
   back: "Zurück",
   forward: "Vorwärts",
   reload: "Neu laden",

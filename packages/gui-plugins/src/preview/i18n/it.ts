@@ -13,10 +13,6 @@ export default {
   more: "Altre opzioni di anteprima",
   "publish.button": "Pubblica",
   "publish.title": "Pubblica su Internet",
-  "publish.description":
-    "Distribuisci il progetto e rendilo accessibile pubblicamente. Al termine della distribuzione verrà generato un URL condivisibile.",
-  "publish.action": "Distribuisci su Internet",
-  "publish.soon": "La pubblicazione arriverà presto.",
   back: "Indietro",
   forward: "Avanti",
   reload: "Ricarica",

@@ -13,10 +13,6 @@ export default {
   more: "Boshqa oldindan ko'rish sozlamalari",
   "publish.button": "Nashr qilish",
   "publish.title": "Internetda nashr qilish",
-  "publish.description":
-    "Loyihangizni joylashtiring va uni hamma uchun ochiq qiling. Joylashtirish tugagach, ulashish mumkin bo'lgan URL yaratiladi.",
-  "publish.action": "Internetga joylashtirish",
-  "publish.soon": "Nashr qilish tez orada qo'shiladi.",
   back: "Orqaga",
   forward: "Oldinga",
   reload: "Qayta yuklash",

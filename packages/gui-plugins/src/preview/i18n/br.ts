@@ -13,10 +13,6 @@ export default {
   more: "Mais opções de pré-visualização",
   "publish.button": "Publicar",
   "publish.title": "Publicar na internet",
-  "publish.description":
-    "Implante seu projeto e torne-o acessível publicamente. Uma URL compartilhável será gerada quando a implantação for concluída.",
-  "publish.action": "Implantar na internet",
-  "publish.soon": "A publicação chega em breve.",
   back: "Voltar",
   forward: "Avançar",
   reload: "Recarregar",

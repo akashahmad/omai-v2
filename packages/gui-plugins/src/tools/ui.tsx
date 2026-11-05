@@ -1,8 +1,10 @@
 // The pieces the Tools panels share, in the website audit's card style.
 
 import { Show, type JSX } from "solid-js"
+import { usePlugin } from "@opencode/plugin/gui"
 import { Icon } from "@opencode/ui/icon"
 import { Loader } from "@opencode/ui/loader"
+import type { Publish } from "@opencode/schema/publish"
 
 export const card =
   "flex flex-col gap-4 p-5 rounded-xl border border-v2-border-border-base/70 bg-v2-background-bg-layer-01 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
@@ -82,5 +84,22 @@ export function Busy(props: { when: boolean; children: JSX.Element }) {
     <Show when={props.when} fallback={props.children}>
       <Spinner />
     </Show>
+  )
+}
+
+/** A refused publishing or domains call: what kind of refusal it was in plain words, then the server's own sentence. */
+export function Failure(props: { problem: { kind: Publish.FailureKind; message: string } }) {
+  const ctx = usePlugin()
+  const title = () => ctx.t(`publish.failed.${props.problem.kind}`)
+
+  return (
+    <Note tone="danger" icon="warning">
+      <span class="flex flex-col gap-0.5">
+        <span class="font-medium">{title()}</span>
+        <Show when={props.problem.message && props.problem.message !== title()}>
+          <span>{props.problem.message}</span>
+        </Show>
+      </span>
+    </Note>
   )
 }

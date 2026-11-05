@@ -13,10 +13,6 @@ export default {
   more: "Fleiri valkostir forskoðunar",
   "publish.button": "Birta",
   "publish.title": "Birta á netinu",
-  "publish.description":
-    "Settu verkefnið þitt í loftið og gerðu það aðgengilegt öllum. Slóð sem hægt er að deila verður til þegar uppsetningu lýkur.",
-  "publish.action": "Setja á netið",
-  "publish.soon": "Birting er væntanleg.",
   back: "Til baka",
   forward: "Áfram",
   reload: "Endurhlaða",

@@ -13,10 +13,6 @@ export default {
   more: "Više opcija pretpregleda",
   "publish.button": "Objavi",
   "publish.title": "Objavi na internetu",
-  "publish.description":
-    "Postavi svoj projekat i učini ga javno dostupnim. Nakon završetka postavljanja bit će generisan URL za dijeljenje.",
-  "publish.action": "Postavi na internet",
-  "publish.soon": "Objavljivanje uskoro stiže.",
   back: "Nazad",
   forward: "Naprijed",
   reload: "Ponovo učitaj",

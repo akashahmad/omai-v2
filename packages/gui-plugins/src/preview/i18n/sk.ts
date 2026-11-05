@@ -13,10 +13,6 @@ export default {
   more: "Ďalšie možnosti náhľadu",
   "publish.button": "Publikovať",
   "publish.title": "Publikovať na internete",
-  "publish.description":
-    "Nasaďte projekt a sprístupnite ho verejne. Po dokončení nasadenia sa vygeneruje URL na zdieľanie.",
-  "publish.action": "Nasadiť na internet",
-  "publish.soon": "Publikovanie bude čoskoro k dispozícii.",
   back: "Späť",
   forward: "Dopredu",
   reload: "Znova načítať",

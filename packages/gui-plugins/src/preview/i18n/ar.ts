@@ -13,10 +13,6 @@ export default {
   more: "مزيد من خيارات المعاينة",
   "publish.button": "نشر",
   "publish.title": "النشر على الإنترنت",
-  "publish.description":
-    "انشر مشروعك واجعله متاحًا للجميع. سيتم إنشاء عنوان URL قابل للمشاركة بعد اكتمال النشر.",
-  "publish.action": "النشر على الإنترنت",
-  "publish.soon": "النشر قادم قريبًا.",
   back: "رجوع",
   forward: "تقدّم",
   reload: "إعادة تحميل",

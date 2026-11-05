@@ -13,10 +13,6 @@ export default {
   more: "Flere indstillinger for forhåndsvisning",
   "publish.button": "Udgiv",
   "publish.title": "Udgiv på internettet",
-  "publish.description":
-    "Udrul dit projekt, og gør det offentligt tilgængeligt. Der oprettes en URL, du kan dele, når udrulningen er færdig.",
-  "publish.action": "Udrul på internettet",
-  "publish.soon": "Udgivelse kommer snart.",
   back: "Tilbage",
   forward: "Frem",
   reload: "Genindlæs",

@@ -13,10 +13,6 @@ export default {
   more: "ተጨማሪ የቅድመ እይታ አማራጮች",
   "publish.button": "አትም",
   "publish.title": "በኢንተርኔት ላይ አትም",
-  "publish.description":
-    "ፕሮጀክትዎን ያሰማሩ እና ለሕዝብ ተደራሽ ያድርጉት። ማሰማራቱ ሲጠናቀቅ ሊጋራ የሚችል URL ይፈጠራል።",
-  "publish.action": "ወደ ኢንተርኔት አሰማራ",
-  "publish.soon": "ማተም በቅርቡ ይመጣል።",
   back: "ተመለስ",
   forward: "ወደፊት",
   reload: "እንደገና ጫን",

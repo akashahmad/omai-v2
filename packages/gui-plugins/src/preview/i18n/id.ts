@@ -13,10 +13,6 @@ export default {
   more: "Opsi pratinjau lainnya",
   "publish.button": "Publikasikan",
   "publish.title": "Publikasikan ke Internet",
-  "publish.description":
-    "Deploy proyek Anda dan jadikan dapat diakses publik. URL yang dapat dibagikan akan dibuat setelah deployment selesai.",
-  "publish.action": "Deploy ke Internet",
-  "publish.soon": "Fitur publikasi segera hadir.",
   back: "Kembali",
   forward: "Maju",
   reload: "Muat ulang",

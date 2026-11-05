@@ -13,10 +13,6 @@ export default {
   more: "Więcej opcji podglądu",
   "publish.button": "Opublikuj",
   "publish.title": "Opublikuj w internecie",
-  "publish.description":
-    "Wdróż projekt i udostępnij go publicznie. Po zakończeniu wdrożenia zostanie wygenerowany URL do udostępniania.",
-  "publish.action": "Wdróż w internecie",
-  "publish.soon": "Publikowanie będzie dostępne wkrótce.",
   back: "Wstecz",
   forward: "Dalej",
   reload: "Odśwież",

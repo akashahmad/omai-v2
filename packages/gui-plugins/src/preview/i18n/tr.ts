@@ -13,10 +13,6 @@ export default {
   more: "Diğer önizleme seçenekleri",
   "publish.button": "Yayınla",
   "publish.title": "İnternette yayınla",
-  "publish.description":
-    "Projenizi dağıtın ve herkesin erişimine açın. Dağıtım tamamlandığında paylaşılabilir bir URL oluşturulur.",
-  "publish.action": "İnternete dağıt",
-  "publish.soon": "Yayınlama yakında geliyor.",
   back: "Geri",
   forward: "İleri",
   reload: "Yeniden yükle",

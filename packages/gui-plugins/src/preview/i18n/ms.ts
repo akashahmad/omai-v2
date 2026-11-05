@@ -13,10 +13,6 @@ export default {
   more: "Lagi pilihan pratonton",
   "publish.button": "Terbitkan",
   "publish.title": "Terbitkan ke Internet",
-  "publish.description":
-    "Gunakan projek anda dan jadikannya boleh diakses secara awam. URL yang boleh dikongsi akan dijana sebaik sahaja penggunaan selesai.",
-  "publish.action": "Gunakan ke Internet",
-  "publish.soon": "Penerbitan akan datang tidak lama lagi.",
   back: "Kembali",
   forward: "Maju",
   reload: "Muat semula",

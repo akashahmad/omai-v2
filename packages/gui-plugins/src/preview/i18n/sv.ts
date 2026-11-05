@@ -13,10 +13,6 @@ export default {
   more: "Fler alternativ för förhandsvisning",
   "publish.button": "Publicera",
   "publish.title": "Publicera på internet",
-  "publish.description":
-    "Driftsätt projektet och gör det offentligt tillgängligt. En delbar URL skapas när driftsättningen är klar.",
-  "publish.action": "Driftsätt på internet",
-  "publish.soon": "Publicering kommer snart.",
   back: "Bakåt",
   forward: "Framåt",
   reload: "Läs in igen",

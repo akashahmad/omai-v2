@@ -13,10 +13,6 @@ export default {
   more: "Meer opties voor voorvertoning",
   "publish.button": "Publiceren",
   "publish.title": "Publiceren op internet",
-  "publish.description":
-    "Implementeer je project en maak het openbaar toegankelijk. Zodra de implementatie klaar is, wordt een deelbare URL gegenereerd.",
-  "publish.action": "Implementeren op internet",
-  "publish.soon": "Publiceren is binnenkort beschikbaar.",
   back: "Terug",
   forward: "Vooruit",
   reload: "Opnieuw laden",

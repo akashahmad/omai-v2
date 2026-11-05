@@ -13,10 +13,6 @@ export default {
   more: "Më shumë opsione të pamjes paraprake",
   "publish.button": "Publiko",
   "publish.title": "Publiko në internet",
-  "publish.description":
-    "Vendose projektin tënd në punë dhe bëje të qasshëm për publikun. Pasi të përfundojë vendosja, do të krijohet një URL që mund të ndahet.",
-  "publish.action": "Vendose në internet",
-  "publish.soon": "Publikimi vjen së shpejti.",
   back: "Prapa",
   forward: "Para",
   reload: "Ringarko",

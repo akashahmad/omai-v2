@@ -13,10 +13,6 @@ export default {
   more: "Mai multe opțiuni de previzualizare",
   "publish.button": "Publică",
   "publish.title": "Publică pe internet",
-  "publish.description":
-    "Implementează proiectul și fă-l accesibil public. După finalizarea implementării va fi generat un URL care poate fi distribuit.",
-  "publish.action": "Implementează pe internet",
-  "publish.soon": "Publicarea va fi disponibilă în curând.",
   back: "Înapoi",
   forward: "Înainte",
   reload: "Reîncarcă",

@@ -13,10 +13,6 @@ export default {
   more: "Öňünden görkezişiň goşmaça sazlamalary",
   "publish.button": "Neşir et",
   "publish.title": "Internetde neşir et",
-  "publish.description":
-    "Taslamaňyzy ýerleşdiriň we hemmeler üçin elýeterli ediň. Ýerleşdiriş tamamlanandan soň paýlaşyp bolýan URL döredilýär.",
-  "publish.action": "Internete ýerleşdir",
-  "publish.soon": "Neşir etmek ýakyn wagtda elýeterli bolar.",
   back: "Yza",
   forward: "Öňe",
   reload: "Täzeden ýükle",

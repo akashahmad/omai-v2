@@ -13,10 +13,6 @@ export default {
   more: "Citas priekšskatījuma opcijas",
   "publish.button": "Publicēt",
   "publish.title": "Publicēt internetā",
-  "publish.description":
-    "Izvieto savu projektu un padari to publiski pieejamu. Kad izvietošana būs pabeigta, tiks ģenerēts kopīgojams URL.",
-  "publish.action": "Izvietot internetā",
-  "publish.soon": "Publicēšana būs pieejama drīzumā.",
   back: "Atpakaļ",
   forward: "Uz priekšu",
   reload: "Pārlādēt",
