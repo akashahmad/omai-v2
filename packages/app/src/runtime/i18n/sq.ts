@@ -806,4 +806,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Anulo ngarkimin e {{filename}}",
   "prompt.toast.uploadFailed.title": "Ngarkimi dështoi",
+  "session.side.preview": "Pamja paraprake",
+  "session.side.code": "Kodi",
+  "session.side.git": "Git",
+  "session.side.tools": "Mjetet",
+  "session.side.sections": "Seksionet e panelit",
+  "session.side.more": "Më shumë seksione",
+  "session.side.expand": "Zgjero në pamje të plotë",
+  "session.side.restore": "Rikthe pamjen e ndarë",
 }

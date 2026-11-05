@@ -200,6 +200,15 @@ const layer = Layer.effect(
             .get()
             .pipe(Effect.orDie)
           if (stored) return
+          // The directory's earlier resolution under another ID, as when a remote is added to a repository that was
+          // identified by its root commit: its sessions follow the new ID.
+          const superseded = yield* db
+            .select({ projectID: WorktreeTable.project_id })
+            .from(WorktreeTable)
+            .where(and(eq(WorktreeTable.directory, item.directory), ne(WorktreeTable.project_id, item.projectID)))
+            .orderBy(desc(WorktreeTable.time_created))
+            .get()
+            .pipe(Effect.orDie)
           const directory = AbsolutePath.make(yield* fs.resolve(item.directory))
           const markerless = yield* db
             .select({ id: ProjectTable.id, directory: ProjectTable.worktree })
@@ -229,7 +238,7 @@ const layer = Layer.effect(
             {
               projectID: item.projectID,
               directory: item.directory,
-              previous: project.previous ?? ID.global,
+              previous: project.previous ?? superseded?.projectID ?? ID.global,
               ...(adopted.length ? { adopted: adopted.map((candidate) => candidate.id) } : {}),
             },
             {

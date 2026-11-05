@@ -269,6 +269,9 @@ import type {
   ExperimentalArtifactsDeleteOutput,
   ExperimentalArtifactsViewInput,
   ExperimentalArtifactsViewOutput,
+  ExperimentalPreviewThumbnailsOutput,
+  ExperimentalPreviewThumbnailInput,
+  ExperimentalPreviewThumbnailOutput,
   ShellListInput,
   ShellListOutput,
   ShellCreateInput,
@@ -1673,6 +1676,31 @@ export function make(options: ClientOptions) {
               query: { location: input["location"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 403, 404, 503],
+              empty: false,
+              binary: true,
+            },
+            requestOptions,
+          ),
+      },
+      preview: {
+        thumbnails: (requestOptions?: RequestOptions) =>
+          request<{ readonly data: ExperimentalPreviewThumbnailsOutput }>(
+            {
+              method: "GET",
+              path: `/api/experimental/preview/thumbnail`,
+              successStatus: 200,
+              declaredStatuses: [400, 401],
+              empty: false,
+            },
+            requestOptions,
+          ).then((value) => value.data),
+        thumbnail: (input: ExperimentalPreviewThumbnailInput, requestOptions?: RequestOptions) =>
+          request<ExperimentalPreviewThumbnailOutput>(
+            {
+              method: "GET",
+              path: `/api/experimental/preview/thumbnail/${encodeURIComponent(input.projectID)}`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
               empty: false,
               binary: true,
             },

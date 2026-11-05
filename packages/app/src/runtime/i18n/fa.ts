@@ -803,4 +803,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "\u2068{{percent}}\u2069٪",
   "prompt.toast.uploading.cancelFile": "لغو بارگذاری \u2068{{filename}}\u2069",
   "prompt.toast.uploadFailed.title": "بارگذاری ناموفق بود",
+  "session.side.preview": "پیش‌نمایش",
+  "session.side.code": "کد",
+  "session.side.git": "Git",
+  "session.side.tools": "ابزارها",
+  "session.side.sections": "بخش‌های پنل",
+  "session.side.more": "بخش‌های بیشتر",
+  "session.side.expand": "گسترش به نمای کامل",
+  "session.side.restore": "بازگرداندن نمای تقسیم‌شده",
 }

@@ -870,4 +870,12 @@ export const dict = {
   "workspace.delete.confirm": "Hapus “{{name}}”?",
   "workspace.delete.location": "Lokasi",
   "settings.search.empty.query": "“{{query}}”",
+  "session.side.preview": "Pratinjau",
+  "session.side.code": "Kode",
+  "session.side.git": "Git",
+  "session.side.tools": "Alat",
+  "session.side.sections": "Bagian panel",
+  "session.side.more": "Bagian lainnya",
+  "session.side.expand": "Perluas ke tampilan penuh",
+  "session.side.restore": "Pulihkan tampilan terpisah",
 }

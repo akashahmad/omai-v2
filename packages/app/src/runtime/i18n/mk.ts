@@ -808,4 +808,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Откажи го поставувањето на {{filename}}",
   "prompt.toast.uploadFailed.title": "Поставувањето не успеа",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Преглед",
+  "session.side.code": "Код",
+  "session.side.git": "Git",
+  "session.side.tools": "Алатки",
+  "session.side.sections": "Делови на панелот",
+  "session.side.more": "Повеќе делови",
+  "session.side.expand": "Прошири во цел приказ",
+  "session.side.restore": "Врати поделен приказ",
 }

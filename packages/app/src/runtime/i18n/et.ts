@@ -796,4 +796,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Tühista faili {{filename}} üleslaadimine",
   "prompt.toast.uploadFailed.title": "Üleslaadimine nurjus",
+  "session.side.preview": "Eelvaade",
+  "session.side.code": "Kood",
+  "session.side.git": "Git",
+  "session.side.tools": "Tööriistad",
+  "session.side.sections": "Paneeli jaotised",
+  "session.side.more": "Rohkem jaotisi",
+  "session.side.expand": "Laienda täisvaatele",
+  "session.side.restore": "Taasta jagatud vaade",
 }

@@ -37,3 +37,4 @@ logs/
 tsconfig.tsbuildinfo
 /artifacts/
 /graphify-out/**
+/docs/**

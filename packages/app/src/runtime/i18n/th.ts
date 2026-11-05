@@ -851,4 +851,12 @@ export const dict = {
   "workspace.delete.confirm": "ลบ “{{name}}” หรือไม่?",
   "workspace.delete.location": "ตำแหน่ง",
   "settings.search.empty.query": "“{{query}}”",
+  "session.side.preview": "ตัวอย่าง",
+  "session.side.code": "โค้ด",
+  "session.side.git": "Git",
+  "session.side.tools": "เครื่องมือ",
+  "session.side.sections": "ส่วนของแผง",
+  "session.side.more": "ส่วนเพิ่มเติม",
+  "session.side.expand": "ขยายเป็นมุมมองเต็ม",
+  "session.side.restore": "คืนค่ามุมมองแบบแยก",
 }

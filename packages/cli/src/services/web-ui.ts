@@ -54,8 +54,8 @@ function serveUI(
     "content-type": FSUtil.mimeType(name),
     "cache-control": revalidate ? "no-cache" : "public, max-age=31536000, immutable",
     "content-security-policy": html
-      ? cspForHtml(typeof file === "string" ? file : Buffer.from(file).toString())
-      : csp(),
+      ? cspForHtml(typeof file === "string" ? file : Buffer.from(file).toString(), previewFrames(request))
+      : csp("", previewFrames(request)),
     "x-content-type-options": "nosniff",
     ...(!html && brotli?.[name] !== undefined ? { vary: "accept-encoding" } : {}),
     ...(encoded ? { "content-encoding": "br" } : {}),
@@ -81,16 +81,27 @@ function isRouteNotFound(error: unknown) {
 // qr-scanner decodes in a worker it creates from a blob: URL whenever the browser has no BarcodeDetector (Safari, desktop
 // Chrome on Windows and Linux). Without worker-src that worker falls under script-src 'self' and never starts.
 // Artifact previews render HTML and PDF files from blob: URLs; without frame-src and object-src they fall back to
-// default-src 'self' and are blocked.
-function csp(hash = "") {
-  return `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'${hash ? ` 'sha256-${hash}'` : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; media-src 'self' data:; connect-src * data: blob:; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'self' blob:`
+// default-src 'self' and are blocked. The preview's host may also serve images, which the visual editor shows as
+// thumbnails of the page's own images.
+function csp(hash = "", frames = "") {
+  return `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'${hash ? ` 'sha256-${hash}'` : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:${frames ? ` ${frames}` : ""}; font-src 'self' data:; media-src 'self' data:; connect-src * data: blob:; worker-src 'self' blob:; frame-src 'self' blob:${frames ? ` ${frames}` : ""}; object-src 'self' blob:`
 }
 
-function cspForHtml(body: string) {
+// The project preview runs on its own port of the host the app was loaded from, so the page may frame that host on
+// any port. Only a plain host name or address makes it into the policy.
+function previewFrames(request: HttpServerRequest.HttpServerRequest) {
+  const hostname = URL.parse(`http://${request.headers.host ?? ""}`)?.hostname ?? ""
+
+  if (!/^[A-Za-z0-9.\-[\]:]+$/.test(hostname)) return ""
+
+  return `http://${hostname}:* https://${hostname}:*`
+}
+
+function cspForHtml(body: string, frames = "") {
   const match = body.match(
     /<script\b(?![^>]*\bsrc\s*=)[^>]*\bid=(["'])theme-preload-script\1[^>]*>([\s\S]*?)<\/script>/i,
   )
-  return csp(match ? createHash("sha256").update(match[2]).digest("base64") : "")
+  return csp(match ? createHash("sha256").update(match[2]).digest("base64") : "", frames)
 }
 
 export * as WebUi from "./web-ui"

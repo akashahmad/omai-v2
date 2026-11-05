@@ -40,6 +40,8 @@ export default function Layout(props: ParentProps) {
   // Wide screens keep the rail; the titlebar there only hosts its commands.
   const rail = () => !mobile()
   const sessionsPanel = () => rail() && layout.route().type === "session" && preferences.appearance.sidebarOpen()
+  // The right panel's full view takes the whole window, the rail and the sessions list included.
+  const fullView = () => layout.route().type === "session" && preferences.appearance.sidePanelExpanded()
 
   const toggleSidebar = () => preferences.appearance.setSidebarOpen(!preferences.appearance.sidebarOpen())
 
@@ -126,10 +128,10 @@ export default function Layout(props: ParentProps) {
             data-tauri-drag-region
           />
         </Show>
-        <Show when={rail()}>
+        <Show when={rail() && !fullView()}>
           <Rail project={project} />
         </Show>
-        <Show when={rail()}>
+        <Show when={rail() && !fullView()}>
           <div class="h-full shrink-0 bg-v2-background-bg-deep pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
             <EdgePanel
               id="sessions-panel"

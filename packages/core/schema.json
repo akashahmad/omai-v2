@@ -1,8 +1,8 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "4f6e16c6-f070-4545-b9d0-19fcb6e5210c",
-  "prevIds": ["0ac88673-a402-45a0-b931-e694d59ccefa"],
+  "id": "b18b8740-0c9f-49bd-bca9-c2a12aa0f040",
+  "prevIds": ["4f6e16c6-f070-4545-b9d0-19fcb6e5210c"],
   "ddl": [
     {
       "name": "account_state",
@@ -38,6 +38,10 @@
     },
     {
       "name": "permission",
+      "entityType": "tables"
+    },
+    {
+      "name": "preview_thumbnail",
       "entityType": "tables"
     },
     {
@@ -685,6 +689,56 @@
       "name": "time_updated",
       "entityType": "columns",
       "table": "permission"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "project_id",
+      "entityType": "columns",
+      "table": "preview_thumbnail"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "hash",
+      "entityType": "columns",
+      "table": "preview_thumbnail"
+    },
+    {
+      "type": "blob",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "data",
+      "entityType": "columns",
+      "table": "preview_thumbnail"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "time_created",
+      "entityType": "columns",
+      "table": "preview_thumbnail"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "time_updated",
+      "entityType": "columns",
+      "table": "preview_thumbnail"
     },
     {
       "type": "text",
@@ -2267,6 +2321,13 @@
       "nameExplicit": false,
       "name": "permission_pk",
       "table": "permission",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["project_id"],
+      "nameExplicit": false,
+      "name": "preview_thumbnail_pk",
+      "table": "preview_thumbnail",
       "entityType": "pks"
     },
     {

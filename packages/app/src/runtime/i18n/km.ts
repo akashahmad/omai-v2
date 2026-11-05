@@ -796,4 +796,12 @@ export const dict = {
   "workspace.delete.confirm": "លុប “{{name}}” ទេទេ?",
   "workspace.delete.location": "ទីតាំង",
   "settings.search.empty.query": '"{{query}}"',
+  "session.side.preview": "មើលជាមុន",
+  "session.side.code": "កូដ",
+  "session.side.git": "Git",
+  "session.side.tools": "ឧបករណ៍",
+  "session.side.sections": "ផ្នែកផ្ទាំង",
+  "session.side.more": "ផ្នែកបន្ថែម",
+  "session.side.expand": "ពង្រីកជាទិដ្ឋភាពពេញ",
+  "session.side.restore": "ស្ដារទិដ្ឋភាពបំបែក",
 }

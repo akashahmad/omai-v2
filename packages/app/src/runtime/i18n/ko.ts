@@ -811,4 +811,12 @@ export const dict = {
   "workspace.delete.confirm": "“{{name}}”을 삭제하시겠습니까?",
   "workspace.delete.location": "위치",
   "settings.search.empty.query": "“{{query}}”",
+  "session.side.preview": "미리보기",
+  "session.side.code": "코드",
+  "session.side.git": "Git",
+  "session.side.tools": "도구",
+  "session.side.sections": "패널 섹션",
+  "session.side.more": "더 많은 섹션",
+  "session.side.expand": "전체 보기로 확장",
+  "session.side.restore": "분할 보기 복원",
 }

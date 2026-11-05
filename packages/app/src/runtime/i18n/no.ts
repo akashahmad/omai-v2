@@ -872,4 +872,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}} %",
   "prompt.toast.uploading.cancelFile": "Avbryt opplasting av {{filename}}",
   "prompt.toast.uploadFailed.title": "Opplasting mislyktes",
+  "session.side.preview": "Forhåndsvisning",
+  "session.side.code": "Kode",
+  "session.side.git": "Git",
+  "session.side.tools": "Verktøy",
+  "session.side.sections": "Panelseksjoner",
+  "session.side.more": "Flere seksjoner",
+  "session.side.expand": "Utvid til full visning",
+  "session.side.restore": "Gjenopprett delt visning",
 } satisfies Partial<Record<Keys, string>>

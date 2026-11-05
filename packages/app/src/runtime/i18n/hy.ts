@@ -803,4 +803,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Չեղարկել {{filename}} ֆայլի վերբեռնումը",
   "prompt.toast.uploadFailed.title": "Վերբեռնումը ձախողվեց",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Նախադիտում",
+  "session.side.code": "Կոդ",
+  "session.side.git": "Git",
+  "session.side.tools": "Գործիքներ",
+  "session.side.sections": "Վահանակի բաժիններ",
+  "session.side.more": "Այլ բաժիններ",
+  "session.side.expand": "Ընդլայնել ամբողջ տեսքի",
+  "session.side.restore": "Վերականգնել բաժանված տեսքը",
 }

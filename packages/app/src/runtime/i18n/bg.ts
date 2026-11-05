@@ -810,4 +810,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Отказ от качването на {{filename}}",
   "prompt.toast.uploadFailed.title": "Качването е неуспешно",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Визуализация",
+  "session.side.code": "Код",
+  "session.side.git": "Git",
+  "session.side.tools": "Инструменти",
+  "session.side.sections": "Секции на панела",
+  "session.side.more": "Още секции",
+  "session.side.expand": "Разгъване до цял изглед",
+  "session.side.restore": "Възстановяване на разделения изглед",
 }

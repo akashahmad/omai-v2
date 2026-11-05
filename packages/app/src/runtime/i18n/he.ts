@@ -801,4 +801,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "\u2068{{percent}}\u2069%",
   "prompt.toast.uploading.cancelFile": "ביטול ההעלאה של \u2068{{filename}}\u2069",
   "prompt.toast.uploadFailed.title": "ההעלאה נכשלה",
+  "session.side.preview": "תצוגה מקדימה",
+  "session.side.code": "קוד",
+  "session.side.git": "Git",
+  "session.side.tools": "כלים",
+  "session.side.sections": "מקטעי החלונית",
+  "session.side.more": "מקטעים נוספים",
+  "session.side.expand": "הרחבה לתצוגה מלאה",
+  "session.side.restore": "שחזור התצוגה המפוצלת",
 }

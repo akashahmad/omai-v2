@@ -799,4 +799,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "{{filename}} faýlynyň ýüklenmegini ýatyr",
   "prompt.toast.uploadFailed.title": "Ýükleme şowsuz boldy",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Öňünden görkeziş",
+  "session.side.code": "Kod",
+  "session.side.git": "Git",
+  "session.side.tools": "Gurallar",
+  "session.side.sections": "Panel bölümleri",
+  "session.side.more": "Goşmaça bölümler",
+  "session.side.expand": "Doly görnüşe giňelt",
+  "session.side.restore": "Bölünen görnüşi dikelt",
 }

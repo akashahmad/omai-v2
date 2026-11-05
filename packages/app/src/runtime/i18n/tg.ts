@@ -812,4 +812,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Боркунии файли {{filename}}-ро бекор кунед",
   "prompt.toast.uploadFailed.title": "Боркунӣ ноком шуд",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Пешнамоиш",
+  "session.side.code": "Код",
+  "session.side.git": "Git",
+  "session.side.tools": "Абзорҳо",
+  "session.side.sections": "Қисмҳои панел",
+  "session.side.more": "Қисмҳои бештар",
+  "session.side.expand": "Васеъ кардан то намуди пурра",
+  "session.side.restore": "Барқарор кардани намуди тақсимшуда",
 }

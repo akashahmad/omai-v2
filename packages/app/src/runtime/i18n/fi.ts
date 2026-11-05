@@ -805,4 +805,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}} %",
   "prompt.toast.uploading.cancelFile": "Peru tiedoston {{filename}} lähetys",
   "prompt.toast.uploadFailed.title": "Lähetys epäonnistui",
+  "session.side.preview": "Esikatselu",
+  "session.side.code": "Koodi",
+  "session.side.git": "Git",
+  "session.side.tools": "Työkalut",
+  "session.side.sections": "Paneelin osiot",
+  "session.side.more": "Lisää osioita",
+  "session.side.expand": "Laajenna koko näkymään",
+  "session.side.restore": "Palauta jaettu näkymä",
 }

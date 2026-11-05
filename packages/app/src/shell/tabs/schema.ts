@@ -57,6 +57,8 @@ export const Regions = Schema.Record(
       bottom: Schema.optional(Schema.Boolean),
       bottomHeight: Schema.optional(Schema.Finite),
       splitRatio: Schema.optional(Schema.Finite),
+      // The lower side pane, such as terminals under the preview, until the user hides it.
+      split: Schema.optional(Schema.Boolean),
     }).pipe(Schema.encodeKeys({ side: "review" })),
   ),
 )

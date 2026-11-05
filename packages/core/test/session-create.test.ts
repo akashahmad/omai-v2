@@ -166,6 +166,34 @@ describe("Session.create", () => {
     ),
   )
 
+  projectIt.live("keeps a git project's sessions when a remote is added later", () =>
+    withTmp((directory) =>
+      Effect.gen(function* () {
+        const session = yield* Session.Service
+        const projects = yield* Project.Service
+        const ref = Location.Ref.make({ directory: AbsolutePath.make(directory) })
+        yield* Effect.promise(async () => {
+          await initGit(directory)
+          await fs.writeFile(path.join(directory, "README.md"), "test\n")
+          await $`git add README.md`.cwd(directory)
+          await $`git commit -qm initial`.cwd(directory)
+        })
+        const before = yield* projects.resolve(ref.directory)
+        const created = yield* session.create({ location: ref, title: "Before the remote" })
+
+        yield* Effect.promise(() => $`git remote add origin git@github.com:owner/later.git`.cwd(directory))
+        const after = yield* projects.resolve(ref.directory)
+        const page = yield* session.list({ project: after.id })
+
+        expect(created.projectID).toBe(before.id)
+        expect(after.id).toBe(Project.ID.make(Hash.fast("git-remote:github.com/owner/later")))
+        expect(after.id).not.toBe(before.id)
+        expect(yield* session.get(created.id)).toMatchObject({ projectID: after.id, location: ref })
+        expect(page.data.map((item) => item.id)).toContain(created.id)
+      }),
+    ),
+  )
+
   projectIt.live("follows the directory's project identity established after creation", () =>
     withTmp((directory) =>
       Effect.gen(function* () {
@@ -358,9 +386,7 @@ describe("Session.create", () => {
       const created = yield* session.create({ location: { directory: AbsolutePath.make("/project/") } })
 
       expect(created.location.directory).toBe(location.directory)
-      expect((yield* session.list({ directory: location.directory })).data.map((item) => item.id)).toEqual([
-        created.id,
-      ])
+      expect((yield* session.list({ directory: location.directory })).data.map((item) => item.id)).toEqual([created.id])
     }),
   )
 
@@ -852,9 +878,10 @@ describe("Session.create", () => {
       const session = yield* Session.Service
       const parent = yield* session.create({ location })
 
-      expect(
-        yield* session.fork({ sessionID: parent.id }).pipe(Effect.flip),
-      ).toMatchObject({ _tag: "Session.ForkEmptyError", sessionID: parent.id })
+      expect(yield* session.fork({ sessionID: parent.id }).pipe(Effect.flip)).toMatchObject({
+        _tag: "Session.ForkEmptyError",
+        sessionID: parent.id,
+      })
     }),
   )
 
@@ -969,7 +996,12 @@ describe("Session.create", () => {
       const input = { id, location }
       const created = yield* session.create(input)
 
-      yield* db.update(SessionTable).set({ agent: Agent.defaultID }).where(eq(SessionTable.id, id)).run().pipe(Effect.orDie)
+      yield* db
+        .update(SessionTable)
+        .set({ agent: Agent.defaultID })
+        .where(eq(SessionTable.id, id))
+        .run()
+        .pipe(Effect.orDie)
 
       expect(yield* session.create(input)).toMatchObject({ id: created.id, agent: "build" })
     }),

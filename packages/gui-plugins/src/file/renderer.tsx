@@ -57,6 +57,10 @@ const isLauncher = (id: string) => id === OPEN || id.startsWith(`${OPEN}:`)
 
 const GROUP = "browser"
 
+// The right panel's Code section opens on this tab: the project's files with nothing open, in the same browser the
+// file tabs share.
+const FILES = "files"
+
 const TABPANEL = "session-side-panel-file-browser-tabpanel"
 
 const HANDOFF_SESSIONS = 40
@@ -286,6 +290,25 @@ const setup: Plugin.Setup<typeof File> = (ctx) => {
     dom: { panel: TABPANEL },
   })
 
+  // One object for every session, so a session switch never renders its trigger again.
+  const filesTab: BuiltinPanelTab = {
+    id: FILES,
+    get title() {
+      return ctx.t("tab.files")
+    },
+    label: () => (
+      <div class="flex items-center gap-1.5">
+        <Icon name="file-tree" size="small" />
+        <span>{ctx.t("tab.files")}</span>
+      </div>
+    ),
+    pinned: true,
+    draggable: false,
+    closable: false,
+    group: GROUP,
+    dom: { panel: TABPANEL },
+  }
+
   const fileTab = (files: Files, id: string): BuiltinPanelTab => {
     const path = () => fileTabPath(files, id)
     const missing = () => files.missing(path())
@@ -330,20 +353,24 @@ const setup: Plugin.Setup<typeof File> = (ctx) => {
       icon: "folder",
     },
     list(input) {
-      return input.open.flatMap((id) => {
-        if (!isLauncher(id) && !isFileTab(id)) return []
+      const files = layout.narrow() || !input.session.project ? [] : [filesTab]
 
-        const cache = tabsOf(input.screen)
-        const existing = cache.get(id)
+      return files.concat(
+        input.open.flatMap((id) => {
+          if (!isLauncher(id) && !isFileTab(id)) return []
 
-        if (existing) return [existing]
+          const cache = tabsOf(input.screen)
+          const existing = cache.get(id)
 
-        const created = isLauncher(id) ? launcher(id) : fileTab(input.screen.file, id)
+          if (existing) return [existing]
 
-        cache.set(id, created)
+          const created = isLauncher(id) ? launcher(id) : fileTab(input.screen.file, id)
 
-        return [created]
-      })
+          cache.set(id, created)
+
+          return [created]
+        }),
+      )
     },
     close(input) {
       tabs.get(input.screen)?.delete(input.tab.id)

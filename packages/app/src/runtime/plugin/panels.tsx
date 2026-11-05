@@ -447,7 +447,8 @@ export function createRegion(input: {
     },
     close(key: string) {
       const entry = byKey().get(key)
-      const last = stored().length === 1 && stored()[0] === key
+      // Pinned tabs, like the preview, keep the region worth showing after its last stored tab closes.
+      const last = stored().length === 1 && stored()[0] === key && !entries().some((item) => item.tab.pinned)
       const closed = entry && closedEntry(key, entry.provider, panelInput(input.view, input.screen, { tab: entry.tab }))
 
       if (closed) input.closed.push(input.view(), closed)

@@ -58,6 +58,7 @@ import { ModelsDev } from "../models-dev.js"
 import { Mcp } from "../mcp/index.js"
 import { Npm } from "@opencode/util/npm"
 import { Permission } from "../permission.js"
+import { PreviewThumbnail } from "../preview/thumbnail.js"
 import { Reference } from "../reference.js"
 import { WebSearch } from "../websearch.js"
 import { Ripgrep } from "../ripgrep.js"
@@ -100,6 +101,7 @@ import { CommandPlugin } from "./command.js"
 import { IdentityPlugin } from "./identity.js"
 import { PlanPlugin } from "./plan.js"
 import { GoalPlugin } from "./goal.js"
+import { PreviewPlugin } from "./preview.js"
 import { ModelsDevPlugin } from "./models-dev.js"
 import { McpCodeModeDefaultsPlugin } from "./mcp-codemode-defaults.js"
 import { ProviderPlugins } from "./provider.js"
@@ -145,6 +147,7 @@ const services = [
   Mcp.Service,
   Npm.Service,
   Permission.Service,
+  PreviewThumbnail.Service,
   Form.Service,
   ReadToolFileSystem.Service,
   Reference.Service,
@@ -203,6 +206,7 @@ export const requirements = LayerNode.group([
   Mcp.node,
   Npm.node,
   Permission.node,
+  PreviewThumbnail.node,
   Form.node,
   ReadToolFileSystem.node,
   Reference.node,
@@ -240,6 +244,7 @@ const pre = [
   PlanPlugin.Plugin,
   CommandPlugin.Plugin,
   GoalPlugin.Plugin,
+  PreviewPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,

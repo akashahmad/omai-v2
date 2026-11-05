@@ -38,7 +38,7 @@ export type PendingSession = {
 
 export type TabInfo = typeof TabStorage.Info.Type
 
-export type TabRegion = "side" | "bottom"
+export type TabRegion = "side" | "bottom" | "split"
 
 export type TabRegionSize = "sessionWidth" | "bottomHeight" | "splitRatio"
 

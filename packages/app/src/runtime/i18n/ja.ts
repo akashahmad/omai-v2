@@ -814,4 +814,12 @@ export const dict = {
   "workspace.delete.confirm": "「{{name}}」を削除しますか？",
   "workspace.delete.location": "場所",
   "settings.search.empty.query": "「{{query}}」",
+  "session.side.preview": "プレビュー",
+  "session.side.code": "コード",
+  "session.side.git": "Git",
+  "session.side.tools": "ツール",
+  "session.side.sections": "パネルセクション",
+  "session.side.more": "その他のセクション",
+  "session.side.expand": "全画面表示に展開",
+  "session.side.restore": "分割表示に戻す",
 }

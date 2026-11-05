@@ -808,4 +808,12 @@ export const dict = {
   "workspace.delete.confirm": "Xóa “{{name}}”?",
   "workspace.delete.location": "Vị trí",
   "settings.search.empty.query": "“{{query}}”",
+  "session.side.preview": "Xem trước",
+  "session.side.code": "Mã",
+  "session.side.git": "Git",
+  "session.side.tools": "Công cụ",
+  "session.side.sections": "Các phần của bảng",
+  "session.side.more": "Thêm phần",
+  "session.side.expand": "Mở rộng toàn màn hình",
+  "session.side.restore": "Khôi phục chế độ chia đôi",
 }

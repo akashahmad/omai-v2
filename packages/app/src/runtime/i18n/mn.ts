@@ -807,4 +807,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "{{filename}} файлын байршуулалтыг цуцлах",
   "prompt.toast.uploadFailed.title": "Байршуулж чадсангүй",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Урьдчилан харах",
+  "session.side.code": "Код",
+  "session.side.git": "Git",
+  "session.side.tools": "Хэрэгслүүд",
+  "session.side.sections": "Самбарын хэсгүүд",
+  "session.side.more": "Бусад хэсгүүд",
+  "session.side.expand": "Бүтэн харагдацаар дэлгэх",
+  "session.side.restore": "Хуваасан харагдацыг сэргээх",
 }

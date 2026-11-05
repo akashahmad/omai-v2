@@ -813,4 +813,12 @@ export const dict = {
   "workspace.delete.confirm": "“{{name}}” ကိုဖျက်ချင်ပါသလား?",
   "workspace.delete.location": "တည်နေရာ",
   "settings.search.empty.query": '"{{query}}"',
+  "session.side.preview": "အစမ်းကြည့်ရှုမှု",
+  "session.side.code": "ကုဒ်",
+  "session.side.git": "Git",
+  "session.side.tools": "ကိရိယာများ",
+  "session.side.sections": "ပန်နယ် အပိုင်းများ",
+  "session.side.more": "နောက်ထပ် အပိုင်းများ",
+  "session.side.expand": "မြင်ကွင်းအပြည့် ချဲ့ရန်",
+  "session.side.restore": "ခွဲထားသော မြင်ကွင်းကို ပြန်ယူရန်",
 }

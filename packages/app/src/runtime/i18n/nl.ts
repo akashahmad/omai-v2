@@ -815,4 +815,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Upload van {{filename}} annuleren",
   "prompt.toast.uploadFailed.title": "Upload mislukt",
+  "session.side.preview": "Voorvertoning",
+  "session.side.code": "Code",
+  "session.side.git": "Git",
+  "session.side.tools": "Tools",
+  "session.side.sections": "Paneelsecties",
+  "session.side.more": "Meer secties",
+  "session.side.expand": "Uitvouwen naar volledige weergave",
+  "session.side.restore": "Gesplitste weergave herstellen",
 }

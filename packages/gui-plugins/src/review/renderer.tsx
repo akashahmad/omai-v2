@@ -133,6 +133,9 @@ const setup: Plugin.Setup<typeof Review> = (ctx) => {
     get tabbable() {
       return !(count() > 0 || layout.sidebar.opened())
     },
+    // Git is a fixed section of the right panel's pill, so its tab is always there.
+    pinned: true,
+    section: "git",
     dom: { tab: "session-side-panel-review-tab", panel: "session-side-panel-review-tabpanel" },
   }
 

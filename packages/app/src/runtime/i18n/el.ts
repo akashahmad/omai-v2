@@ -824,4 +824,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Ακύρωση μεταφόρτωσης του {{filename}}",
   "prompt.toast.uploadFailed.title": "Η μεταφόρτωση απέτυχε",
+  "session.side.preview": "Προεπισκόπηση",
+  "session.side.code": "Κώδικας",
+  "session.side.git": "Git",
+  "session.side.tools": "Εργαλεία",
+  "session.side.sections": "Ενότητες πίνακα",
+  "session.side.more": "Περισσότερες ενότητες",
+  "session.side.expand": "Ανάπτυξη σε πλήρη προβολή",
+  "session.side.restore": "Επαναφορά διαιρεμένης προβολής",
 }

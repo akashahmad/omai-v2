@@ -845,6 +845,14 @@ export const dict = {
   "workspace.delete.confirm": "删除“{{name}}”吗？",
   "workspace.delete.location": "位置",
   "settings.search.empty.query": "“{{query}}”",
+  "session.side.preview": "预览",
+  "session.side.code": "代码",
+  "session.side.git": "Git",
+  "session.side.tools": "工具",
+  "session.side.sections": "面板分区",
+  "session.side.more": "更多分区",
+  "session.side.expand": "展开为全屏视图",
+  "session.side.restore": "恢复分屏视图",
 } satisfies Partial<Record<Keys, string>>
 
 export default dict

@@ -833,4 +833,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}} %",
   "prompt.toast.uploading.cancelFile": "Atšaukti failo {{filename}} įkėlimą",
   "prompt.toast.uploadFailed.title": "Įkelti nepavyko",
+  "session.side.preview": "Peržiūra",
+  "session.side.code": "Kodas",
+  "session.side.git": "Git",
+  "session.side.tools": "Įrankiai",
+  "session.side.sections": "Skydelio skiltys",
+  "session.side.more": "Daugiau skilčių",
+  "session.side.expand": "Išskleisti į visą rodinį",
+  "session.side.restore": "Atkurti padalytą rodinį",
 }

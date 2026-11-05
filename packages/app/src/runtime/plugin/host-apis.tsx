@@ -662,16 +662,21 @@ export function createPluginAttachment(apis: HostApis) {
   const sideOpened = (session: SessionRef) => !!tabs.region(shellTab(session), "side")
 
   // The side and split panes show with the side region; the bottom pane until the user hides it.
-  const paneOpened = (session: SessionRef, pane: SessionPane) =>
-    pane === "bottom" ? tabs.region(shellTab(session), "bottom", true) : sideOpened(session)
+  const paneOpened = (session: SessionRef, pane: SessionPane) => {
+    if (pane === "bottom") return tabs.region(shellTab(session), "bottom", true)
+
+    return sideOpened(session) && (pane !== "split" || tabs.region(shellTab(session), "split", true))
+  }
 
   // Shows the pane a stored tab landed in.
-  const reveal = (session: SessionRef, value: string, key: string) =>
-    tabs.setRegion(
-      shellTab(session),
-      sessionTabPane(layout.panel.state(value), key) === "bottom" ? "bottom" : "side",
-      true,
-    )
+  const reveal = (session: SessionRef, value: string, key: string) => {
+    const pane = sessionTabPane(layout.panel.state(value), key)
+
+    batch(() => {
+      if (pane === "split") tabs.setRegion(shellTab(session), "split", true)
+      tabs.setRegion(shellTab(session), pane === "bottom" ? "bottom" : "side", true)
+    })
+  }
 
   // A token per session whose side region is open, new each time the region opens.
   const sideVisits = createMemo<ReadonlyMap<string, object>>(
@@ -775,6 +780,9 @@ export function createPluginAttachment(apis: HostApis) {
     if (!value) return located.hold(session, () => open(key, session, options))
     const placement = options?.tab ?? "open"
 
+    // A panel that names its pane, like the terminal's lower one, has its tabs open there.
+    if (item?.value.pane && !narrow()) layout.panel.place(value, key, item.value.pane)
+
     // An append adds the tab quietly: no selection, no region change, no preview replacement.
     if (placement === "append") return layout.panel.append(value, key)
 
@@ -869,7 +877,8 @@ export function createPluginAttachment(apis: HostApis) {
 
     if (state(key, session) !== "visible") return
     const pane = mountedSession(session) ? region()?.paneOf(key) : sessionTabPane(layout.panel.state(value), key)
-    tabs.setRegion(shellTab(session), pane === "bottom" ? "bottom" : "side", false)
+    // Hiding a tab of the lower pane hides only that pane, so the preview above it stays.
+    tabs.setRegion(shellTab(session), pane ?? "side", false)
   }
 
   // Open-project requests wait until their server is listed (e.g. an SSH server that just connected).

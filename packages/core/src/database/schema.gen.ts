@@ -104,6 +104,15 @@ const schema: Omit<DatabaseMigration.Migration, "id"> = {
         );
       `)
       yield* tx.run(`
+        CREATE TABLE \`preview_thumbnail\` (
+          \`project_id\` text PRIMARY KEY,
+          \`hash\` text NOT NULL,
+          \`data\` blob NOT NULL,
+          \`time_created\` integer NOT NULL,
+          \`time_updated\` integer NOT NULL
+        );
+      `)
+      yield* tx.run(`
         CREATE TABLE \`project_directory\` (
           \`project_id\` text NOT NULL,
           \`directory\` text NOT NULL,

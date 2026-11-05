@@ -843,4 +843,12 @@ export const dict = {
   "error.chain.mcpFailed": "MCP 伺服器「{{name}}」啟動失敗。注意：O M A I + 尚不支援 MCP 驗證。",
   "session.delete.confirm": "要刪除工作階段「{{name}}」嗎？",
   "settings.search.empty.query": "「{{query}}」",
+  "session.side.preview": "預覽",
+  "session.side.code": "程式碼",
+  "session.side.git": "Git",
+  "session.side.tools": "工具",
+  "session.side.sections": "面板區段",
+  "session.side.more": "更多區段",
+  "session.side.expand": "展開為完整檢視",
+  "session.side.restore": "還原分割檢視",
 } satisfies Partial<Record<Keys, string>>

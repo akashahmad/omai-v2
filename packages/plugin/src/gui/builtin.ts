@@ -4,7 +4,7 @@
 import type { Schema } from "effect"
 import type { Context } from "./context.js"
 import { Registry, type Catalog, type Messages, type Persisted, type StoreDeclaration, type StoreFrom } from "./core.js"
-import type { Desktop, Layout, Locale, StorageScope, StoreOptions } from "./host-apis.js"
+import type { Desktop, Layout, Locale, MountedSession, SessionScreen, StorageScope, StoreOptions } from "./host-apis.js"
 import type { MainContext } from "./main.js"
 import type { Command, IconName, Panel, PanelTab, SlotMap } from "./registries.js"
 import { type JSX } from "solid-js"
@@ -57,6 +57,12 @@ export const BuiltinCommand = Registry.define<BuiltinCommand>("command")
 /** A `PanelTab` with the fields only built-ins set. */
 export interface BuiltinPanelTab extends PanelTab {
   /**
+   * The part of the right panel's Preview, Code, Git and Tools pill the tab belongs to. `"preview"` is the project
+   * preview, `"git"` the working tree's changes, `"tools"` the project tools such as the website audit; tabs without one
+   * belong to Code, which lists them in the strip under the pill.
+   */
+  readonly section?: "preview" | "git" | "tools"
+  /**
    * Renders before the tabs in stored order. Opening it also stores it first and leaves the preview tab open, so
    * closing it selects the first remaining tab. Fallback selection takes a `first` tab after the regular tabs and
    * before a pinned tab.
@@ -73,6 +79,11 @@ export interface BuiltinPanelTab extends PanelTab {
 
 /** A `Panel` with the fields only built-ins set. */
 export interface BuiltinPanel extends Panel {
+  /**
+   * The side region pane the panel's tabs open in. `"split"` is the lower pane under the main one, as terminals use,
+   * so the tab sits below the preview instead of among the files. Without it, tabs open where the user last targeted.
+   */
+  readonly pane?: "split"
   /**
    * Stored tab keys from before plugins (e.g. "review"), or from this plugin's earlier id, mapped to this panel's tab
    * ids. The host rewrites them once.
@@ -104,6 +115,17 @@ export interface BuiltinSlotMap extends SlotMap {
   readonly "session.location.path.menu": SlotMap["session.location.menu"]
   /** The narrow file tree column at the session's end edge, shown while the user has it open. */
   readonly "session.files": SlotMap["session.panel.end"]
+  /**
+   * The right panel's toolbar beside its Preview, Code, Git and Tools pill. `section` is the part on screen, so a
+   * plugin shows only the controls that belong to it.
+   */
+  readonly "session.side.toolbar": SlotMap["session.panel.end"] & {
+    /**
+     * The section on screen: `"preview"` for the project preview, `"code"` for file tabs, `"git"` for changes,
+     * `"tools"` for the project tools.
+     */
+    readonly section: "preview" | "code" | "git" | "tools"
+  }
   /**
    * Replaces the project menu's current location row; one contribution owns it. Without one the host shows a static
    * row.
@@ -141,6 +163,57 @@ export type BuiltinSlot = {
  * ```
  */
 export const BuiltinSlot = Registry.define<BuiltinSlot>("slot")
+
+/**
+ * A panel that covers the session's message timeline while it is active, such as the visual editor's inspector. The
+ * timeline stays mounted underneath and can't be reached while covered; the composer stays visible and usable below
+ * the cover. When several covers are active for one session, the first registered wins.
+ *
+ * @example
+ * ```ts
+ * ctx.add(BuiltinTimelineCover, {
+ *   id: "inspector",
+ *   active: (input) => editing(input.session),
+ *   render: (input) => <Inspector session={input.session} />,
+ * })
+ * ```
+ */
+export interface BuiltinTimelineCover {
+  /** Identifies the cover within its plugin. */
+  readonly id: string
+  /**
+   * Whether the cover is shown over the session's timeline now. Reactive: the host reads it again when what it reads
+   * changes. Return false whenever the session has nothing to show, so the timeline is never covered by an empty panel.
+   *
+   * @param input - The session the timeline belongs to.
+   */
+  active(input: {
+    /** The routed session, as in `session.*` slots. */
+    readonly session: MountedSession
+  }): boolean
+  /**
+   * Renders the cover once while it is active; its own reactivity updates it. It fills the timeline's area; the host
+   * keeps the composer's height free at the bottom.
+   *
+   * @param input - The session screen and session the cover belongs to.
+   */
+  render(input: {
+    /** The owning session screen; always present. */
+    readonly screen: SessionScreen
+    /** The routed session; read it where you use it, as a new session arrives through it without a remount. */
+    readonly session: MountedSession
+  }): JSX.Element
+}
+
+/**
+ * The `BuiltinTimelineCover` registry. The host shows the first active cover over the session's timeline.
+ *
+ * @example
+ * ```ts
+ * ctx.add(BuiltinTimelineCover, { id: "inspector", active: () => true, render: () => <Inspector /> })
+ * ```
+ */
+export const BuiltinTimelineCover = Registry.define<BuiltinTimelineCover>("timeline-cover")
 
 /**
  * An older home of a built-in's window value, imported once into a store that has no value yet: a `StoreFrom` key, or

@@ -90,7 +90,8 @@
     "@types/node": "catalog:",
     "@types/which": "3.0.4",
     "drizzle-kit": "catalog:",
-    "fast-check": "catalog:"
+    "fast-check": "catalog:",
+    "happy-dom": "20.0.11"
   },
   "dependencies": {
     "@ai-sdk/provider": "3.0.19",
@@ -127,6 +128,7 @@
     "immer": "11.1.4",
     "jose": "6.0.11",
     "jsonc-parser": "3.3.1",
+    "lighthouse": "13.4.1",
     "mime-types": "3.0.2",
     "which": "6.0.1",
     "zod": "catalog:"

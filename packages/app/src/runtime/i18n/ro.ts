@@ -818,4 +818,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Anulează încărcarea fișierului {{filename}}",
   "prompt.toast.uploadFailed.title": "Încărcarea a eșuat",
+  "session.side.preview": "Previzualizare",
+  "session.side.code": "Cod",
+  "session.side.git": "Git",
+  "session.side.tools": "Instrumente",
+  "session.side.sections": "Secțiuni ale panoului",
+  "session.side.more": "Mai multe secțiuni",
+  "session.side.expand": "Extinde la vizualizare completă",
+  "session.side.restore": "Restabilește vizualizarea împărțită",
 }

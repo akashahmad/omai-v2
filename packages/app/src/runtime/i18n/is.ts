@@ -805,4 +805,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Hætta við upphleðslu á {{filename}}",
   "prompt.toast.uploadFailed.title": "Upphleðsla mistókst",
+  "session.side.preview": "Forskoðun",
+  "session.side.code": "Kóði",
+  "session.side.git": "Git",
+  "session.side.tools": "Verkfæri",
+  "session.side.sections": "Hlutar spjalds",
+  "session.side.more": "Fleiri hlutar",
+  "session.side.expand": "Stækka í fullan skjá",
+  "session.side.restore": "Endurheimta skipta sýn",
 }

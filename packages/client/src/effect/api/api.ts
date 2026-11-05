@@ -2491,6 +2491,16 @@ export type ExperimentalArtifactsDeleteOperation<E = never> = (
   input: ExperimentalArtifactsDeleteInput,
 ) => Effect.Effect<ExperimentalArtifactsDeleteOutput, E>
 
+export type ExperimentalPreviewThumbnailsOutput = ReadonlyArray<{
+  readonly projectID: Project.ID
+  readonly hash: string
+  readonly time: number
+}>
+export type ExperimentalPreviewThumbnailsOperation<E = never> = () => Effect.Effect<
+  ExperimentalPreviewThumbnailsOutput,
+  E
+>
+
 export interface ExperimentalApi<E = never> {
   readonly persistentPty: {
     readonly read: ExperimentalPersistentPtyReadOperation<E>
@@ -2520,6 +2530,7 @@ export interface ExperimentalApi<E = never> {
     readonly update: ExperimentalArtifactsUpdateOperation<E>
     readonly delete: ExperimentalArtifactsDeleteOperation<E>
   }
+  readonly preview: { readonly thumbnails: ExperimentalPreviewThumbnailsOperation<E> }
 }
 
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }

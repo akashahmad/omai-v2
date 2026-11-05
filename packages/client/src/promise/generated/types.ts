@@ -391,6 +391,8 @@ export type LocationPublicInfo = {
   project: { id: ProjectID; directory: AbsolutePath; canonical: AbsolutePath }
 }
 
+export type PreviewThumbnailInfo = { projectID: ProjectID; hash: string; time: number }
+
 export type ModelRef = { id: string; providerID: ProviderID; variant?: string }
 
 export type ProviderCache = { ttl?: ProviderCacheTTL; warming?: ProviderCacheWarming }
@@ -4617,6 +4619,12 @@ export type ExperimentalArtifactsViewInput = {
 }
 
 export type ExperimentalArtifactsViewOutput = globalThis.Uint8Array
+
+export type ExperimentalPreviewThumbnailsOutput = { data: Array<PreviewThumbnailInfo> }["data"]
+
+export type ExperimentalPreviewThumbnailInput = { readonly projectID: string }
+
+export type ExperimentalPreviewThumbnailOutput = globalThis.Uint8Array
 
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 

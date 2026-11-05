@@ -816,4 +816,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "A(z) {{filename}} feltöltésének megszakítása",
   "prompt.toast.uploadFailed.title": "A feltöltés sikertelen",
+  "session.side.preview": "Előnézet",
+  "session.side.code": "Kód",
+  "session.side.git": "Git",
+  "session.side.tools": "Eszközök",
+  "session.side.sections": "Panelszakaszok",
+  "session.side.more": "További szakaszok",
+  "session.side.expand": "Kibontás teljes nézetre",
+  "session.side.restore": "Osztott nézet visszaállítása",
 }

@@ -267,6 +267,7 @@ import type {
   ExperimentalArtifactsUpdateOutput,
   ExperimentalArtifactsDeleteInput,
   ExperimentalArtifactsDeleteOutput,
+  ExperimentalPreviewThumbnailsOutput,
   ShellListInput,
   ShellListOutput,
   ShellCreateInput,
@@ -1696,6 +1697,14 @@ const EndpointExperimentalArtifactsDelete =
       }).pipe(Effect.mapError(mapClientError)),
     )
 
+const EndpointExperimentalPreviewThumbnails = (raw: RawClient["server.experimental"]) => () =>
+  preserveEffect<ExperimentalPreviewThumbnailsOutput>()(
+    raw["preview.thumbnails"]({}).pipe(
+      Effect.mapError(mapClientError),
+      Effect.map((value) => value.data),
+    ),
+  )
+
 const adaptGroupExperimental = (raw: RawClient["server.experimental"]) => ({
   persistentPty: {
     read: EndpointExperimentalPersistentPtyRead(raw),
@@ -1725,6 +1734,7 @@ const adaptGroupExperimental = (raw: RawClient["server.experimental"]) => ({
     update: EndpointExperimentalArtifactsUpdate(raw),
     delete: EndpointExperimentalArtifactsDelete(raw),
   },
+  preview: { thumbnails: EndpointExperimentalPreviewThumbnails(raw) },
 })
 
 const EndpointShellList = (raw: RawClient["server.shell"]) => (input?: ShellListInput) =>

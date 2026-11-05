@@ -185,6 +185,7 @@ export function SessionsPanel(props: { project: OpenProject }) {
                 {(session) => {
                   // The data cache follows renames and activity the listed page has not seen.
                   const info = () => value().ctx.data.session.get(session.id) ?? session
+
                   // The tabs' busy check: the session or any of its children working, unless it waits on the user.
                   const state = useSessionTabAvatarState(
                     () => ServerConnection.key(value().conn),

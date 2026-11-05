@@ -818,4 +818,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "Atcelt faila {{filename}} augšupielādi",
   "prompt.toast.uploadFailed.title": "Augšupielāde neizdevās",
+  "session.side.preview": "Priekšskatījums",
+  "session.side.code": "Kods",
+  "session.side.git": "Git",
+  "session.side.tools": "Rīki",
+  "session.side.sections": "Paneļa sadaļas",
+  "session.side.more": "Vairāk sadaļu",
+  "session.side.expand": "Izvērst pilnā skatā",
+  "session.side.restore": "Atjaunot dalīto skatu",
 }

@@ -831,4 +831,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "\u2068{{percent}}\u2069%",
   "prompt.toast.uploading.cancelFile": "\u2068{{filename}}\u2069 ގެ އަޕްލޯޑް ކެންސަލް ކުރަން",
   "prompt.toast.uploadFailed.title": "އަޕްލޯޑް ފޭލްވެއްޖެ",
+  "session.side.preview": "ޕްރިވިއު",
+  "session.side.code": "ކޯޑް",
+  "session.side.git": "Git",
+  "session.side.tools": "ޓޫލްތައް",
+  "session.side.sections": "ޕެނަލްގެ ބައިތައް",
+  "session.side.more": "އިތުރު ބައިތައް",
+  "session.side.expand": "ފުރިހަމަ ވިއު އަށް ފުޅާކުރޭ",
+  "session.side.restore": "ބައިކޮށްފައިވާ ވިއު އަނބުރާ ގެންނާ",
 }

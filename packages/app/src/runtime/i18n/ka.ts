@@ -804,4 +804,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "{{filename}} ფაილის ატვირთვის გაუქმება",
   "prompt.toast.uploadFailed.title": "ატვირთვა ვერ მოხერხდა",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "გადახედვა",
+  "session.side.code": "კოდი",
+  "session.side.git": "Git",
+  "session.side.tools": "ხელსაწყოები",
+  "session.side.sections": "პანელის სექციები",
+  "session.side.more": "სხვა სექციები",
+  "session.side.expand": "სრულ ხედზე გაშლა",
+  "session.side.restore": "გაყოფილი ხედის აღდგენა",
 }

@@ -1,14 +1,4 @@
-import {
-  For,
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-  on,
-  onCleanup,
-  type Accessor,
-  type JSX,
-} from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, type Accessor, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { createEventListener } from "@solid-primitives/event-listener"
@@ -17,7 +7,7 @@ import { Tabs } from "@opencode/ui/tabs"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Icon } from "@opencode/ui/icon"
 import { ResizeHandle } from "@opencode/ui/resize-handle"
-import { Mark } from "@opencode/ui/logo"
+import { BrandIcon } from "@/shell/brand-icon"
 import { Keybind } from "@opencode/ui/keybind"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Menu } from "@opencode/ui/menu"
@@ -33,6 +23,7 @@ import { useLanguage } from "@/runtime/i18n/language"
 import { same } from "@/runtime/persistence/equality"
 import { useLayout } from "@/shell/state/layout"
 import { useSessionLayout } from "@/session/session-layout"
+import { useSettings } from "@/settings/model"
 import type { Sizing } from "@/session/helpers"
 import { PanelTrigger } from "./panel-trigger"
 import { createSessionPanelMenuEntries, type SessionPanelMenuEntry } from "./panel-menu"
@@ -68,15 +59,13 @@ export function SideRegion(props: {
 
   // Opening the side region with no tabs shows a new tab view, once per opening and session. Keyed by the session, not
   // the item, whose object changes with every routed session.
-  const starting = createMemo(() =>
-    tabsOpen() && layout.ready() && props.region.empty() ? props.view.key : undefined,
-  )
+  const starting = createMemo(() => (tabsOpen() && layout.ready() && props.region.empty() ? props.view.key : undefined))
 
   createEffect(on(starting, (key) => key && props.region.openNewTab("side")))
 
   // The split pane shows while it holds tabs; when the side pane has none, the split pane takes the whole height.
   const panes = createMemo(() => {
-    const split = props.region.pane("split").keys().length > 0
+    const split = props.region.pane("split").keys().length > 0 && view().split.opened()
 
     if (!split) return ["side"] as const
 
@@ -240,6 +229,69 @@ export function PaneTabs(props: {
 
   let selectionEvent: Event | undefined
 
+  // The side pane's header is the Preview, Code, Git and Tools pill instead of a bare tab strip. Tabs name their section; the
+  // rest are Code, which the strip below the pill lists.
+  const settings = useSettings()
+
+  const sectionOf = (key: string | undefined): Section | undefined => {
+    const entry = key === undefined ? undefined : props.region.entry(key)
+
+    if (!entry) return undefined
+
+    return entry.tab.section ?? "code"
+  }
+
+  const codeKeys = createMemo(() => props.pane.keys().filter((key) => sectionOf(key) === "code"))
+  // Code with no file open yet shows its empty state over the pane until a file opens.
+  const [codeEmpty, setCodeEmpty] = createSignal(false)
+  const [lastCode, setLastCode] = createSignal<string>()
+
+  createEffect(
+    on(
+      () => props.pane.active(),
+      (key, previous) => {
+        // The code tab that was on screen, read before this change replaces it.
+        const closedCode = previous !== undefined && previous === lastCode() && !props.pane.keys().includes(previous)
+        setCodeEmpty(false)
+
+        if (sectionOf(key) === "code") setLastCode(key)
+
+        // Closing the open file leaves Code on its file list rather than wherever the region falls back to.
+        if (pill() && closedCode && sectionOf(key) !== "code" && codeKeys().length > 0) show(codeKeys()[0]!)
+      },
+    ),
+  )
+
+  const section = createMemo<Section>(() =>
+    codeEmpty() || current() ? "code" : (sectionOf(props.pane.active()) ?? "code"),
+  )
+
+  const show = (key: string) => {
+    props.region.select(key)
+    props.region.newTabs(props.pane.id).forEach((entry) => props.region.dismissNewTab(entry.id))
+  }
+
+  const choose = (next: Section) => {
+    if (next !== "code") {
+      const key = props.pane.keys().find((item) => sectionOf(item) === next)
+      setCodeEmpty(false)
+
+      if (key) show(key)
+
+      return
+    }
+
+    const remembered = lastCode()
+    const key = remembered && codeKeys().includes(remembered) ? remembered : codeKeys()[0]
+
+    if (key) return show(key)
+    // Nothing to show yet: the file tree is where a file gets picked.
+    setCodeEmpty(true)
+    settings.appearance.setFileTreeOpen(true)
+  }
+
+  const pill = () => props.actions === true
+
   return (
     <Tabs
       data-pane-content={props.pane.id}
@@ -262,7 +314,23 @@ export function PaneTabs(props: {
         }
       }}
     >
-      <div class="session-review-v2-tabs-bar sticky top-0 shrink-0 flex items-center">
+      <Show when={pill()}>
+        <SidePanelHeader
+          section={section()}
+          onChoose={choose}
+          view={props.view}
+          screen={props.screen}
+          reserve={props.present()}
+          end={props.end}
+        />
+      </Show>
+      <div
+        class="session-review-v2-tabs-bar sticky top-0 shrink-0 flex items-center"
+        classList={{
+          hidden: pill() && section() !== "code",
+          "border-b border-v2-border-border-base [--tabs-bar-height:36px]": pill(),
+        }}
+      >
         <Tabs.List
           data-pane-strip={props.pane.id}
           ref={(el: HTMLDivElement) => {
@@ -283,7 +351,7 @@ export function PaneTabs(props: {
             setTabMenu({ open: true, key, x: event.clientX, y: event.clientY })
           }}
         >
-          <For each={props.pane.keys()}>
+          <For each={pill() ? codeKeys() : props.pane.keys()}>
             {(key) => (
               <Show when={props.region.entry(key)}>
                 {(entry) => (
@@ -332,7 +400,11 @@ export function PaneTabs(props: {
               </Tabs.Trigger>
             )}
           </For>
-          <div class="h-full shrink-0 sticky end-0 z-10 flex items-center justify-center bg-v2-background-bg-base">
+          {/* The pill's Code strip lists files only; terminals and reviews have their own places. */}
+          <div
+            class="h-full shrink-0 sticky end-0 z-10 flex items-center justify-center bg-v2-background-bg-base"
+            classList={{ hidden: pill() }}
+          >
             <Show
               when={primary() ?? (launchers().length === 0 && menu().length === 1 ? menu()[0]?.item : undefined)}
               fallback={
@@ -402,6 +474,7 @@ export function PaneTabs(props: {
         </Menu>
         <div
           data-slot="session-side-panel-actions"
+          classList={{ hidden: pill() }}
           class="session-review-v2-open-in-app-slot h-[var(--tabs-bar-height)] shrink-0 flex items-center gap-2 pe-3"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
@@ -440,12 +513,18 @@ export function PaneTabs(props: {
           <Show when={!primary()}>
             <div class="relative pt-2 flex-1 min-h-0 overflow-hidden">
               <div class="h-full px-6 pb-42 -mt-4 flex flex-col items-center justify-center text-center gap-6">
-                <Mark class="w-14 opacity-10" />
+                <BrandIcon class="size-14 rounded-[10px] opacity-40" />
                 <div class="text-14-regular text-text-weak max-w-56">{language.t("session.files.selectToOpen")}</div>
               </div>
             </div>
           </Show>
         </Tabs.Content>
+      </Show>
+      <Show when={pill() && codeEmpty() && !current()}>
+        <div class="absolute inset-x-0 bottom-0 top-[calc(3rem+36px)] z-10 flex flex-col items-center justify-center gap-6 bg-v2-background-bg-base px-6 text-center">
+          <BrandIcon class="size-14 rounded-[10px] opacity-40" />
+          <div class="text-14-regular text-text-weak max-w-56">{language.t("session.files.selectToOpen")}</div>
+        </div>
       </Show>
       {/* Kept mounted under the new tab view, so terminals and editors keep their state. */}
       <div class="contents" classList={{ hidden: !!current() }} inert={!!current() || undefined}>
@@ -622,5 +701,155 @@ function LauncherRow(props: { item: SessionPanelMenuItem; onChoose: () => void }
         <Keybind keys={keybind()} variant="neutral" />
       </Show>
     </button>
+  )
+}
+
+type Section = "preview" | "code" | "git" | "tools"
+
+const SECTIONS: ReadonlyArray<{
+  id: Section
+  icon: "globe" | "code-v2" | "review" | "wrench"
+  label: "session.side.preview" | "session.side.code" | "session.side.git" | "session.side.tools"
+}> = [
+  { id: "preview", icon: "globe", label: "session.side.preview" },
+  { id: "code", icon: "code-v2", label: "session.side.code" },
+  { id: "git", icon: "review", label: "session.side.git" },
+  { id: "tools", icon: "wrench", label: "session.side.tools" },
+]
+
+/**
+ * The side pane's toolbar: the full-view toggle and the section pill on the start side, then whatever the plugins
+ * add for the section on screen, such as the preview's address bar.
+ */
+function SidePanelHeader(props: {
+  section: Section
+  onChoose: (section: Section) => void
+  view: MountedSession
+  screen: SessionScreen
+  /** Keeps room at the end for the session's review toggle, which floats over the panel. */
+  reserve: boolean
+  end?: JSX.Element
+}) {
+  const language = useLanguage()
+  const settings = useSettings()
+  const expanded = () => settings.appearance.sidePanelExpanded()
+  const others = () => SECTIONS.filter((item) => item.id !== props.section)
+
+  return (
+    <div
+      data-slot="session-side-toolbar"
+      class="@container sticky top-0 z-20 shrink-0 flex items-center gap-2 h-10 ps-2 pe-3 border-b border-v2-border-border-base bg-v2-background-bg-base"
+    >
+      <div class="flex items-center gap-0.5 min-w-0 shrink-0">
+        <Tooltip
+          value={expanded() ? language.t("session.side.restore") : language.t("session.side.expand")}
+          placement="bottom"
+        >
+          <IconButton
+            icon={<Icon name={expanded() ? "layout-right-full" : "layout-right"} size="small" />}
+            variant="ghost-muted"
+            aria-pressed={expanded()}
+            aria-label={expanded() ? language.t("session.side.restore") : language.t("session.side.expand")}
+            onClick={() => settings.appearance.setSidePanelExpanded(!expanded())}
+          />
+        </Tooltip>
+        <div
+          role="tablist"
+          aria-label={language.t("session.side.sections")}
+          class="flex-none flex gap-0.5 items-center p-0.5 rounded-full bg-v2-overlay-simple-overlay-hover"
+        >
+          <For each={SECTIONS}>
+            {(item) => (
+              <Tooltip value={language.t(item.label)} placement="bottom">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={props.section === item.id}
+                  aria-label={language.t(item.label)}
+                  data-section={item.id}
+                  class="shrink-0 flex items-center gap-1.5 h-7 px-2.5 rounded-full cursor-pointer transition-colors"
+                  classList={{
+                    // The section on screen is tinted with a bright blue of the brand's hue. Its text mixes that blue
+                    // with the theme's ink so it reads on light and dark.
+                    "bg-[#1a64d6]/15 shadow-[inset_0_0_0_1px_rgb(26_100_214/0.35)] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))]":
+                      props.section === item.id,
+                    "text-v2-text-text-muted hover:text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover":
+                      props.section !== item.id,
+                    // On a narrow panel only the section on screen stays in the pill; the rest move to its menu.
+                    "@max-[26rem]:hidden": props.section !== item.id,
+                  }}
+                  onClick={() => props.onChoose(item.id)}
+                >
+                  <Icon name={item.icon} size="small" />
+                  <Show when={props.section === item.id}>
+                    <span class="text-12-medium whitespace-nowrap @max-[15rem]:hidden">{language.t(item.label)}</span>
+                  </Show>
+                </button>
+              </Tooltip>
+            )}
+          </For>
+          <Menu gutter={4} modal={false} placement="bottom-start">
+            <Menu.Trigger
+              as="button"
+              type="button"
+              aria-label={language.t("session.side.more")}
+              class="hidden @max-[26rem]:flex shrink-0 items-center justify-center h-7 w-7 rounded-full cursor-pointer text-v2-text-text-muted hover:text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover"
+            >
+              <Icon name="outline-dots" size="small" />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content>
+                <For each={others()}>
+                  {(item) => (
+                    <Menu.Item onSelect={() => props.onChoose(item.id)}>
+                      <Icon name={item.icon} size="small" />
+                      {language.t(item.label)}
+                    </Menu.Item>
+                  )}
+                </For>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu>
+        </div>
+      </div>
+      <div class="flex flex-1 min-w-0 items-center gap-2">
+        <PluginSlot
+          at="session.side.toolbar"
+          input={{
+            get session() {
+              return props.view
+            },
+            get screen() {
+              return props.screen
+            },
+            get section() {
+              return props.section
+            },
+          }}
+        />
+      </div>
+      <div
+        data-slot="session-side-panel-actions"
+        class="session-review-v2-open-in-app-slot shrink-0 flex items-center gap-2"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <PluginSlot
+          at="session.panel.end"
+          input={{
+            get session() {
+              return props.view
+            },
+            get screen() {
+              return props.screen
+            },
+          }}
+        />
+        {props.end}
+        <Show when={props.reserve}>
+          <div class="size-7 shrink-0" aria-hidden />
+        </Show>
+      </div>
+    </div>
   )
 }

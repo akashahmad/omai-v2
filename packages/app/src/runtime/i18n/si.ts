@@ -804,4 +804,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "{{percent}}%",
   "prompt.toast.uploading.cancelFile": "{{filename}} ගොනුව උඩුගත කිරීම අවලංගු කරන්න",
   "prompt.toast.uploadFailed.title": "උඩුගත කිරීම අසාර්ථකයි",
+  "session.side.preview": "පෙරදසුන",
+  "session.side.code": "කේතය",
+  "session.side.git": "Git",
+  "session.side.tools": "මෙවලම්",
+  "session.side.sections": "පැනල කොටස්",
+  "session.side.more": "තවත් කොටස්",
+  "session.side.expand": "සම්පූර්ණ දසුනට විහිදන්න",
+  "session.side.restore": "බෙදූ දසුන ප්‍රතිසාධනය කරන්න",
 } satisfies Partial<Record<Keys, string>>

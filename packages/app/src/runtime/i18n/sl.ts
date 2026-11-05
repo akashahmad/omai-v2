@@ -825,4 +825,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Prekliči nalaganje datoteke {{filename}}",
   "prompt.toast.uploadFailed.title": "Nalaganje ni uspelo",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Predogled",
+  "session.side.code": "Koda",
+  "session.side.git": "Git",
+  "session.side.tools": "Orodja",
+  "session.side.sections": "Razdelki plošče",
+  "session.side.more": "Več razdelkov",
+  "session.side.expand": "Razširi na celoten pogled",
+  "session.side.restore": "Obnovi razdeljeni pogled",
 }

@@ -2,6 +2,22 @@ import { additionalIcons, additionalIconViewBox } from "./icon/additional-icons"
 
 // Consumers center the SVG viewport, so each icon must center its artwork within its viewBox.
 const icons = {
+  mobile: {
+    viewBox: "0 0 16 16",
+    body: `<rect x="4.5" y="1.5" width="7" height="13" rx="1.6" stroke="currentColor"/><path d="M6.5 12.5H9.5" stroke="currentColor"/>`,
+  },
+  tablet: {
+    viewBox: "0 0 16 16",
+    body: `<rect x="2.5" y="3" width="11" height="10" rx="1.6" stroke="currentColor"/><path d="M7 11H9" stroke="currentColor"/>`,
+  },
+  "code-v2": {
+    viewBox: "0 0 24 24",
+    body: `<path d="M13.2724 3.8184C13.3728 3.41663 13.7798 3.17219 14.1816 3.2725C14.5834 3.37295 14.8278 3.77991 14.7275 4.18168L10.7275 20.1817C10.627 20.5835 10.2201 20.8279 9.8183 20.7276C9.41653 20.6271 9.17209 20.2202 9.2724 19.8184L13.2724 3.8184ZM6.46967 7.46977C6.76256 7.17688 7.23732 7.17688 7.53022 7.46977C7.82311 7.76266 7.82311 8.23742 7.53022 8.53032L4.06049 12L7.53022 15.4698C7.82311 15.7627 7.82311 16.2374 7.53022 16.5303C7.23732 16.8232 6.76256 16.8232 6.46967 16.5303L2.46967 12.5303C2.17678 12.2374 2.17678 11.7627 2.46967 11.4698L6.46967 7.46977ZM16.4697 7.46977C16.7626 7.17688 17.2373 7.17688 17.5302 7.46977L21.5302 11.4698C21.8231 11.7627 21.8231 12.2374 21.5302 12.5303L17.5302 16.5303C17.2373 16.8232 16.7626 16.8232 16.4697 16.5303C16.1768 16.2374 16.1768 15.7627 16.4697 15.4698L19.9394 12L16.4697 8.53032C16.1768 8.23742 16.1768 7.76266 16.4697 7.46977Z" fill="currentColor"/>`,
+  },
+  wrench: {
+    viewBox: "0 0 16 16",
+    body: `<path d="M10.2 1.9a3.6 3.6 0 0 0-3.5 4.6L2.2 11a1.4 1.4 0 0 0 0 2l.8.8a1.4 1.4 0 0 0 2 0l4.5-4.5a3.6 3.6 0 0 0 4.6-3.5c0-.4 0-.7-.1-1L11.9 7l-2-.9-.9-2 2.2-2.1c-.3-.1-.7-.1-1-.1Z" stroke="currentColor" stroke-linejoin="round"/>`,
+  },
   lock: {
     viewBox: "0 0 16 16",
     body: `<rect x="3.5" y="7" width="9" height="7" rx="1" stroke="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2M8 10v1" stroke="currentColor" stroke-linecap="round"/>`,

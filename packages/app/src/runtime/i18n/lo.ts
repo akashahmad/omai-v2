@@ -793,4 +793,12 @@ export const dict = {
   "workspace.delete.confirm": 'ລຶບ "{{name}}"?',
   "workspace.delete.location": "ສະຖານທີ່",
   "settings.search.empty.query": '"{{query}}"',
+  "session.side.preview": "ເບິ່ງຕົວຢ່າງ",
+  "session.side.code": "ໂຄດ",
+  "session.side.git": "Git",
+  "session.side.tools": "ເຄື່ອງມື",
+  "session.side.sections": "ສ່ວນຂອງແຜງ",
+  "session.side.more": "ສ່ວນເພີ່ມເຕີມ",
+  "session.side.expand": "ຂະຫຍາຍເປັນມຸມມອງເຕັມ",
+  "session.side.restore": "ກູ້ຄືນມຸມມອງແບບແບ່ງ",
 }

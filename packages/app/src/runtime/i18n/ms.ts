@@ -802,4 +802,12 @@ export const dict = {
   "workspace.delete.confirm": "Padam “{{name}}”?",
   "workspace.delete.location": "Lokasi",
   "settings.search.empty.query": '"{{query}}"',
+  "session.side.preview": "Pratonton",
+  "session.side.code": "Kod",
+  "session.side.git": "Git",
+  "session.side.tools": "Alat",
+  "session.side.sections": "Bahagian panel",
+  "session.side.more": "Lagi bahagian",
+  "session.side.expand": "Kembangkan ke paparan penuh",
+  "session.side.restore": "Pulihkan paparan terbahagi",
 }

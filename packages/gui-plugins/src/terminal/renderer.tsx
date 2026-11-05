@@ -5,7 +5,6 @@ import {
   Command,
   createKeyed,
   MenuItem,
-  Panel,
   Style,
   type MountedSession,
   type PanelTab,
@@ -18,7 +17,7 @@ import { createTerminalModel, type TerminalSession } from "./model"
 import { terminalTabLabel } from "./title"
 import { TerminalTabLabel } from "./label"
 import quoteStyles from "./quote.css?inline"
-import { onIdle, BuiltinCommand, BuiltinSlot } from "@opencode/plugin/gui/builtin"
+import { onIdle, BuiltinCommand, BuiltinPanel, BuiltinSlot } from "@opencode/plugin/gui/builtin"
 
 const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
   const sessions = ctx.sessions
@@ -212,9 +211,11 @@ const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
     }
   }
 
-  ctx.add(Panel, {
+  ctx.add(BuiltinPanel, {
     id: "main",
     region: "side",
+    // Terminals open in their own pane under the preview, not among the files.
+    pane: "split",
     // A tab whose terminal the server no longer lists (closed here or elsewhere, or exited) leaves the strip.
     transient: true,
     mobile: {

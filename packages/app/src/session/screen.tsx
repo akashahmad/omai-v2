@@ -25,6 +25,7 @@ import type { SessionModel } from "@/session/model"
 import { SESSION_PANEL_WIDTH_MIN } from "@/session/session-panel-width"
 import { SessionPanelFrame } from "@/session/session-frame"
 import { PluginLinks, PluginSlot } from "@/runtime/plugin/render"
+import { TimelineCover, useTimelineCover } from "@/runtime/plugin/timeline-cover"
 import { createPanelSidebar, createRegion, MobilePanel } from "@/runtime/plugin/panels"
 import { createMobileViews, MobileViewTabs } from "@/runtime/plugin/mobile"
 import { usePluginAttachment } from "@/runtime/plugin/host-apis"
@@ -161,7 +162,25 @@ function SessionScreenContent(props: {
   })
 
   // The chat keeps its open width as the far end of a close's travel.
-  const chatOpenWidth = createMemo<string>((previous) => (sideVisible() ? screen.panel.width() : previous), "100%")
+  // Expanded, the right panel takes the whole row and the conversation steps aside until it is restored.
+  const expanded = createMemo(() => sideVisible() && settings.appearance.sidePanelExpanded())
+
+  // Full view belongs to an open right panel: closing the panel leaves it, so the rail and the conversation return.
+  createEffect(
+    on(
+      sideVisible,
+      (visible) => {
+        if (!visible && settings.appearance.sidePanelExpanded()) settings.appearance.setSidePanelExpanded(false)
+      },
+      { defer: true },
+    ),
+  )
+
+  const chatOpenWidth = createMemo<string>(
+    (previous) => (sideVisible() ? (expanded() ? "0px" : screen.panel.width()) : previous),
+    "100%",
+  )
+
   let chat: HTMLDivElement | undefined
   let sidePresence: HTMLDivElement | undefined
 
@@ -250,6 +269,7 @@ function SessionScreenContent(props: {
 
   props.bindBackground(composer.requests.background.tasks)
   props.bindPrompt({ quotable: composer.quote.available, focus: composer.quote.focus, focused: composer.focused })
+
   const quote = createTimelineQuote({
     root: timeline.scroller,
     sessionKey: session.identity.sessionKey,
@@ -356,6 +376,31 @@ function SessionScreenContent(props: {
     </Show>
   )
 
+  // A plugin panel, such as the visual editor's inspector, can cover the timeline while the composer stays usable.
+  const cover = useTimelineCover(props.view)
+  const [composerHeight, setComposerHeight] = createSignal(0)
+
+  const measureComposer = (row: HTMLDivElement) => {
+    const measure = () => setComposerHeight(row.firstElementChild?.getBoundingClientRect().height ?? 0)
+    const resize = new ResizeObserver(measure)
+
+    const watch = () => {
+      resize.disconnect()
+
+      if (row.firstElementChild) resize.observe(row.firstElementChild)
+      measure()
+    }
+    // The composer region mounts and unmounts inside this row; follow whichever one is there.
+
+    const children = new MutationObserver(watch)
+    children.observe(row, { childList: true })
+    watch()
+    onCleanup(() => {
+      resize.disconnect()
+      children.disconnect()
+    })
+  }
+
   const sessionPanelContent = () => (
     <>
       <ComposerDropzone
@@ -444,12 +489,15 @@ function SessionScreenContent(props: {
             </Show>
           </Match>
         </Switch>
+        <Show when={isDesktop() && session.identity.params.id}>
+          <TimelineCover cover={cover()} screen={props.screen} session={props.view()} inset={composerHeight()} />
+        </Show>
       </div>
 
       {/* The composer region overflows this zero-height row upward, over a timeline that scrolls on underneath it. It
           stays shallower than the timeline's observed elements, so their resizes from its inset arrive in the same
           ResizeObserver pass. */}
-      <div class="relative z-[70] flex h-0 shrink-0 flex-col justify-end">
+      <div ref={measureComposer} class="relative z-[70] flex h-0 shrink-0 flex-col justify-end">
         <Show when={composer.active()} keyed>
           {(model) => (
             <ActiveSessionComposerRegion
@@ -479,7 +527,9 @@ function SessionScreenContent(props: {
             {/* Keep the control outside panel animations. */}
             <Show when={isDesktop() && messagesReady() && session.identity.params.id}>
               <div
-                class="absolute end-3 top-0 z-30 h-12 flex items-center"
+                class="absolute end-3 top-0 z-30 flex items-center"
+                // Centered on the header under it: the right panel's 40px toolbar when open, else the chat's 48px header.
+                classList={{ "h-10": session.layout.view().side.opened(), "h-12": !session.layout.view().side.opened() }}
                 data-slot="session-review-toggle"
                 onPointerDown={hideTimelineScrollbar}
                 onClick={hideTimelineScrollbar}
@@ -496,6 +546,7 @@ function SessionScreenContent(props: {
             <div
               ref={chat}
               class="relative z-10 min-w-0 shrink-0 flex flex-col min-h-0 h-full flex-1 md:flex-none"
+              classList={{ "invisible overflow-hidden -me-1": expanded() }}
               data-slot="session-chat-panel"
               data-scrollbar-hidden={store.timelineScrollbarHidden}
               onPointerMove={revealTimelineScrollbar}
@@ -514,7 +565,10 @@ function SessionScreenContent(props: {
 
               {/* Hidden rather than unmounted: removing it makes the transcript frame the last child, and structural
                 selectors in the transcript then restyle every element in it as the side panel starts to close. */}
-              <div classList={{ hidden: !screen.panel.resizable() }} onPointerDown={() => screen.size.start()}>
+              <div
+                classList={{ hidden: !screen.panel.resizable() || expanded() }}
+                onPointerDown={() => screen.size.start()}
+              >
                 <ResizeHandle
                   class="-end-1"
                   direction="horizontal"
@@ -545,7 +599,7 @@ function SessionScreenContent(props: {
                   ref={sideContent}
                   data-slot="session-side-panel-content"
                   class="absolute inset-y-0 start-0 size-full [contain:layout_style] will-change-[opacity]"
-                  style={{ "--session-side-content-width": screen.side.contentWidth() }}
+                  style={{ "--session-side-content-width": expanded() ? "100%" : screen.side.contentWidth() }}
                 >
                   <div data-slot="session-side-region" class="absolute inset-0 min-h-0 overflow-visible">
                     <Show when={store.sideMounted}>

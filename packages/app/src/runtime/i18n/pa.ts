@@ -819,4 +819,12 @@ export const dict = {
   "prompt.toast.uploading.percent": "\u2068{{percent}}\u2069%",
   "prompt.toast.uploading.cancelFile": "\u2068{{filename}}\u2069 دی اپ لوڈ منسوخ کرو",
   "prompt.toast.uploadFailed.title": "اپ لوڈ ناکام ہو گیا",
+  "session.side.preview": "پیش منظر",
+  "session.side.code": "کوڈ",
+  "session.side.git": "Git",
+  "session.side.tools": "اوزار",
+  "session.side.sections": "پینل دے حصے",
+  "session.side.more": "ہور حصے",
+  "session.side.expand": "پوری ویو تک ودھاؤ",
+  "session.side.restore": "ونڈی ہوئی ویو بحال کرو",
 }

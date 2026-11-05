@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { createResource, createSignal, Show } from "solid-js"
 import {
   displayName,
   getProjectAvatarGenerated,
@@ -118,6 +118,10 @@ export function ProjectRow(props: { projects: ProjectsController; project: Local
 }
 
 export function ProjectCard(props: { projects: ProjectsController; project: LocalProject }) {
+  // The latest screenshot of the project's app, when its preview has ever run; the avatar otherwise.
+  const [thumbnail] = createResource(() => props.projects.thumbnailKey(props.project.id), props.projects.thumbnail)
+  const [loaded, setLoaded] = createSignal(false)
+
   return (
     <div
       data-component="project-card"
@@ -125,11 +129,29 @@ export function ProjectCard(props: { projects: ProjectsController; project: Loca
     >
       <button
         type="button"
-        class="flex h-36 cursor-default items-center justify-center bg-v2-background-bg-layer-01"
+        class="relative flex h-36 cursor-default items-center justify-center overflow-hidden bg-v2-background-bg-layer-01"
         onClick={() => void props.projects.open(props.project)}
         aria-label={displayName(props.project)}
       >
-        <Avatar project={props.project} class="!size-16 text-20-medium" />
+        <Show when={thumbnail()} fallback={<Avatar project={props.project} class="!size-16 text-20-medium" />}>
+          {(src) => (
+            <>
+              <img
+                src={src()}
+                alt=""
+                decoding="async"
+                class="absolute inset-0 size-full object-cover object-top transition-opacity duration-300"
+                classList={{ "opacity-0": !loaded(), "opacity-100": loaded() }}
+                onLoad={() => setLoaded(true)}
+              />
+              <span class="absolute inset-x-0 bottom-0 h-px bg-v2-border-border-muted" />
+              <Avatar
+                project={props.project}
+                class="!absolute bottom-2 left-2 !size-7 text-12-medium shadow-[0_0_0_2px_var(--v2-background-bg-base)]"
+              />
+            </>
+          )}
+        </Show>
       </button>
       <div class="flex items-center gap-2 p-3">
         <button

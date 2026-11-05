@@ -21,6 +21,7 @@ import {
   openSessionTab,
   placeSessionTabs,
   previewSessionTab,
+  sessionTabPane,
   type SessionPane,
   type SessionTabs,
   type SessionTabState,
@@ -51,6 +52,8 @@ export type TabRegions = {
   setBottomHeight(height: number): void
   splitRatio: Accessor<number | undefined>
   setSplitRatio(ratio: number): void
+  splitOpened: Accessor<boolean>
+  setSplitOpened(opened: boolean): void
 }
 
 export type LayoutRoute =
@@ -577,6 +580,9 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
           split: {
             ratio: createMemo(() => regions.splitRatio() ?? 0.5),
             resize: regions.setSplitRatio,
+            /** The lower pane shows while it holds tabs until the user hides it, as the bottom pane does. */
+            opened: regions.splitOpened,
+            setOpened: regions.setSplitOpened,
           },
           session: {
             width: createMemo(() => regions.sessionWidth() ?? DEFAULT_SESSION_WIDTH),
@@ -606,6 +612,14 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
         },
         focus(session: string, tab: string) {
           writeTabs(session, { ...(store.sessionTabs[session] ?? { all: [] }), active: tab })
+        },
+        /** Puts `tab` in `pane`: moves it there when it is stored in another pane, else the next write adds it there. */
+        place(session: string, tab: string, pane: SessionPane) {
+          const current = store.sessionTabs[session]
+
+          if (!current?.all.includes(tab)) return setEphemeral("sessionTabTarget", session, { pane, at: Date.now() })
+
+          if (sessionTabPane(current, tab) !== pane) writeTabs(session, moveSessionTab(current, tab, pane))
         },
         close(session: string, tab: string) {
           const current = store.sessionTabs[session]

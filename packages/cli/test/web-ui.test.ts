@@ -218,6 +218,12 @@ describe("web UI", () => {
           expect(fallback.headers.get("content-security-policy")).toContain("connect-src * data: blob:")
           expect(fallback.headers.get("content-security-policy")).toContain("worker-src 'self' blob:")
           expect(fallback.headers.get("content-security-policy")).toContain("frame-src 'self' blob:")
+          // The project preview is the same host on its own port.
+          expect(fallback.headers.get("content-security-policy")).toContain(`http://${new URL(origin).hostname}:*`)
+          // The visual editor shows the preview's images (its thumbnails) from that same host.
+          expect(fallback.headers.get("content-security-policy")).toContain(
+            `img-src 'self' data: https: blob: http://${new URL(origin).hostname}:*`,
+          )
           expect(fallback.headers.get("content-security-policy")).toContain("object-src 'self' blob:")
 
           const dotted = yield* Effect.promise(() => fetch(`${origin}/workspace/example.js`))

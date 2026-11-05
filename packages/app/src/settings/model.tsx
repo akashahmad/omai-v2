@@ -146,6 +146,7 @@ const appearanceSchema = Persistence.struct({
   fileTreeOpen: Persistence.optional(Schema.Boolean),
   sessionsPanelWidth: Persistence.optional(Schema.Finite),
   fileTreeWidth: Persistence.optional(Schema.Finite),
+  sidePanelExpanded: Persistence.optional(Schema.Boolean),
   reduceMotion: Schema.Literals(["system", "on", "off"]),
 })
 
@@ -472,6 +473,10 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         fileTreeWidth: withFallback(() => store.appearance?.fileTreeWidth, 240),
         setFileTreeWidth(value: number) {
           setStore("appearance", "fileTreeWidth", value)
+        },
+        sidePanelExpanded: withFallback(() => store.appearance?.sidePanelExpanded, false),
+        setSidePanelExpanded(value: boolean) {
+          setStore("appearance", "sidePanelExpanded", value)
         },
         reduceMotion,
         setReduceMotion(value: ReduceMotion) {

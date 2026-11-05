@@ -780,4 +780,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "የ{{filename}} ስቀላን ሰርዝ",
   "prompt.toast.uploadFailed.title": "ስቀላው አልተሳካም",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "ቅድመ እይታ",
+  "session.side.code": "ኮድ",
+  "session.side.git": "Git",
+  "session.side.tools": "መሳሪያዎች",
+  "session.side.sections": "የፓነል ክፍሎች",
+  "session.side.more": "ተጨማሪ ክፍሎች",
+  "session.side.expand": "ወደ ሙሉ እይታ አስፋ",
+  "session.side.restore": "የተከፈለ እይታን መልስ",
 }

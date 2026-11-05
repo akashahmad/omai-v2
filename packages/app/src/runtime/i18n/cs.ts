@@ -826,4 +826,12 @@ export const dict = {
   "prompt.toast.uploading.cancelFile": "Zrušit nahrávání souboru {{filename}}",
   "prompt.toast.uploadFailed.title": "Nahrávání se nezdařilo",
   "prompt.toast.uploading.percent": "{{percent}}%",
+  "session.side.preview": "Náhled",
+  "session.side.code": "Kód",
+  "session.side.git": "Git",
+  "session.side.tools": "Nástroje",
+  "session.side.sections": "Sekce panelu",
+  "session.side.more": "Další sekce",
+  "session.side.expand": "Rozbalit na celé zobrazení",
+  "session.side.restore": "Obnovit rozdělené zobrazení",
 }
