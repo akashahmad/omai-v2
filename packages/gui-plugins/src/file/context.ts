@@ -3,6 +3,7 @@ import type { Browser } from "@opencode/plugin/gui/browser"
 import type { Changes } from "@opencode/plugin/gui/review"
 import type { LineRange, Live, MountedSession, OpenOptions } from "@opencode/plugin/gui"
 import type { OpenApp } from "./apps"
+import type { createDownloads } from "./download"
 
 /** An open-in-app request in flight: the app it opens, or undefined while none is. */
 export interface OpenRequest {
@@ -39,6 +40,8 @@ export interface FileShared {
     register(session: string, path: string, run: () => void): () => void
     run(session: string, path: string): void
   }
+  /** Project, folder and file downloads, which keep going while the files panel is closed. */
+  readonly downloads: ReturnType<typeof createDownloads>
   /** The tab is the session's selected side tab. */
   active(session: MountedSession, id: string): boolean
   open(session: MountedSession, path: string, options?: OpenOptions): void

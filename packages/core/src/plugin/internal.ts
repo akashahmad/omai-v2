@@ -105,6 +105,7 @@ import { IdentityPlugin } from "./identity.js"
 import { PlanPlugin } from "./plan.js"
 import { GoalPlugin } from "./goal.js"
 import { CheckpointsPlugin } from "./checkpoints.js"
+import { FilesPlugin } from "./files.js"
 import { PublishPlugin } from "./publish.js"
 import { GitToolPlugin } from "./git-tool.js"
 import { PreviewPlugin } from "./preview.js"
@@ -260,6 +261,7 @@ const pre = [
   GitToolPlugin.Plugin,
   CheckpointsPlugin.Plugin,
   PublishPlugin.Plugin,
+  FilesPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,

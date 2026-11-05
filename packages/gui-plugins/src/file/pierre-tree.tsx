@@ -1,7 +1,7 @@
 import "@pierre/trees/web-components"
 import { FileTree, type FileTreeDirectoryHandle, type FileTreeItemHandle } from "@pierre/trees"
 import { getIcon } from "@opencode/ui/icons/catalog"
-import { createMemo, createSignal, onCleanup, onMount } from "solid-js"
+import { createMemo, createRoot, createSignal, getOwner, onCleanup, onMount, type JSX } from "solid-js"
 import type { ChangeKind } from "@opencode/plugin/gui/review"
 import { createKeyed, usePlugin, type FileNode, type MountedSession, type SessionScreen } from "@opencode/plugin/gui"
 import { startFileDrag } from "./drag"
@@ -119,6 +119,11 @@ const TREE_UNSAFE_CSS = `
   }
 `
 
+// The row menu's size, for keeping it inside the tree.
+const MENU_WIDTH = 184
+
+const MENU_HEIGHT = 196
+
 function sameStringMap(a: ReadonlyMap<string, string> | undefined, b: ReadonlyMap<string, string> | undefined) {
   if (a === b) return true
   const sizeA = a?.size ?? 0
@@ -151,6 +156,17 @@ function findFileButtonPath(event: Event) {
   return button?.dataset.itemType === "file" ? button.dataset.itemPath : undefined
 }
 
+/** A row the tree's "⋯" menu acts on. `path` is the workspace path as the tree lists it, without a trailing slash. */
+export type TreeMenuItem = { readonly kind: "file" | "directory"; readonly path: string; readonly name: string }
+
+/** Row actions: a "⋯" button and a right-click menu on every row, and inline renaming. */
+export type TreeMenu = {
+  /** The menu's content. `rename` closes the menu and starts inline renaming of the row. */
+  render(item: TreeMenuItem, actions: { close(): void; rename(): void }): JSX.Element
+  /** Renames on the server and resolves false when that failed, which moves the row back. */
+  rename(from: string, to: string): Promise<boolean>
+}
+
 export default function PierreFileTree(props: {
   session: MountedSession
   screen: SessionScreen
@@ -161,8 +177,12 @@ export default function PierreFileTree(props: {
   draggable?: boolean
   onFileClick?: (file: FileNode) => void
   onFileDoubleClick?: (file: FileNode) => void
+  menu?: TreeMenu
 }) {
   const ctx = usePlugin()
+  const owner = getOwner()
+  let disposeMenu: (() => void) | undefined
+  let shiftedAnchor: HTMLElement | undefined
   const file = props.screen.file
   const openIn = ctx.desktop ? useOpenInApp({ session: props.session, path: () => file.root }) : undefined
   const live = () => props.allowed === undefined
@@ -262,6 +282,117 @@ export default function PierreFileTree(props: {
     return { name: norm.split("/").at(-1) || norm, path: original, absolute: original, type: "file", ignored: false }
   }
 
+  // Places the menu inside the tree, which clips what overflows it. A right-click pins the library's anchor with
+  // `position: fixed` at the pointer, but an ancestor of the side panel is its containing block, so the anchor first
+  // shifts back by what it missed. Returns the menu's offset from the anchor and whether it opens upwards.
+  const placeMenu = (element: HTMLElement, rect: { top: number; left: number }) => {
+    const anchor = element.closest<HTMLElement>('[data-type="context-menu-anchor"]')
+    const bounds = tree?.getFileTreeContainer()?.getBoundingClientRect()
+
+    if (!anchor || !bounds) return { left: 0, above: false }
+    anchor.style.translate = ""
+    const pointer = anchor.style.position === "fixed"
+
+    if (pointer) {
+      const missed = anchor.getBoundingClientRect()
+
+      shiftedAnchor = anchor
+
+      anchor.style.translate = `${rect.left - missed.left}px ${rect.top - missed.top}px`
+    }
+
+    const at = anchor.getBoundingClientRect()
+    const wanted = pointer ? at.left : at.right - MENU_WIDTH
+    const left = Math.min(Math.max(wanted, bounds.left + 4), bounds.right - MENU_WIDTH - 4)
+
+    return { left: left - at.left, above: at.bottom + MENU_HEIGHT > bounds.bottom && at.top - MENU_HEIGHT > bounds.top }
+  }
+
+  const closeMenuRoot = () => {
+    disposeMenu?.()
+    disposeMenu = undefined
+
+    // The anchor goes back to following the hovered row's "⋯" button.
+    if (shiftedAnchor) shiftedAnchor.style.translate = ""
+    shiftedAnchor = undefined
+  }
+
+  onCleanup(closeMenuRoot)
+
+  // The menu renders under this component's owner, so it reads the plugin's context like any other view here.
+  const menuOptions = (menu: TreeMenu) => ({
+    composition: {
+      contextMenu: {
+        // Desktop keeps right-click for "Open in"; the web opens this menu on right-click too.
+        triggerMode: openIn?.canOpen() ? ("button" as const) : ("both" as const),
+        buttonVisibility: "when-needed" as const,
+        render: (item: { kind: "file" | "directory"; path: string; name: string }, context: {
+            anchorElement: HTMLElement
+            anchorRect: { top: number; left: number }
+            close(options?: { restoreFocus?: boolean }): void
+          },
+        ) => {
+          closeMenuRoot()
+          const place = placeMenu(context.anchorElement, context.anchorRect)
+          const path = originalPath(item.path)
+          const target: TreeMenuItem = { kind: item.kind, path: normalizeFileTreeV2Path(path), name: item.name }
+
+          return createRoot((dispose) => {
+            disposeMenu = dispose
+
+            const element = (
+              // Positioned from the anchor, out of the list's flow, so the menu never widens the scrolling list.
+              <div
+                data-file-tree-context-menu-root="true"
+                class="absolute z-50"
+                classList={{ "top-full mt-0.5": !place.above, "bottom-full mb-0.5": place.above }}
+                style={{ left: `${place.left}px`, width: `${MENU_WIDTH}px` }}
+              >
+                {menu.render(target, {
+                  close: () => context.close(),
+                  rename: () => {
+                    context.close({ restoreFocus: false })
+                    tree?.startRenaming(item.path)
+                  },
+                })}
+              </div>
+            )
+
+            return element instanceof HTMLElement ? element : null
+          }, owner ?? undefined)
+        },
+        onClose: closeMenuRoot,
+      },
+    },
+    renaming: {
+      onRename: (event: { sourcePath: string; destinationPath: string; isFolder: boolean }) => {
+        const from = normalizeFileTreeV2Path(originalPath(event.sourcePath))
+        const to = normalizeFileTreeV2Path(event.destinationPath)
+        // The tree moves the row itself; keep the paths it knows in step so the next listing doesn't add it again.
+        const moved = renameKnown(event.sourcePath, event.destinationPath, event.isFolder)
+        void menu.rename(from, to).then((ok) => {
+          if (ok || !tree) return
+          renameKnown(event.destinationPath, event.sourcePath, event.isFolder)
+          tree.move(moved.to, moved.from)
+        })
+      },
+      onError: (error: string) => ctx.toast.show({ variant: "error", title: error }),
+    },
+  })
+
+  const renameKnown = (source: string, destination: string, folder: boolean) => {
+    const from = folder ? `${normalizeFileTreeV2Path(source)}/` : normalizeFileTreeV2Path(source)
+    const to = folder ? `${normalizeFileTreeV2Path(destination)}/` : normalizeFileTreeV2Path(destination)
+
+    for (const item of [...knownPaths]) {
+      if (item !== from && !(folder && item.startsWith(from))) continue
+      knownPaths.delete(item)
+      knownPaths.add(to + item.slice(from.length))
+    }
+
+    return { from, to }
+  }
+
   onMount(() => {
     if (!wrapper) return
     const isLive = live()
@@ -282,6 +413,8 @@ export default function PierreFileTree(props: {
     renderedKinds = props.kinds
     renderedIgnored = initialLive?.ignoredPaths
     renderedRoot = file.root
+
+    const actions = props.menu ? menuOptions(props.menu) : undefined
 
     tree = new FileTree({
       paths: initialPaths,
@@ -312,6 +445,8 @@ export default function PierreFileTree(props: {
       gitStatus: initialGitStatus.length > 0 ? initialGitStatus : undefined,
       dragAndDrop: draggable() ? { canDrag: () => true, canDrop: () => false } : false,
       unsafeCSS: TREE_UNSAFE_CSS,
+      composition: actions?.composition,
+      renaming: actions?.renaming,
       renderRowDecoration: ({ row }) => {
         if (row.kind !== "directory") return null
         const label = props.labels?.get(normalizeFileTreeV2Path(row.path))

@@ -1,0 +1,5 @@
+/* The project zip's progress bar before the server reports a measurable step. */
+@keyframes files-indeterminate {
+  0% { inset-inline-start: -33%; }
+  100% { inset-inline-start: 100%; }
+}

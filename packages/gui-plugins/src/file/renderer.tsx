@@ -35,6 +35,7 @@ import { artifactKind } from "@opencode/util/artifact"
 import { uuid } from "@opencode/util/uuid"
 import { resolveArtifactPath } from "./artifact"
 import { FileContext, type FileShared } from "./context"
+import { createDownloads } from "./download"
 import type { OpenApp } from "./apps"
 import {
   FileTree,
@@ -188,7 +189,14 @@ const setup: Plugin.Setup<typeof File> = (ctx) => {
     })
   }
 
+  const downloads = createDownloads({
+    failed: (name, error) => ctx.toast.show({ variant: "error", title: ctx.t("download.failed", { name }), description: error }),
+  })
+
+  onCleanup(downloads.dispose)
+
   const shared: FileShared = {
+    downloads,
     changes: ctx.use(Changes),
     browser: ctx.use(Browser),
     filter: {
