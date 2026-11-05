@@ -37,6 +37,7 @@ import { ConfigWorktreePlugin } from "../config/plugin/worktree.js"
 import { Worktree } from "../worktree.js"
 import { WorktreeStrategies } from "../worktree/strategies.js"
 import { Bus } from "../bus.js"
+import { Checkpoints } from "../checkpoint/service.js"
 import { Environment } from "../environment/index.js"
 import { FileAccess } from "../file-access.js"
 import { FileMutation } from "../file-mutation.js"
@@ -101,6 +102,8 @@ import { CommandPlugin } from "./command.js"
 import { IdentityPlugin } from "./identity.js"
 import { PlanPlugin } from "./plan.js"
 import { GoalPlugin } from "./goal.js"
+import { CheckpointsPlugin } from "./checkpoints.js"
+import { GitToolPlugin } from "./git-tool.js"
 import { PreviewPlugin } from "./preview.js"
 import { ModelsDevPlugin } from "./models-dev.js"
 import { McpCodeModeDefaultsPlugin } from "./mcp-codemode-defaults.js"
@@ -148,6 +151,7 @@ const services = [
   Npm.Service,
   Permission.Service,
   PreviewThumbnail.Service,
+  Checkpoints.Service,
   Form.Service,
   ReadToolFileSystem.Service,
   Reference.Service,
@@ -207,6 +211,7 @@ export const requirements = LayerNode.group([
   Npm.node,
   Permission.node,
   PreviewThumbnail.node,
+  Checkpoints.node,
   Form.node,
   ReadToolFileSystem.node,
   Reference.node,
@@ -245,6 +250,8 @@ const pre = [
   CommandPlugin.Plugin,
   GoalPlugin.Plugin,
   PreviewPlugin.Plugin,
+  GitToolPlugin.Plugin,
+  CheckpointsPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,

@@ -2,15 +2,23 @@ import { createSignal, For, Match, Switch } from "solid-js"
 import { usePlugin } from "@opencode/plugin/gui"
 import { Icon } from "@opencode/ui/icon"
 import type { IconName } from "@opencode/plugin/gui"
+import { CheckpointsPanel } from "./checkpoints/panel"
+import type { CheckpointView } from "./checkpoints/view"
+import { GitPanel } from "./git/panel"
+import type { GitView } from "./git/view"
 import { SeoPanel } from "./seo/panel"
 import type { AuditView } from "./seo/view"
 
-type Tool = "seo"
+type Tool = "seo" | "git" | "checkpoints"
 
-const TOOLS: ReadonlyArray<{ id: Tool; icon: IconName; label: string }> = [{ id: "seo", icon: "glasses", label: "seo.name" }]
+const TOOLS: ReadonlyArray<{ id: Tool; icon: IconName; label: string }> = [
+  { id: "seo", icon: "glasses", label: "seo.name" },
+  { id: "git", icon: "branch", label: "git.name" },
+  { id: "checkpoints", icon: "outline-rotate-clockwise", label: "checkpoints.name" },
+]
 
 /** The Tools section: the list of project tools beside the one on screen, as the settings pages lay out. */
-export default function ToolsPanel(props: { audit: AuditView }) {
+export default function ToolsPanel(props: { audit: AuditView; git: GitView; checkpoints: CheckpointView }) {
   const ctx = usePlugin()
   const [tool, setTool] = createSignal<Tool>("seo")
 
@@ -43,6 +51,12 @@ export default function ToolsPanel(props: { audit: AuditView }) {
         <Switch>
           <Match when={tool() === "seo"}>
             <SeoPanel view={props.audit} />
+          </Match>
+          <Match when={tool() === "git"}>
+            <GitPanel view={props.git} />
+          </Match>
+          <Match when={tool() === "checkpoints"}>
+            <CheckpointsPanel view={props.checkpoints} />
           </Match>
         </Switch>
       </div>

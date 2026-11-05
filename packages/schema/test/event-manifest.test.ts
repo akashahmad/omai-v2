@@ -120,6 +120,7 @@ describe("public event manifest", () => {
         "session.message.content.updated.1",
         "session.usage.recorded.1",
         "session.forked.2",
+        "session.path.swapped.1",
         "session.inbox.delivered.1",
         "session.inbox.enqueued.1",
         "session.inbox.cancelled.1",
@@ -161,6 +162,8 @@ describe("public event manifest", () => {
       SessionEvent.UsageRecorded,
       SessionEvent.MessageContentUpdated,
     ])
+    expect(SessionEvent.Definitions).toContain(SessionEvent.PathSwapped)
+    expect(EventManifest.ServerDefinitions).toContain(SessionEvent.PathSwapped)
     expect(SessionEvent.UsageRecorded.durability).toBe("durable")
     expect(EventManifest.Durable.get("session.usage.recorded.1")).toBe(SessionEvent.UsageRecorded)
     expect(SessionEvent.Definitions).not.toContain(SessionEvent.UsageRecorded)

@@ -79,9 +79,10 @@ export function visibleTimelineMessages(
 
   if (queued.size === 0 && inputs.size === 0 && !revertMessageID) return messages
 
-  const visible = messages.filter(
-    (message) => !queued.has(message.id) && (!revertMessageID || message.id < revertMessageID),
-  )
+  // Fork copies have ids that do not sort in history order, so the revert boundary is found by position. A boundary
+  // missing from the loaded window is older than it, so nothing loaded is visible.
+  const boundary = revertMessageID ? messages.findIndex((message) => message.id === revertMessageID) : messages.length
+  const visible = messages.slice(0, Math.max(boundary, 0)).filter((message) => !queued.has(message.id))
 
   if (inputs.size === 0) return visible
 

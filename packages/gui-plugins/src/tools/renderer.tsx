@@ -3,15 +3,26 @@ import { Icon } from "@opencode/ui/icon"
 import type { Plugin } from "@opencode/plugin/gui"
 import { BuiltinPanel, onIdle, type BuiltinPanelTab } from "@opencode/plugin/gui/builtin"
 import type ToolsDefinition from "./index"
+import { checkpointViews } from "./checkpoints/view"
+import { gitViews } from "./git/view"
 import { auditViews } from "./seo/view"
 
 /**
- * The right panel's Tools section: project tools such as the website audit. The audit runs on the server, so its view
- * lives per session and outlives the panel.
+ * The right panel's Tools section: project tools such as the website audit, Git and Checkpoints. They run on the
+ * server, so their views live per session and outlive the panel.
  */
 const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
   const layout = ctx.layout
+  const sessions = ctx.sessions
   const audit = auditViews(getOwner())
+
+  // The sessions whose shell tab is still open; the Git and Checkpoints views of the others are dropped.
+  const open = () =>
+    [...sessions.list().map((session) => session.key), sessions.current()?.key].filter((key) => key !== undefined)
+
+  const git = gitViews(getOwner(), open)
+  const checkpoints = checkpointViews(getOwner(), open)
+
   const ToolsPanel = lazy(() => import("./panel"))
 
   onIdle(() => void ToolsPanel.preload())
@@ -41,7 +52,21 @@ const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
     list: (input) => (!layout.narrow() && input.session.project ? [tab] : []),
     render: (props) => (
       <Suspense>
-        <ToolsPanel audit={audit(() => props.session, ctx.t, () => ctx.locale.locale())} />
+        <ToolsPanel
+          audit={audit(
+            () => props.session,
+            ctx.t,
+            () => ctx.locale.locale(),
+          )}
+          git={git(() => props.session, ctx.t)}
+          checkpoints={checkpoints(() => props.session, {
+            t: ctx.t,
+            plural: ctx.plural,
+            get locale() {
+              return ctx.locale.locale()
+            },
+          })}
+        />
       </Suspense>
     ),
   })

@@ -1212,6 +1212,16 @@ export type SessionForked = {
   }
 }
 
+export type SessionPathSwapped = {
+  id: EventID
+  created: number
+  metadata?: { [x: string]: any }
+  type: "session.path.swapped"
+  durable: { aggregateID: string; seq: EventSeq; version: 1 }
+  location?: LocationRef
+  data: { sessionID: SessionID; branchID: SessionID }
+}
+
 export type SessionInboxDelivered = {
   id: EventID
   created: number
@@ -2733,6 +2743,7 @@ export type SessionEventDurable =
   | SessionUnarchived
   | SessionDeleted
   | SessionForked
+  | SessionPathSwapped
   | SessionInboxDelivered
   | SessionInboxEnqueued
   | SessionInboxCancelled
@@ -2791,6 +2802,7 @@ export type V2Event =
   | SessionUsageUpdated
   | SessionDeleted
   | SessionForked
+  | SessionPathSwapped
   | SessionInboxDelivered
   | SessionInboxEnqueued
   | SessionInboxCancelled
@@ -4281,6 +4293,7 @@ export type EventSubscribeInput = {
         | "session.usage.updated"
         | "session.deleted"
         | "session.forked"
+        | "session.path.swapped"
         | "session.inbox.delivered"
         | "session.inbox.enqueued"
         | "session.inbox.cancelled"

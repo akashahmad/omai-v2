@@ -1222,11 +1222,35 @@ export function createData(config: CreateDataInput) {
           event.data.sessionID,
           (store.session.pending[event.data.sessionID] ?? []).filter((item) => item.id < event.data.to),
         )
+        // Fork copies have ids that do not sort in history order, so the boundary is found by id, not compared.
+        if (
+          store.session.message[event.data.sessionID] &&
+          !messageIndex.get(event.data.sessionID)?.has(event.data.to)
+        ) {
+          // The boundary is older than the loaded window, or not loaded yet: read the window again.
+          sync.invalidate(`session.message:${event.data.sessionID}`)
+          refresh(() => result.session.message.sync(event.data.sessionID))
+          return
+        }
         message.update(event.data.sessionID, (draft, index) => {
-          const position = draft.findIndex((item) => item.id >= event.data.to)
-          if (position === -1) return
+          const position = index.get(event.data.to)
+          if (position === undefined) return
           for (const item of draft.splice(position)) index.delete(item.id)
         })
+        return
+      case "session.path.swapped":
+        // The two sessions exchanged their histories and reverts, so whatever is loaded of either is read again.
+        for (const sessionID of [event.data.sessionID, event.data.branchID]) {
+          if (store.session.info[sessionID]) {
+            result.session.invalidate(sessionID)
+            refresh(() => result.session.sync(sessionID))
+          }
+
+          if (store.session.message[sessionID]) {
+            sync.invalidate(`session.message:${sessionID}`)
+            refresh(() => result.session.message.sync(sessionID))
+          }
+        }
         return
       case "session.compaction.delta":
         if (!store.session.message[event.data.sessionID]) return

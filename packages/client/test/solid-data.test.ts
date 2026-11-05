@@ -1500,6 +1500,90 @@ test("projects background user shell metadata from durable shell data", () => {
   }
 })
 
+// Fork copies are named after the fork event plus their position, unpadded, so their ids do not sort in history order.
+function copyFixture(pages: () => string[]) {
+  const listeners = new Set<Parameters<CreateDataInput["event"]["listen"]>[0]>()
+  const reads: string[] = []
+  const api = OpenCode.make({
+    baseUrl: "http://opencode.local",
+    fetch: async (input, init) => {
+      const request = input instanceof Request ? input : new Request(input, init)
+      const url = new URL(request.url)
+      reads.push(url.pathname)
+      if (url.pathname.endsWith("/message"))
+        return Response.json({
+          data: pages()
+            .map((id, index) => ({ id, type: "user", text: id, time: { created: index } }))
+            .toReversed(),
+          cursor: {},
+        })
+      return Response.json({ data: session(2) })
+    },
+  })
+  return createRoot((dispose) => ({
+    data: createData({
+      api: () => api,
+      directory: "/project",
+      event: {
+        on: () => () => {},
+        listen(handler) {
+          listeners.add(handler)
+          return () => listeners.delete(handler)
+        },
+      },
+      connection: { status: () => "connected" },
+    }),
+    reads,
+    emit: (details: OpenCodeEvent) => listeners.forEach((listener) => listener({ name: details.type, details })),
+    dispose,
+  }))
+}
+
+test("a committed revert drops the boundary and what follows it in history order, not id order", async () => {
+  const setup = copyFixture(() => ["msg_X_3", "msg_X_12", "msg_X_100"])
+  try {
+    await setup.data.session.message.sync("ses_refresh")
+    setup.emit({
+      id: "evt_committed",
+      created: 3,
+      type: "session.revert.committed",
+      durable: { aggregateID: "ses_refresh", seq: 4, version: 1 },
+      data: { sessionID: "ses_refresh", to: "msg_X_12" },
+    })
+    expect(setup.data.session.message.list("ses_refresh").map((item) => item.id)).toEqual(["msg_X_3"])
+  } finally {
+    setup.dispose()
+  }
+})
+
+test("a path swap reads the loaded history of both sessions again", async () => {
+  const pages = { current: ["msg_A", "msg_B"] }
+  const setup = copyFixture(() => pages.current)
+  try {
+    setup.data.session.remember(session(2))
+    await setup.data.session.message.sync("ses_refresh")
+    pages.current = ["msg_A", "msg_X_3", "msg_X_12"]
+    setup.emit({
+      id: "evt_swapped",
+      created: 3,
+      type: "session.path.swapped",
+      durable: { aggregateID: "ses_refresh", seq: 4, version: 1 },
+      data: { sessionID: "ses_refresh", branchID: "ses_branch" },
+    })
+    await wait(() => setup.data.session.message.list("ses_refresh").length === 3)
+    expect(setup.data.session.message.list("ses_refresh").map((item) => item.id)).toEqual([
+      "msg_A",
+      "msg_X_3",
+      "msg_X_12",
+    ])
+    await wait(() => setup.reads.filter((read) => read === "/api/session/ses_refresh").length === 1)
+    // The branch was never loaded here, so nothing of it is read.
+    expect(setup.reads.some((read) => read.includes("ses_branch"))).toBe(false)
+  } finally {
+    setup.dispose()
+  }
+})
+
 function modelInfo(name: string): ModelInfo {
   return {
     id: "chat",

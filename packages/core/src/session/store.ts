@@ -1,6 +1,6 @@
 export * as SessionStore from "./store.js"
 
-import { and, asc, desc, eq, gt, isNotNull, isNull, like, lt, notInArray, or, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, gt, isNotNull, isNull, like, lt, notExists, notInArray, or, sql, type SQL } from "drizzle-orm"
 import { Context, Effect, Layer, Schema } from "effect"
 import { Project } from "@opencode/schema/project"
 import { Workspace } from "@opencode/schema/workspace"
@@ -11,6 +11,7 @@ import { SessionHistory } from "./history.js"
 import { MessageDecodeError } from "./error.js"
 import { SessionMessage } from "./message.js"
 import { Session } from "@opencode/schema/session"
+import { CheckpointBranchTable } from "../checkpoint/sql.js"
 import { SessionMessageTable, SessionTable } from "./sql.js"
 import { fromRow } from "./info.js"
 
@@ -147,7 +148,14 @@ const layer = Layer.effect(
         const requestedOrder = input.order ?? "desc"
         const order = direction === "previous" ? (requestedOrder === "asc" ? "desc" : "asc") : requestedOrder
         const sortColumn = SessionTable.time_updated
-        const conditions: SQL[] = []
+        const conditions: SQL[] = [
+          notExists(
+            db
+              .select({ one: sql`1` })
+              .from(CheckpointBranchTable)
+              .where(eq(CheckpointBranchTable.session_id, SessionTable.id)),
+          ),
+        ]
         if ("directory" in input) conditions.push(eq(SessionTable.directory, input.directory))
         if (input.workspaceID) conditions.push(eq(SessionTable.workspace_id, input.workspaceID))
         if ("project" in input) conditions.push(eq(SessionTable.project_id, input.project))

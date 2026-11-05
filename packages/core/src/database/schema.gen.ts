@@ -38,6 +38,18 @@ const schema: Omit<DatabaseMigration.Migration, "id"> = {
         );
       `)
       yield* tx.run(`
+        CREATE TABLE \`checkpoint_branch\` (
+          \`session_id\` text PRIMARY KEY,
+          \`root_session_id\` text NOT NULL,
+          \`parent_session_id\` text NOT NULL,
+          \`boundary_key\` text NOT NULL,
+          \`revert_message_id\` text,
+          \`time_created\` integer NOT NULL,
+          CONSTRAINT \`fk_checkpoint_branch_session_id_session_v2_id_fk\` FOREIGN KEY (\`session_id\`) REFERENCES \`session_v2\`(\`id\`) ON DELETE CASCADE,
+          CONSTRAINT \`fk_checkpoint_branch_root_session_id_session_v2_id_fk\` FOREIGN KEY (\`root_session_id\`) REFERENCES \`session_v2\`(\`id\`) ON DELETE CASCADE
+        );
+      `)
+      yield* tx.run(`
         CREATE TABLE \`credential\` (
           \`id\` text PRIMARY KEY,
           \`integration_id\` text,
@@ -317,6 +329,7 @@ const schema: Omit<DatabaseMigration.Migration, "id"> = {
           CONSTRAINT \`fk_worktree_project_id_project_id_fk\` FOREIGN KEY (\`project_id\`) REFERENCES \`project\`(\`id\`) ON DELETE CASCADE
         );
       `)
+      yield* tx.run(`CREATE INDEX \`checkpoint_branch_root_idx\` ON \`checkpoint_branch\` (\`root_session_id\`);`)
       yield* tx.run(`CREATE UNIQUE INDEX \`event_aggregate_seq_idx\` ON \`event\` (\`aggregate_id\`,\`seq\`);`)
       yield* tx.run(`CREATE INDEX \`event_aggregate_type_seq_idx\` ON \`event\` (\`aggregate_id\`,\`type\`,\`seq\`);`)
       yield* tx.run(`CREATE INDEX \`job_session_idx\` ON \`job\` (\`session_id\`);`)

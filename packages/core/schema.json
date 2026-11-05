@@ -1,8 +1,8 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "b18b8740-0c9f-49bd-bca9-c2a12aa0f040",
-  "prevIds": ["4f6e16c6-f070-4545-b9d0-19fcb6e5210c"],
+  "id": "1f603495-b838-4eb3-bc25-2263305a8f8b",
+  "prevIds": ["b18b8740-0c9f-49bd-bca9-c2a12aa0f040"],
   "ddl": [
     {
       "name": "account_state",
@@ -14,6 +14,10 @@
     },
     {
       "name": "control_account",
+      "entityType": "tables"
+    },
+    {
+      "name": "checkpoint_branch",
       "entityType": "tables"
     },
     {
@@ -289,6 +293,66 @@
       "name": "time_updated",
       "entityType": "columns",
       "table": "control_account"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "session_id",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "root_session_id",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "parent_session_id",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "boundary_key",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "revert_message_id",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "time_created",
+      "entityType": "columns",
+      "table": "checkpoint_branch"
     },
     {
       "type": "text",
@@ -2072,6 +2136,28 @@
       "table": "account_state"
     },
     {
+      "columns": ["session_id"],
+      "tableTo": "session_v2",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_checkpoint_branch_session_id_session_v2_id_fk",
+      "entityType": "fks",
+      "table": "checkpoint_branch"
+    },
+    {
+      "columns": ["root_session_id"],
+      "tableTo": "session_v2",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_checkpoint_branch_root_session_id_session_v2_id_fk",
+      "entityType": "fks",
+      "table": "checkpoint_branch"
+    },
+    {
       "columns": ["aggregate_id"],
       "tableTo": "event_sequence",
       "columnsTo": ["aggregate_id"],
@@ -2282,6 +2368,13 @@
       "entityType": "pks"
     },
     {
+      "columns": ["session_id"],
+      "nameExplicit": false,
+      "name": "checkpoint_branch_pk",
+      "table": "checkpoint_branch",
+      "entityType": "pks"
+    },
+    {
       "columns": ["id"],
       "nameExplicit": false,
       "name": "credential_pk",
@@ -2392,6 +2485,20 @@
       "name": "workspace_pk",
       "table": "workspace",
       "entityType": "pks"
+    },
+    {
+      "columns": [
+        {
+          "value": "root_session_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "checkpoint_branch_root_idx",
+      "entityType": "indexes",
+      "table": "checkpoint_branch"
     },
     {
       "columns": [

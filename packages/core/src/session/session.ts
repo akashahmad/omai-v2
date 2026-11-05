@@ -1,5 +1,6 @@
 export * as Session from "./session.js"
 
+import { and, desc, eq } from "drizzle-orm"
 import { DateTime, Effect, Fiber, Scope } from "effect"
 import type { Agent } from "@opencode/schema/agent"
 import type { Model } from "@opencode/schema/model"
@@ -7,6 +8,8 @@ import type { Permission } from "@opencode/schema/permission"
 import { Event } from "@opencode/schema/event"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Bus } from "../bus.js"
+import { CheckpointBranch } from "../checkpoint/branch.js"
+import { deriveCheckpoints, readMessages } from "../checkpoint/derive.js"
 import { Database } from "../database/database.js"
 import { Instance } from "../instance/service.js"
 import { ShellResult } from "../shell/result.js"
@@ -14,7 +17,9 @@ import type { Skill } from "../skill.js"
 import {
   BusyError,
   CompactionConflictError,
+  ForkEmptyError,
   InboxConflictError,
+  MessageNotFoundError,
   NotFoundError,
   PromptConflictError,
   SyntheticConflictError,
@@ -22,12 +27,16 @@ import {
 import { SessionEvent } from "./event.js"
 import { SessionExecution } from "./execution.js"
 import { SessionInbox } from "./inbox.js"
+import { InstructionEntry } from "./instruction-entry.js"
+import { InstructionState } from "./instruction-state.js"
 import { SessionMessage } from "./message.js"
+import { SessionBlob } from "./blob.js"
 import { SessionPrompt } from "./prompt.js"
 import { SessionRevert } from "./revert.js"
 import { SessionShell } from "./shell.js"
 import { SessionSkill } from "./skill.js"
 import { SessionSchema } from "./schema.js"
+import { SessionMessageTable } from "./sql.js"
 import { SessionStore } from "./store.js"
 
 type PromptRequest = SessionPrompt.Input & {
@@ -152,6 +161,85 @@ export const make = Effect.fn("Session.make")(function* () {
     (sessionID: SessionSchema.ID, inboxID: SessionMessage.ID) => mutatePending(sessionID, inboxID, admission.queue),
     Effect.uninterruptible,
   )
+  const fork = Effect.fn("Session.fork")(function* (
+    sessionID: SessionSchema.ID,
+    input: { before?: SessionMessage.ID },
+  ) {
+    const parent = yield* get(sessionID)
+    const boundary = yield* database.db
+      .select({ id: SessionMessageTable.id })
+      .from(SessionMessageTable)
+      .where(
+        and(
+          eq(SessionMessageTable.session_id, sessionID),
+          input.before ? eq(SessionMessageTable.id, input.before) : undefined,
+        ),
+      )
+      .orderBy(desc(SessionMessageTable.seq))
+      .limit(1)
+      .get()
+      .pipe(Effect.orDie)
+    if (!boundary && input.before) return yield* new MessageNotFoundError({ sessionID, messageID: input.before })
+    if (!boundary) return yield* new ForkEmptyError({ sessionID })
+    const forkedID = SessionSchema.ID.create()
+    const inherited = yield* database.db
+      .transaction(() =>
+        Effect.all({
+          instructions: InstructionState.current(database.db, parent.id),
+          instructionEntries: InstructionEntry.snapshot(database.db, parent.id),
+        }),
+      )
+      .pipe(Effect.orDie)
+    // The fork adopts the parent's newest instruction values rather than the
+    // values in effect at the boundary; copied history may contain frozen
+    // instruction-update text the initial baseline already reflects.
+    // The parent's location, not the caller's, decides whether the copy's media is stored as blobs.
+    const media = yield* SessionBlob.enabledFor(instances, parent)
+    yield* bus
+      .publish(SessionEvent.Forked, {
+        sessionID: forkedID,
+        parentID: parent.id,
+        boundary: { type: input.before ? "before" : "through", messageID: boundary.id },
+        ...inherited,
+      })
+      .pipe(Effect.provideService(SessionBlob.ForkMedia, media))
+    return yield* get(forkedID).pipe(Effect.orDie)
+  })
+  // Committing a staged revert first keeps the whole session, abandoned path included, as a hidden branch.
+  // The fork, its branch record and the commit are separate writes: a crash in between leaves an extra copy, never a loss.
+  // Uninterruptible: a caller cancelled between the fork and its branch record would leave the fork unrecorded, which
+  // makes it show up in session lists as an ordinary session.
+  const commitRevert = Effect.fn("Session.commitRevert")(function* (session: SessionSchema.Info) {
+    if (!session.revert) return
+    const kept = yield* fork(session.id, {}).pipe(Effect.orDie)
+    yield* CheckpointBranch.record(database.db, {
+      session_id: kept.id,
+      root_session_id: yield* CheckpointBranch.rootOf(database.db, session.id),
+      parent_session_id: session.id,
+      boundary_key: yield* keptBoundaryKey(session.id, session.revert.messageID),
+      revert_message_id: null,
+      time_created: Date.now(),
+    })
+    yield* SessionRevert.commit(bus, session)
+  }, Effect.uninterruptible)
+  /** The key of the last checkpoint still visible before the revert boundary; empty when there is none. */
+  const keptBoundaryKey = Effect.fn("Session.keptBoundaryKey")(function* (
+    sessionID: SessionSchema.ID,
+    messageID: SessionMessage.ID,
+  ) {
+    const boundary = yield* database.db
+      .select({ seq: SessionMessageTable.seq })
+      .from(SessionMessageTable)
+      .where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.id, messageID)))
+      .get()
+      .pipe(Effect.orDie)
+    if (!boundary) return ""
+    // An undecodable legacy row only costs the branch its position; it must not block the commit.
+    return yield* readMessages(database.db, sessionID, boundary.seq).pipe(
+      Effect.map((messages) => deriveCheckpoints(messages).at(-1)?.key ?? ""),
+      Effect.catchTag("Session.MessageDecodeError", () => Effect.succeed("")),
+    )
+  })
   const prompt = Effect.fn("Session.prompt")((sessionID: SessionSchema.ID, input: PromptRequest) =>
     Effect.uninterruptibleMask((restore) =>
       Effect.gen(function* () {
@@ -166,11 +254,12 @@ export const make = Effect.fn("Session.make")(function* () {
           })
           if (existing) return existing
           // Preparation, the staged revert commit and admission share one acquisition of the session's location
-          // services, so projections see its config whoever called prompt.
+          // services, so projections see its config whoever called prompt. The commit's fork provides the same
+          // location again, which reuses the held entry rather than building another.
           return yield* Effect.gen(function* () {
             const item = yield* restore(SessionPrompt.prepare({ session, messageID, input }))
             // Commit a staged revert only after preparation succeeds, before admitting new work.
-            if (session.revert) yield* SessionRevert.commit(bus, session)
+            if (session.revert) yield* commitRevert(session)
             return yield* admission.admit({
               id: messageID,
               sessionID: session.id,
@@ -261,7 +350,7 @@ export const make = Effect.fn("Session.make")(function* () {
     input: { id?: SessionMessage.ID; delivery?: SessionInbox.Delivery },
   ) {
     const session = yield* get(sessionID)
-    if (session.revert) yield* SessionRevert.commit(bus, session)
+    if (session.revert) yield* commitRevert(session)
     const inputID = input.id ?? SessionMessage.ID.create()
     const admitted = yield* admission
       .admitCompaction({
@@ -341,19 +430,22 @@ export const make = Effect.fn("Session.make")(function* () {
       Effect.provideService(Bus.Service, bus),
     )
   })
-  const clear = Effect.fn("Session.revert.clear")(function* (sessionID: SessionSchema.ID) {
+  const clear = Effect.fn("Session.revert.clear")(function* (
+    sessionID: SessionSchema.ID,
+    options?: { readonly resume?: boolean },
+  ) {
     const session = yield* get(sessionID)
     if (yield* execution.isActive(sessionID)) return yield* new BusyError({ sessionID })
     yield* SessionRevert.clear(session).pipe(
       Effect.provideService(Instance.Service, instances),
       Effect.provideService(Bus.Service, bus),
     )
-    return yield* execution.wake(sessionID)
+    if (options?.resume !== false) yield* execution.wake(sessionID)
   })
   const commit = Effect.fn("Session.revert.commit")(function* (sessionID: SessionSchema.ID) {
     const session = yield* get(sessionID)
     if (yield* execution.isActive(sessionID)) return yield* new BusyError({ sessionID })
-    return yield* SessionRevert.commit(bus, session)
+    return yield* commitRevert(session)
   })
   const revert = { stage, clear, commit }
   const operations = {
@@ -379,6 +471,7 @@ export const make = Effect.fn("Session.make")(function* () {
     cancelInbox,
     steerInbox,
     queueInbox,
+    fork,
     revert,
   }
 
@@ -405,6 +498,7 @@ export const make = Effect.fn("Session.make")(function* () {
     const cancelInbox = operations.cancelInbox.bind(undefined, sessionID)
     const steerInbox = operations.steerInbox.bind(undefined, sessionID)
     const queueInbox = operations.queueInbox.bind(undefined, sessionID)
+    const fork = operations.fork.bind(undefined, sessionID)
     const stage = operations.revert.stage.bind(undefined, sessionID)
     const clear = operations.revert.clear.bind(undefined, sessionID)
     const commit = operations.revert.commit.bind(undefined, sessionID)
@@ -434,6 +528,7 @@ export const make = Effect.fn("Session.make")(function* () {
       cancelInbox,
       steerInbox,
       queueInbox,
+      fork,
       revert,
     }
   }

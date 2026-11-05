@@ -181,6 +181,20 @@ describe("visibleTimelineMessages", () => {
     expect(visibleTimelineMessages(messages, [], "msg_0")).toEqual([])
   })
 
+  test("finds the revert boundary by position, since fork copy ids do not sort in history order", () => {
+    const copies = [
+      { id: "msg_X_3", type: "user", text: "first", time: { created: 1 } },
+      { id: "msg_X_12", type: "user", text: "second", time: { created: 2 } },
+      { id: "msg_X_100", type: "user", text: "third", time: { created: 3 } },
+    ] satisfies SessionMessageInfo[]
+
+    expect(visibleTimelineMessages(copies, [], "msg_X_12").map((message) => message.id)).toEqual(["msg_X_3"])
+    expect(visibleTimelineMessages(copies, [], "msg_X_100").map((message) => message.id)).toEqual([
+      "msg_X_3",
+      "msg_X_12",
+    ])
+  })
+
   test("keeps a pre-promotion failed idle marker after the pending input that triggered it", () => {
     const failed = [
       { id: "msg_3", type: "user", text: "queued", time: { created: 3 } },

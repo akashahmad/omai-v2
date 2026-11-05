@@ -4,7 +4,7 @@ export * from "./session/schema.js"
 import { DateTime, Effect, Layer, Context, Option, Stream } from "effect"
 import { LLMClient } from "@opencode/ai/effect"
 import { ListAnchor, ListCursor, ListFilter } from "@opencode/schema/session"
-import { and, desc, eq } from "drizzle-orm"
+import { CheckpointBranch } from "./checkpoint/branch.js"
 import { Project } from "./project.js"
 import { Model } from "@opencode/schema/model"
 import { Location } from "./location.js"
@@ -15,7 +15,6 @@ import { Bus } from "./bus.js"
 import { Instance } from "./instance/service.js"
 import { Database } from "./database/database.js"
 import { SessionProjector } from "./session/projector.js"
-import { SessionMessageTable } from "./session/sql.js"
 import { SessionBlob } from "./session/blob.js"
 import { SessionSchema } from "./session/schema.js"
 import { RelativePath } from "./schema.js"
@@ -45,7 +44,6 @@ import { Node } from "@opencode/util/effect/app-node"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { SessionEvent } from "./session/event.js"
 import { SessionInbox } from "./session/inbox.js"
-import { InstructionState } from "./session/instruction-state.js"
 import { SessionGenerate } from "./session/generate.js"
 import { SessionCommand } from "./session/command.js"
 import {
@@ -66,7 +64,6 @@ import type { FileDiff } from "@opencode/schema/file-diff"
 import { Job } from "./job.js"
 import type { Command } from "./command.js"
 import { SessionEnvironment } from "./session/environment.js"
-import { InstructionEntry } from "./session/instruction-entry.js"
 
 // get project -> project.locations
 //
@@ -253,8 +250,10 @@ export interface Interface {
       SessionSchema.Revert,
       NotFoundError | MessageNotFoundError | BusyError | Snapshot.Error | FileSystem.DirectoryNotFoundError
     >
+    /** `resume: false` clears without waking the session, for a caller that wakes it once its own work is done. */
     readonly clear: (
       sessionID: SessionSchema.ID,
+      options?: { readonly resume?: boolean },
     ) => Effect.Effect<void, NotFoundError | BusyError | Snapshot.Error | FileSystem.DirectoryNotFoundError>
     readonly commit: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError | BusyError>
   }
@@ -336,51 +335,7 @@ const layer = Layer.effect(
         // TODO: Restore recorded sessions onto replacement synchronized workspaces in a future API slice.
         return yield* result.get(sessionID).pipe(Effect.orDie)
       }),
-      fork: Effect.fn("Session.fork")(function* (input) {
-        const parent = yield* result.get(input.sessionID)
-        const boundary = yield* db
-          .select({ id: SessionMessageTable.id })
-          .from(SessionMessageTable)
-          .where(
-            and(
-              eq(SessionMessageTable.session_id, input.sessionID),
-              input.before ? eq(SessionMessageTable.id, input.before) : undefined,
-            ),
-          )
-          .orderBy(desc(SessionMessageTable.seq))
-          .limit(1)
-          .get()
-          .pipe(Effect.orDie)
-        if (!boundary && input.before)
-          return yield* new MessageNotFoundError({
-            sessionID: input.sessionID,
-            messageID: input.before,
-          })
-        if (!boundary) return yield* new ForkEmptyError({ sessionID: input.sessionID })
-        const sessionID = SessionSchema.ID.create()
-        const inherited = yield* db
-          .transaction(() =>
-            Effect.all({
-              instructions: InstructionState.current(db, parent.id),
-              instructionEntries: InstructionEntry.snapshot(db, parent.id),
-            }),
-          )
-          .pipe(Effect.orDie)
-        // The fork adopts the parent's newest instruction values rather than the
-        // values in effect at the boundary; copied history may contain frozen
-        // instruction-update text the initial baseline already reflects.
-        // The parent's location, not the caller's, decides whether the copy's media is stored as blobs.
-        const media = yield* mediaBlob(parent)
-        yield* bus
-          .publish(SessionEvent.Forked, {
-            sessionID,
-            parentID: parent.id,
-            boundary: { type: input.before ? "before" : "through", messageID: boundary.id },
-            ...inherited,
-          })
-          .pipe(Effect.provideService(SessionBlob.ForkMedia, media))
-        return yield* result.get(sessionID).pipe(Effect.orDie)
-      }),
+      fork: (input) => sessions.forSession(input.sessionID).fork({ before: input.before }),
       get: (sessionID) => sessions.forSession(sessionID).get(),
       environment: Effect.fn("Session.environment")(function* (input) {
         yield* result.get(input.sessionID)
@@ -396,6 +351,9 @@ const layer = Layer.effect(
         yield* transport.close(sessionID)
         const children = yield* store.list({ parentID: sessionID })
         yield* Effect.forEach(children, (child) => result.remove(child.id), { concurrency: 1, discard: true })
+        // Branch sessions are hidden roots' history, not children, so they are removed by root.
+        const branches = yield* CheckpointBranch.forRoot(db, sessionID)
+        yield* Effect.forEach(branches, (branch) => result.remove(branch.session_id), { concurrency: 1, discard: true })
         yield* environments.clear(sessionID)
         yield* bus.publish(SessionEvent.Deleted, { sessionID })
         yield* bus.remove(sessionID)
@@ -529,7 +487,7 @@ const layer = Layer.effect(
       interrupt: (sessionID, options) => sessions.forSession(sessionID).interrupt(options),
       revert: {
         stage: (input) => sessions.forSession(input.sessionID).revert.stage(input),
-        clear: (sessionID) => sessions.forSession(sessionID).revert.clear(),
+        clear: (sessionID, options) => sessions.forSession(sessionID).revert.clear(options),
         commit: (sessionID) => sessions.forSession(sessionID).revert.commit(),
       },
     })

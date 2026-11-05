@@ -700,7 +700,8 @@ describe("Session-owned handles", () => {
       yield* fixture.sessions.forSession(sessionID).revert.commit()
       expect((yield* handle.get()).revert).toBeUndefined()
       expect(yield* fixture.store.context(sessionID)).toEqual([])
-      expect(fixture.locations).toHaveLength(acquisitions)
+      // Keeping the abandoned path as a branch resolves the session's media storage once.
+      expect(fixture.locations).toHaveLength(acquisitions + 1)
     }),
   )
 

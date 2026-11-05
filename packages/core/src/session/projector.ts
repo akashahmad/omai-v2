@@ -13,7 +13,15 @@ import { SessionMessageUpdater } from "./message-updater.js"
 import { SessionInbox } from "./inbox.js"
 import { InstructionState } from "./instruction-state.js"
 import { SessionBlob } from "./blob.js"
-import { SessionInboxTable, SessionMessageTable, SessionPartTable, SessionTable, type SessionPartData } from "./sql.js"
+import {
+  BlobRefTable,
+  InstructionStateTable,
+  SessionInboxTable,
+  SessionMessageTable,
+  SessionPartTable,
+  SessionTable,
+  type SessionPartData,
+} from "./sql.js"
 import { SessionStored } from "./stored.js"
 import { InstructionEntry } from "./instruction-entry.js"
 import type { SQLiteUpdateSetSource } from "drizzle-orm/sqlite-core/query-builders/update"
@@ -31,7 +39,7 @@ import { ProjectTable } from "../project/sql.js"
 type DatabaseService = Database.Interface["db"]
 type MessageEvent = Exclude<
   SessionEvent.DurableEvent,
-  typeof SessionEvent.Forked.Type | typeof SessionEvent.Deleted.Type
+  typeof SessionEvent.Forked.Type | typeof SessionEvent.Deleted.Type | typeof SessionEvent.PathSwapped.Type
 >
 
 const encodeMessage = Schema.encodeSync(SessionMessage.Info)
@@ -255,6 +263,111 @@ const projectFork = Effect.fn("SessionProjector.projectFork")(function* (
   if (copiedSeq !== undefined) yield* Bus.reserveSequence(db, event.data.sessionID, copiedSeq)
   if (event.data.instructions)
     yield* InstructionState.initialize(db, event.data.sessionID, event.durable.seq, event.data.instructions)
+})
+
+/**
+ * Exchanges the history, revert state and change summary of a session and one of its checkpoint branches. Rows keep
+ * their ids and seq; only their owner changes. The other session state (title, usage, inbox, instruction entries)
+ * stays put.
+ */
+const projectPathSwap = Effect.fn("SessionProjector.projectPathSwap")(function* (
+  db: DatabaseService,
+  event: typeof SessionEvent.PathSwapped.Type,
+) {
+  const visibleID = event.data.sessionID
+  const branchID = event.data.branchID
+  const owners = yield* db
+    .select({
+      id: SessionTable.id,
+      revert: SessionTable.revert,
+      summary_additions: SessionTable.summary_additions,
+      summary_deletions: SessionTable.summary_deletions,
+      summary_files: SessionTable.summary_files,
+      summary_diffs: SessionTable.summary_diffs,
+    })
+    .from(SessionTable)
+    .where(inArray(SessionTable.id, [visibleID, branchID]))
+    .all()
+    .pipe(Effect.orDie)
+  const visible = owners.find((row) => row.id === visibleID)
+  const branch = owners.find((row) => row.id === branchID)
+  if (!visible || !branch || visibleID === branchID)
+    return yield* Effect.die(new Error(`Path swap sessions not found: ${visibleID}, ${branchID}`))
+
+  // (session_id, seq) is unique and SQLite checks it row by row, so the visible rows park at negative seqs
+  // under the branch while the branch's rows move over, then take their seqs back.
+  yield* db
+    .update(SessionMessageTable)
+    .set({ session_id: branchID, seq: sql`-1 - ${SessionMessageTable.seq}` })
+    .where(eq(SessionMessageTable.session_id, visibleID))
+    .run()
+    .pipe(Effect.orDie)
+  yield* db
+    .update(SessionMessageTable)
+    .set({ session_id: visibleID })
+    .where(and(eq(SessionMessageTable.session_id, branchID), gte(SessionMessageTable.seq, 0)))
+    .run()
+    .pipe(Effect.orDie)
+  yield* db
+    .update(SessionMessageTable)
+    .set({ seq: sql`-1 - ${SessionMessageTable.seq}` })
+    .where(and(eq(SessionMessageTable.session_id, branchID), lt(SessionMessageTable.seq, 0)))
+    .run()
+    .pipe(Effect.orDie)
+  // Part and blob ref keys include the message id, which differs between the two paths, so one update swaps them.
+  const exchange = (column: typeof SessionPartTable.session_id | typeof BlobRefTable.session_id) =>
+    sql`case ${column} when ${visibleID} then ${branchID} else ${visibleID} end`
+  yield* db
+    .update(SessionPartTable)
+    .set({ session_id: exchange(SessionPartTable.session_id) })
+    .where(inArray(SessionPartTable.session_id, [visibleID, branchID]))
+    .run()
+    .pipe(Effect.orDie)
+  yield* db
+    .update(BlobRefTable)
+    .set({ session_id: exchange(BlobRefTable.session_id) })
+    .where(inArray(BlobRefTable.session_id, [visibleID, branchID]))
+    .run()
+    .pipe(Effect.orDie)
+
+  // The instruction fold tracks positions in the history, so it travels with it.
+  const states = yield* db
+    .select()
+    .from(InstructionStateTable)
+    .where(inArray(InstructionStateTable.session_id, [visibleID, branchID]))
+    .all()
+    .pipe(Effect.orDie)
+  yield* db
+    .delete(InstructionStateTable)
+    .where(inArray(InstructionStateTable.session_id, [visibleID, branchID]))
+    .run()
+    .pipe(Effect.orDie)
+  if (states.length > 0)
+    yield* db
+      .insert(InstructionStateTable)
+      .values(states.map((state) => ({ ...state, session_id: state.session_id === visibleID ? branchID : visibleID })))
+      .run()
+      .pipe(Effect.orDie)
+
+  // The revert and the change summary describe the history, so they move with it.
+  const describe = (row: typeof visible) => ({
+    revert: row.revert,
+    summary_additions: row.summary_additions,
+    summary_deletions: row.summary_deletions,
+    summary_files: row.summary_files,
+    summary_diffs: row.summary_diffs,
+  })
+  yield* setSession(db, visibleID, { ...describe(branch), time_updated: event.created })
+  yield* setSession(db, branchID, describe(visible))
+  // Each session's next event must sort after the history it now holds.
+  const latest = yield* db
+    .select({ sessionID: SessionMessageTable.session_id, seq: sql<number>`max(${SessionMessageTable.seq})` })
+    .from(SessionMessageTable)
+    .where(inArray(SessionMessageTable.session_id, [visibleID, branchID]))
+    .groupBy(SessionMessageTable.session_id)
+    .all()
+    .pipe(Effect.orDie)
+  yield* Effect.forEach(latest, (row) => Bus.reserveSequence(db, row.sessionID, row.seq), { discard: true })
 })
 
 function run(db: DatabaseService, event: MessageEvent) {
@@ -672,6 +785,7 @@ const layer = Layer.effectDiscard(
     yield* bus.project(SessionEvent.MessageContentUpdated, (event) => run(db, event))
     yield* bus.project(SessionEvent.UsageRecorded, (event) => applyUsage(db, event.data.sessionID, event.data))
     yield* bus.project(SessionEvent.Forked, (event) => projectFork(db, event))
+    yield* bus.project(SessionEvent.PathSwapped, (event) => projectPathSwap(db, event))
     yield* bus.project(SessionEvent.InboxDelivered, (event) =>
       Effect.gen(function* () {
         const input = yield* SessionInbox.projectDelivered(db, {

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "opencode HttpApi",
+    "title": "omai HttpApi",
     "version": "0.0.1",
     "description": "Experimental HttpApi surface for selected instance routes."
   },
@@ -1484,7 +1484,7 @@
             }
           }
         },
-        "description": "Retrieve foreground Session drains currently owned by this OpenCode process. Sessions absent from the result are inactive.",
+        "description": "Retrieve foreground Session drains currently owned by this O M A I + process. Sessions absent from the result are inactive.",
         "summary": "List active sessions"
       }
     },
@@ -4046,7 +4046,7 @@
             }
           }
         },
-        "description": "Interrupt active execution owned by this OpenCode process. Returns interrupted=true when an active execution was interrupted and false for the idle no-op. When resume=true, execution resumes pending steering input and next-in-line control items (manual compaction, moves) while queued prompts remain parked.",
+        "description": "Interrupt active execution owned by this O M A I + process. Returns interrupted=true when an active execution was interrupted and false for the idle no-op. When resume=true, execution resumes pending steering input and next-in-line control items (manual compaction, moves) while queued prompts remain parked.",
         "summary": "Interrupt session execution"
       }
     },
@@ -10114,6 +10114,7 @@
                     "session.usage.updated",
                     "session.deleted",
                     "session.forked",
+                    "session.path.swapped",
                     "session.inbox.delivered",
                     "session.inbox.enqueued",
                     "session.inbox.cancelled",
@@ -10223,6 +10224,7 @@
                           "session.usage.updated",
                           "session.deleted",
                           "session.forked",
+                          "session.path.swapped",
                           "session.inbox.delivered",
                           "session.inbox.enqueued",
                           "session.inbox.cancelled",
@@ -12025,7 +12027,7 @@
             }
           }
         },
-        "description": "Stream persistent PTY output through the OpenCode server.",
+        "description": "Stream persistent PTY output through the O M A I + server.",
         "summary": "Connect to a persistent PTY",
         "x-websocket": true
       }
@@ -13365,6 +13367,120 @@
         },
         "description": "Serve HTML and static files from the local provider. Experimental: needs experimental.artifacts in the Location's config and may change without notice.",
         "summary": "View local artifact"
+      }
+    },
+    "/api/experimental/preview/thumbnail": {
+      "get": {
+        "tags": ["experimental"],
+        "operationId": "experimental.preview.thumbnails",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PreviewThumbnailInfo"
+                      }
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "List the projects that have a screenshot of their app's preview, with each image's hash, without the images. Experimental: may change without compatibility guarantees.",
+        "summary": "List preview thumbnails"
+      }
+    },
+    "/api/experimental/preview/thumbnail/{projectID}": {
+      "get": {
+        "tags": ["experimental"],
+        "operationId": "experimental.preview.thumbnail",
+        "parameters": [
+          {
+            "name": "projectID",
+            "in": "path",
+            "schema": {
+              "$ref": "#/components/schemas/Project.ID"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Read the latest screenshot of a project's app preview as a WebP image, with ETag and 304 Not Modified support. It stays after the preview stops. Experimental: may change without compatibility guarantees.",
+        "summary": "Read preview thumbnail"
       }
     },
     "/api/shell": {
@@ -15416,109 +15532,6 @@
           },
           "required": true
         }
-      }
-    },
-    "/api/experimental/usage/limits": {
-      "get": {
-        "tags": ["usage"],
-        "operationId": "experimental.usage.limits",
-        "parameters": [
-          {
-            "name": "location",
-            "in": "query",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "directory": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "additionalProperties": false
-            },
-            "required": false,
-            "style": "deepObject",
-            "explode": true
-          }
-        ],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "location": {
-                      "$ref": "#/components/schemas/Location.PublicRef"
-                    },
-                    "data": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/UsageLimits.Info"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": ["location", "data"],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "InvalidRequestError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UnauthorizedError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "LocationNotFoundError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "ServiceUnavailableError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceUnavailableErrorEncoded"
-                }
-              }
-            }
-          }
-        },
-        "description": "Return the OpenCode Go allowance and Console budgets of the OpenCode Console workspace the location is signed in to, or null when it isn't signed in.",
-        "summary": "Get usage limits"
       }
     },
     "/api/config": {
@@ -21251,6 +21264,30 @@
         "required": ["_tag", "pluginID", "message"],
         "additionalProperties": false
       },
+      "PreviewThumbnailInfo": {
+        "type": "object",
+        "properties": {
+          "projectID": {
+            "$ref": "#/components/schemas/Project.ID"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": ["Infinity", "-Infinity", "NaN"]
+              }
+            ]
+          }
+        },
+        "required": ["projectID", "hash", "time"],
+        "additionalProperties": false
+      },
       "Project": {
         "type": "object",
         "properties": {
@@ -22589,6 +22626,9 @@
           },
           {
             "$ref": "#/components/schemas/session.forked"
+          },
+          {
+            "$ref": "#/components/schemas/session.path.swapped"
           },
           {
             "$ref": "#/components/schemas/session.inbox.delivered"
@@ -24129,7 +24169,7 @@
         "properties": {
           "interrupted": {
             "type": "boolean",
-            "description": "Whether an active execution owned by this OpenCode process was interrupted."
+            "description": "Whether an active execution owned by this O M A I + process was interrupted."
           }
         },
         "required": ["interrupted"],
@@ -24874,157 +24914,6 @@
         "required": ["_tag", "providerID", "modelID", "capability", "message"],
         "additionalProperties": false
       },
-      "UsageLimits.Budget": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "limit": {
-            "$ref": "#/components/schemas/Money.USD"
-          },
-          "spent": {
-            "$ref": "#/components/schemas/Money.USD"
-          },
-          "scope": {
-            "type": "string",
-            "enum": ["each", "combined"]
-          },
-          "per": {
-            "type": "string",
-            "enum": ["set", "model"]
-          },
-          "coverage": {
-            "type": "string",
-            "enum": ["all", "models"]
-          },
-          "models": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UsageLimits.BudgetModel"
-            }
-          },
-          "vendors": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "inputPriceAtLeast": {
-            "$ref": "#/components/schemas/Money.USDPerMillionTokens"
-          },
-          "picked": {
-            "type": "boolean"
-          },
-          "shared": {
-            "type": "boolean"
-          },
-          "resetsAt": {
-            "type": "number",
-            "description": "Milliseconds since the Unix epoch"
-          }
-        },
-        "required": [
-          "id",
-          "limit",
-          "spent",
-          "scope",
-          "per",
-          "coverage",
-          "models",
-          "vendors",
-          "picked",
-          "shared",
-          "resetsAt"
-        ],
-        "additionalProperties": false
-      },
-      "UsageLimits.BudgetModel": {
-        "type": "object",
-        "properties": {
-          "providerID": {
-            "$ref": "#/components/schemas/Provider.ID"
-          },
-          "modelID": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "spent": {
-            "$ref": "#/components/schemas/Money.USD"
-          }
-        },
-        "required": ["providerID", "modelID", "name"],
-        "additionalProperties": false
-      },
-      "UsageLimits.Go": {
-        "type": "object",
-        "properties": {
-          "rolling": {
-            "$ref": "#/components/schemas/UsageLimits.Meter"
-          },
-          "weekly": {
-            "$ref": "#/components/schemas/UsageLimits.Meter"
-          },
-          "monthly": {
-            "$ref": "#/components/schemas/UsageLimits.Meter"
-          }
-        },
-        "required": ["rolling", "weekly", "monthly"],
-        "additionalProperties": false
-      },
-      "UsageLimits.Info": {
-        "type": "object",
-        "properties": {
-          "workspace": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "usageURL": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "usageURL"],
-            "additionalProperties": false
-          },
-          "go": {
-            "$ref": "#/components/schemas/UsageLimits.Go"
-          },
-          "budgets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UsageLimits.Budget"
-            }
-          }
-        },
-        "required": ["workspace", "budgets"],
-        "additionalProperties": false
-      },
-      "UsageLimits.Meter": {
-        "type": "object",
-        "properties": {
-          "percent": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
-          },
-          "limited": {
-            "type": "boolean"
-          },
-          "resetsAt": {
-            "type": "number",
-            "description": "Milliseconds since the Unix epoch"
-          }
-        },
-        "required": ["percent", "limited", "resetsAt"],
-        "additionalProperties": false
-      },
       "V2Event": {
         "anyOf": [
           {
@@ -25089,6 +24978,9 @@
           },
           {
             "$ref": "#/components/schemas/session.forked"
+          },
+          {
+            "$ref": "#/components/schemas/session.path.swapped"
           },
           {
             "$ref": "#/components/schemas/session.inbox.delivered"
@@ -28159,6 +28051,58 @@
         "required": ["id", "created", "type", "durable", "data"],
         "additionalProperties": false
       },
+      "session.path.swapped": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Event.ID"
+          },
+          "created": {
+            "type": "number"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["session.path.swapped"]
+          },
+          "durable": {
+            "type": "object",
+            "properties": {
+              "aggregateID": {
+                "type": "string"
+              },
+              "seq": {
+                "$ref": "#/components/schemas/Event.Seq"
+              },
+              "version": {
+                "$ref": "#/components/schemas/Event.VersionEncoded_c77c5abcb68d"
+              }
+            },
+            "required": ["aggregateID", "seq", "version"],
+            "additionalProperties": false
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location.Ref"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "$ref": "#/components/schemas/Session.ID"
+              },
+              "branchID": {
+                "$ref": "#/components/schemas/Session.ID"
+              }
+            },
+            "required": ["sessionID", "branchID"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["id", "created", "type", "durable", "data"],
+        "additionalProperties": false
+      },
       "session.permissions": {
         "type": "object",
         "properties": {
@@ -30541,10 +30485,6 @@
     {
       "name": "websearch",
       "description": "Location-scoped web search routes."
-    },
-    {
-      "name": "usage",
-      "description": "Experimental usage limit routes."
     },
     {
       "name": "config",

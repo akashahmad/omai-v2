@@ -138,6 +138,7 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
       "session.permissions": () => Effect.void,
       "session.deleted": () => Effect.void,
       "session.forked": () => Effect.void,
+      "session.path.swapped": () => Effect.void,
       "session.inbox.delivered": () => Effect.void,
       "session.inbox.enqueued": () => Effect.void,
       "session.inbox.cancelled": () => Effect.void,

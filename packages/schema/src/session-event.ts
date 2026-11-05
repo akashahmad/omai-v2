@@ -205,6 +205,18 @@ export const Forked = Event.durable({
 })
 export type Forked = typeof Forked.Type
 
+// Exchanges the session's history and revert state with one of its checkpoint branches, a hidden session that
+// holds an abandoned path. Clients reload both sessions' info and messages when it arrives.
+export const PathSwapped = Event.durable({
+  type: "session.path.swapped",
+  ...options,
+  schema: {
+    ...Base,
+    branchID: SessionID,
+  },
+})
+export type PathSwapped = typeof PathSwapped.Type
+
 const InboxRef = {
   ...Base,
   inboxID: SessionMessage.ID,
@@ -665,6 +677,7 @@ export const Definitions = Event.inventory(
   UsageUpdated,
   Deleted,
   Forked,
+  PathSwapped,
   InboxDelivered,
   InboxEnqueued,
   InboxCancelled,

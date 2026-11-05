@@ -62,6 +62,7 @@ test("exposes every standard HTTP API group", () => {
     "media",
     "schedule",
     "artifacts",
+    "preview",
     "migration",
     "config",
   ])
