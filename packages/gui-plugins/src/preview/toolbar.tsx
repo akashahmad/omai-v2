@@ -231,14 +231,24 @@ export function PreviewToolbar(props: { view: PreviewView }) {
           <Menu.Portal>
             <Menu.Content>
               <Show when={view.running() || view.busy()}>
-                <Menu.Item onSelect={() => view.restart()}>{ctx.t("restart")}</Menu.Item>
-                <Menu.Item onSelect={() => view.stop()}>{ctx.t("stop")}</Menu.Item>
+                <Menu.Item onSelect={() => view.restart()}>
+                  <Icon name="outline-rotate-clockwise" size="small" class="shrink-0 text-v2-text-text-muted" />
+                  <span class="flex-1">{ctx.t("restart")}</span>
+                </Menu.Item>
+                <Menu.Item onSelect={() => view.stop()}>
+                  <Icon name="stop" size="small" class="shrink-0 text-v2-text-text-muted" />
+                  <span class="flex-1">{ctx.t("stop")}</span>
+                </Menu.Item>
               </Show>
               <Show when={!view.running() && !view.busy()}>
-                <Menu.Item onSelect={() => view.start({ retry: true })}>{ctx.t("start")}</Menu.Item>
+                <Menu.Item onSelect={() => view.start({ retry: true })}>
+                  <Icon name="outline-arrow-right" size="small" class="shrink-0 text-v2-text-text-muted" />
+                  <span class="flex-1">{ctx.t("start")}</span>
+                </Menu.Item>
               </Show>
               <Menu.Item onSelect={() => view.toggleLogs()}>
-                {view.state.logs ? ctx.t("logs.hide") : ctx.t("logs.show")}
+                <Icon name="outline-console" size="small" class="shrink-0 text-v2-text-text-muted" />
+                <span class="flex-1">{view.state.logs ? ctx.t("logs.hide") : ctx.t("logs.show")}</span>
               </Menu.Item>
               <Show when={compact()}>
                 <Menu.Separator />
@@ -250,11 +260,13 @@ export function PreviewToolbar(props: { view: PreviewView }) {
                     if (href) window.open(href, "_blank", "noopener")
                   }}
                 >
-                  {ctx.t("open.browser")}
+                  <Icon name="square-arrow-top-right" size="small" class="shrink-0 text-v2-text-text-muted" />
+                  <span class="flex-1">{ctx.t("open.browser")}</span>
                 </Menu.Item>
                 <For each={ZOOM_OPTIONS}>
                   {(zoom) => (
                     <Menu.Item onSelect={() => view.setZoom(zoom)}>
+                      <Icon name="outline-magnifier-plus" size="small" class="shrink-0 text-v2-text-text-muted" />
                       <span class="flex-1 tabular-nums">
                         {ctx.t("zoom")} {zoom}%
                       </span>

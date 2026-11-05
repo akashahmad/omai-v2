@@ -2344,3 +2344,235 @@
   [data-slot="tabs-v2-trigger"] {
   padding-inline: 8px;
 }
+
+/* ----------------------------------------------------------------------------------------------------------------
+   O M A I + settings look: a branded sidebar with labelled groups and icon chips, a stronger page header, kicker
+   section titles, softer cards with row hover, and the brand blue for every accent (switches, sliders, links).
+   ---------------------------------------------------------------------------------------------------------------- */
+
+.settings {
+  --settings-brand: #0a3a78;
+  --settings-brand-hover: #082f62;
+  --settings-brand-tint: rgb(26 100 214 / 0.12);
+  --settings-brand-ink: color-mix(in srgb, #1a64d6 85%, var(--v2-text-text-base));
+  /* Switches, sliders and accent buttons inside settings use the brand blue. */
+  --v2-background-bg-accent: var(--settings-brand);
+  --v2-text-text-accent: var(--settings-brand-ink);
+  --v2-text-text-accent-hover: #1a64d6;
+}
+
+/* Sidebar: a soft panel with the brand header on top. */
+.settings-screen
+  > .settings[data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
+  > .settings-sidebar {
+  padding-block: 32px 32px;
+  padding-inline-end: 40px;
+}
+
+.settings-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 6px;
+}
+
+.settings-brand-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgb(10 58 120 / 0.22);
+}
+
+.settings-brand-title {
+  color: var(--v2-text-text-base);
+  font-size: 18px;
+  font-weight: 640;
+  line-height: 1.25;
+}
+
+.settings-nav {
+  gap: 14px;
+}
+
+/* The way out sits above everything else, as a quiet link rather than a button between the header and search. */
+.settings-nav > .settings-back {
+  margin-block: -6px 4px;
+}
+
+.settings-back {
+  height: 28px;
+  align-self: flex-start;
+  padding-inline: 6px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+}
+
+.settings-back:hover,
+.settings-back:focus-visible {
+  background: var(--v2-overlay-simple-overlay-hover);
+}
+
+/* Search: a filled field with a brand focus ring. */
+.settings .settings-search [data-component="text-input-v2"] {
+  border-radius: 9px;
+  background: var(--v2-overlay-simple-overlay-hover);
+  transition:
+    background-color 150ms,
+    box-shadow 150ms;
+}
+
+.settings .settings-search [data-component="text-input-v2"]:focus-within:not([data-disabled]) {
+  background: var(--v2-background-bg-base);
+  box-shadow:
+    inset 0 0 0 1px #1a64d6,
+    0 0 0 3px rgb(26 100 214 / 0.14);
+}
+
+/* Groups: a small uppercase label above each. */
+.settings-nav-groups {
+  gap: 18px;
+}
+
+.settings-nav-group {
+  gap: 2px;
+}
+
+.settings-nav-group-header {
+  height: 24px;
+  padding-inline: 8px;
+  color: var(--v2-text-text-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Items: taller, rounder, with the icon in a chip; the selected one in the brand tint with an accent bar. */
+.settings-nav-groups [data-slot="tabs-v2-trigger-wrapper"] {
+  position: relative;
+  height: 34px;
+  border-radius: 9px;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger"] {
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  font-size: 13px;
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger-content"] {
+  gap: 10px;
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger-content"] > svg {
+  box-sizing: content-box;
+  padding: 4px;
+  border-radius: 7px;
+  background: var(--v2-overlay-simple-overlay-hover);
+  color: var(--v2-text-text-muted);
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) {
+  background: var(--settings-brand-tint);
+  color: var(--settings-brand-ink);
+  font-weight: 560;
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected])::before {
+  content: "";
+  position: absolute;
+  inset-block: 9px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--settings-brand);
+}
+
+.settings-nav-groups [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) [data-slot="tabs-v2-trigger-content"] > svg {
+  background: var(--settings-brand);
+  color: #fff;
+}
+
+/* Page header: a larger title, the description under it, and a divider before the content. */
+.settings-tab-header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--v2-border-border-base);
+}
+
+.settings-screen .settings-tab-header {
+  padding-top: 40px;
+}
+
+.settings-tab-title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.settings-tab-header-actions {
+  height: 29px;
+}
+
+/* Section titles: small uppercase kickers with a brand marker. */
+.settings-section {
+  gap: 12px;
+}
+
+.settings-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--v2-text-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.settings-section-title::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--settings-brand);
+}
+
+/* Cards: rounder, on the page colour with a hairline and a soft shadow; rows light up under the pointer. */
+[data-component="settings-list"] {
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: var(--v2-background-bg-base);
+  box-shadow:
+    inset 0 0 0 1px var(--v2-border-border-muted),
+    0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+[data-component="settings-list"] > [data-component="settings-row"] {
+  margin-inline: -20px;
+  padding-inline: 20px;
+  transition: background-color 150ms;
+}
+
+[data-component="settings-list"][data-variant="catalog"] > [data-component="settings-row"] {
+  margin-inline: -16px;
+  padding-inline: 16px;
+}
+
+@media (hover: hover) {
+  [data-component="settings-list"] > [data-component="settings-row"]:hover {
+    background: var(--v2-overlay-simple-overlay-hover);
+  }
+}
+
+[data-slot="settings-row-title"] {
+  font-weight: 540;
+}

@@ -774,6 +774,11 @@ export const dict = {
 
   "settings.section.server": "Server",
   "settings.backToApp": "Back to app",
+  "settings.title": "Settings",
+  "settings.group.workspace": "AI & workspace",
+  "settings.group.personal": "Personal",
+  "settings.group.system": "System",
+  "settings.group.more": "More",
   "settings.backToSettings": "Back to settings",
   "settings.backToProjects": "Back to projects",
   "settings.search.placeholder": "Search",

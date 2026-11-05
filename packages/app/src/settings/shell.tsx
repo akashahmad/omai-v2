@@ -223,24 +223,28 @@ function RootSettings() {
 
   const groups = createMemo<SettingsNavGroup[]>(() => [
     {
+      label: language.t("settings.group.workspace"),
       items: serverTabs.map((item) => ({ ...item, label: language.t(item.label) })),
     },
     {
+      label: language.t("settings.group.personal"),
       items: [...rootClientTabs.map((item) => ({ ...item, label: language.t(item.label) })), ...pluginTabs()],
     },
     {
+      label: language.t("settings.group.system"),
       items: [
         {
           value: "servers",
           icon: pageIcons.servers,
           label: language.t(multiple() ? "settings.tab.servers" : pageLabels.servers),
         },
+        ...(experimentalSettingsAvailable
+          ? experimentalTab.map((item) => ({ ...item, label: language.t(item.label) }))
+          : []),
       ],
     },
-    ...(experimentalSettingsAvailable
-      ? [{ items: experimentalTab.map((item) => ({ ...item, label: language.t(item.label) })) }]
-      : []),
     {
+      label: language.t("settings.group.more"),
       items: [...aboutTab.map((item) => ({ ...item, label: language.t(item.label) })), ...pluginTabs("about")],
     },
   ])
@@ -349,6 +353,7 @@ function RootSettings() {
 function ProjectSettings(props: { server: ServerConnection.Any; project: LocalProject }) {
   const language = useLanguage()
   const surface = useSettingsSurface()
+
   const groups: SettingsNavGroup[] = [
     { items: nestedProjectTabs.map((item) => ({ ...item, label: language.t(item.label) })) },
   ]

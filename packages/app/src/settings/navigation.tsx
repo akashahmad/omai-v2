@@ -5,6 +5,7 @@ import { Tabs } from "@opencode/ui/tabs"
 import { createEffect, ErrorBoundary, For, on, Show, type ComponentProps, type JSX } from "solid-js"
 import { useLanguage } from "@/runtime/i18n/language"
 import { ErrorPage } from "@/shell/errors/error"
+import { BrandIcon } from "@/shell/brand-icon"
 import { CollapsedSidebarToggleSpace } from "@/shell/sidebar-toggle"
 import { useSettingsSurface } from "./surface"
 import { SettingsSearch } from "./search"
@@ -125,6 +126,10 @@ export function SettingsNavigation(props: {
             <Icon name="arrow-left" size="small" class="settings-back-icon" />
             <span>{backLabel()}</span>
           </button>
+          <div class="settings-brand" data-component="settings-brand">
+            <BrandIcon class="settings-brand-icon" />
+            <span class="settings-brand-title">{language.t("settings.title")}</span>
+          </div>
           <Show when={searchable()}>
             <SettingsSearch />
           </Show>

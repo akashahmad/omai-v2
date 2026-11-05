@@ -23,6 +23,7 @@ describe("Preview", () => {
   test("defines omai.preview", () => {
     expect(Preview.Definition.id).toBe("omai.preview")
     expect(Object.keys(Preview.Definition.methods).sort()).toEqual([
+      "asset",
       "logs",
       "restart",
       "setRecipe",

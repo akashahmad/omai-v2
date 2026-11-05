@@ -463,3 +463,53 @@
     padding-block: 0;
   }
 }
+
+@layer base {
+  /*
+    Everything clickable shows the pointer: buttons, links, tabs, menu and list items, toggles and the controls people
+    click. The components and some utility classes set `cursor: default`, so this wins with !important from the base
+    layer (an important declaration in an earlier layer beats normal ones in later layers). Disabled controls keep
+    their own cursor, and an element that asks for a specific cursor (drag handles, text, resize, help, progress) keeps it.
+  */
+  :is(
+      button,
+      a[href],
+      summary,
+      select,
+      label[for],
+      [role="button"],
+      [role="link"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="menuitemcheckbox"],
+      [role="menuitemradio"],
+      [role="option"],
+      [role="switch"],
+      [role="checkbox"],
+      [role="radio"],
+      [role="treeitem"],
+      [data-action],
+      input:is([type="checkbox"], [type="radio"], [type="color"], [type="file"], [type="submit"], [type="button"], [type="reset"]),
+      label:has(> input:is([type="checkbox"], [type="radio"], [type="color"], [type="file"]))
+    ):not(
+      :disabled,
+      [aria-disabled="true"],
+      [data-disabled],
+      [class*="cursor-grab"],
+      [class*="cursor-text"],
+      [class*="cursor-progress"],
+      [class*="cursor-help"],
+      [class*="resize"],
+      [class*="cursor-not-allowed"]
+    ) {
+    cursor: pointer !important;
+  }
+}
+
+/* The composer's send and stop button uses the O M A I + brand blue, in both themes, like the accents in Settings. */
+[data-component="icon-button-v2"][data-action="composer-submit"] {
+  --v2-background-bg-icon-button-contrast: #0a3a78;
+  --submit-highlight: var(--v2-alpha-light-20);
+  --submit-hover: rgb(0 0 0 / 0.14);
+  color: #fff;
+}
