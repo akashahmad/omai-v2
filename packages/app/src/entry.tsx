@@ -112,5 +112,7 @@ if (root instanceof HTMLElement && root.dataset.omaiMounted === undefined) {
       ),
       root,
     )
+    // The static splash in index.html covers the cold start; the app shows its own loaders from here.
+    document.getElementById("boot-splash")?.remove()
   })
 }

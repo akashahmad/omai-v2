@@ -263,6 +263,57 @@
     }
   }
 
+  /* The brand loader: the app icon breathing while a screen loads, its halo pulsing out. It appears only after a
+     short delay, so a quick load never flashes it. */
+  [data-component="brand-loader"] {
+    animation: brand-loader-enter 240ms ease-out 150ms both;
+
+    [data-slot="brand-loader-icon"] {
+      animation: brand-loader-breathe 1.6s ease-in-out infinite;
+    }
+
+    [data-slot="brand-loader-halo"] {
+      animation: brand-loader-halo 1.6s ease-out infinite;
+    }
+  }
+
+  :root[data-motion="reduce"] [data-component="brand-loader"] {
+    [data-slot="brand-loader-icon"],
+    [data-slot="brand-loader-halo"] {
+      animation: none;
+    }
+  }
+
+  @keyframes brand-loader-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+
+  @keyframes brand-loader-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(0.92);
+      opacity: 0.75;
+    }
+  }
+
+  @keyframes brand-loader-halo {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.45;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+
   @keyframes titlebar-update-loader-spin {
     to {
       transform: rotate(360deg);

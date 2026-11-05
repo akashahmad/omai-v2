@@ -31,6 +31,7 @@ import { SessionErrorFallback } from "./route-error"
 import { createSessionResolution } from "./session-resolution"
 import { SessionScreenView } from "./screen"
 import { PreparingComposer } from "./preparing-composer"
+import { BrandLoader } from "@/shell/brand-loader"
 
 export function TargetSessionRouteContent() {
   const params = useParams<{ serverKey: string; id: string }>()
@@ -183,6 +184,7 @@ function PendingSessionState(props: { sessionID: string }) {
   return (
     <SessionStatePanel>
       <SessionIdentityHeader sessionID={props.sessionID} />
+      <BrandLoader />
     </SessionStatePanel>
   )
 }
