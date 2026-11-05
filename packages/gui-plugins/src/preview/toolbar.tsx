@@ -11,6 +11,9 @@ import { ZOOM_OPTIONS, type Device, type PreviewView } from "./view"
 
 const NEXT_DEVICE: Record<Device, Device> = { desktop: "tablet", tablet: "mobile", mobile: "desktop" }
 
+const kbd =
+  "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border border-v2-border-border-base bg-v2-background-bg-base px-1 font-sans text-[10px] text-v2-text-text-muted"
+
 // Below this width the zoom and open-in-browser controls move into the options menu.
 const COMPACT_WIDTH = 380
 
@@ -133,15 +136,27 @@ export function PreviewToolbar(props: { view: PreviewView; publish: PublishState
               <Icon name="chevron-down" size="small" />
             </Menu.Trigger>
             <Menu.Portal>
-              <Menu.Content class="w-64">
-                <div class="flex items-center gap-1.5 px-2 py-1.5 border-b border-v2-border-border-base">
-                  <Icon name="magnifying-glass" size="small" class="shrink-0" />
+              <Menu.Content
+                data-component="preview-routes"
+                class="w-[300px] !p-1.5 !rounded-xl border border-v2-border-border-base"
+              >
+                <div class="mb-1.5 flex h-9 items-center gap-2 rounded-lg border border-v2-border-border-base bg-v2-background-bg-base px-2.5 transition-[border-color,box-shadow] focus-within:border-[#1a64d6] focus-within:shadow-[0_0_0_3px_rgb(26_100_214/0.15)]">
+                  <Icon name="magnifying-glass" size="small" class="shrink-0 text-v2-icon-icon-muted" />
                   <input
                     ref={searchInput}
                     value={search()}
                     onInput={(event) => setSearch(event.currentTarget.value)}
                     onKeyDown={(event) => {
                       event.stopPropagation()
+
+                      // Down moves from the search into the list, where the menu's own keys take over.
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault()
+                        event.currentTarget.closest('[role="menu"]')?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+
+                        return
+                      }
+
                       const target = typed() ?? pages()[0]
 
                       if (event.key === "Enter" && target) view.go(target)
@@ -149,32 +164,81 @@ export function PreviewToolbar(props: { view: PreviewView; publish: PublishState
                     placeholder={ctx.t("address.search")}
                     aria-label={ctx.t("address.search")}
                     spellcheck={false}
-                    class="w-full min-w-0 bg-transparent border-0 outline-none text-12-regular text-v2-text-text-base placeholder:text-v2-text-text-faint"
+                    autocomplete="off"
+                    class="w-full min-w-0 bg-transparent border-0 outline-none text-[13px] text-v2-text-text-base placeholder:text-v2-text-text-faint"
                   />
                 </div>
-                <div class="mt-1 max-h-56 overflow-y-auto">
+                <Show when={typed()}>
+                  {(path) => (
+                    <Menu.Item
+                      class="!h-9 !rounded-lg !px-1.5 cursor-pointer"
+                      onSelect={() => view.go(path())}
+                    >
+                      <span class="flex size-6 shrink-0 items-center justify-center rounded-md bg-[#1a64d6]/12 text-[#1a64d6]">
+                        <Icon name="outline-arrow-right" size="small" />
+                      </span>
+                      <span class="min-w-0 flex-1 truncate text-[13px]">
+                        {ctx.t("address.goTo")} <span class="font-mono text-[12px]">{path()}</span>
+                      </span>
+                      <kbd class={kbd}>↵</kbd>
+                    </Menu.Item>
+                  )}
+                </Show>
+                <Show when={pages().length > 0}>
+                  <div class="flex items-center justify-between px-2 pb-1 pt-1.5 text-[11px] font-medium uppercase tracking-[0.04em] text-v2-text-text-faint">
+                    <span>{ctx.t("address.pages")}</span>
+                    <span class="tabular-nums">{pages().length}</span>
+                  </div>
+                </Show>
+                <div class="max-h-64 overflow-y-auto">
                   <For each={pages()}>
-                    {(page) => (
-                      <Menu.Item onSelect={() => view.go(page)}>
-                        <span class="truncate flex-1 font-mono text-12-regular">
-                          {page === "/" ? ctx.t("address.homepage") : page}
-                        </span>
-                        <Show when={view.state.path.split(/[?#]/)[0] === page}>
-                          <Icon name="check" size="small" />
-                        </Show>
-                      </Menu.Item>
-                    )}
+                    {(page) => {
+                      const current = () => view.state.path.split(/[?#]/)[0] === page
+
+                      return (
+                        <Menu.Item
+                          class="!h-9 !rounded-lg !px-1.5 cursor-pointer"
+                          classList={{ "!bg-[#1a64d6]/10": current() }}
+                          onSelect={() => view.go(page)}
+                        >
+                          <span
+                            class="flex size-6 shrink-0 items-center justify-center rounded-md"
+                            classList={{
+                              "bg-[#1a64d6]/15 text-[#1a64d6]": current(),
+                              "bg-v2-overlay-simple-overlay-hover text-v2-icon-icon-muted": !current(),
+                            }}
+                          >
+                            <Show when={page === "/"} fallback={<Icon name="file-document" size="small" />}>
+                              <HomeIcon />
+                            </Show>
+                          </span>
+                          <span class="flex min-w-0 flex-1 items-baseline gap-2">
+                            <Show
+                              when={page === "/"}
+                              fallback={<span class="truncate font-mono text-[12px]">{page}</span>}
+                            >
+                              <span class="truncate text-[13px]">{ctx.t("address.homepage")}</span>
+                              <span class="shrink-0 font-mono text-[11px] text-v2-text-text-faint">/</span>
+                            </Show>
+                          </span>
+                          <Show when={current()}>
+                            <Icon name="check" size="small" class="shrink-0 text-[#1a64d6]" />
+                          </Show>
+                        </Menu.Item>
+                      )
+                    }}
                   </For>
-                  <Show when={typed()}>
-                    {(path) => (
-                      <Menu.Item onSelect={() => view.go(path())}>
-                        <Icon name="code" size="small" />
-                        <span class="truncate">
-                          {ctx.t("address.goTo")} <span class="font-mono">{path()}</span>
-                        </span>
-                      </Menu.Item>
-                    )}
-                  </Show>
+                </div>
+                <div class="mt-1.5 flex items-center gap-3 border-t border-v2-border-border-base px-2 pt-2 pb-0.5 text-[11px] text-v2-text-text-faint">
+                  <span class="flex items-center gap-1">
+                    <kbd class={kbd}>↑</kbd>
+                    <kbd class={kbd}>↓</kbd>
+                    {ctx.t("address.hint.move")}
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <kbd class={kbd}>↵</kbd>
+                    {ctx.t("address.hint.open")}
+                  </span>
                 </div>
               </Menu.Content>
             </Menu.Portal>
@@ -313,5 +377,18 @@ export function PreviewToolbar(props: { view: PreviewView; publish: PublishState
         </Tooltip>
       </div>
     </div>
+  )
+}
+
+function HomeIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" class="size-3.5">
+      <path
+        d="M2.75 7.25 8 2.75l5.25 4.5v5.5a.75.75 0 0 1-.75.75H9.75V9.75h-3.5v3.75H3.5a.75.75 0 0 1-.75-.75v-5.5Z"
+        stroke="currentColor"
+        stroke-width="1.3"
+        stroke-linejoin="round"
+      />
+    </svg>
   )
 }
