@@ -1,9 +1,11 @@
 import { getOwner, lazy, Suspense } from "solid-js"
+import { createStore, produce } from "solid-js/store"
 import { Icon } from "@opencode/ui/icon"
 import type { Plugin } from "@opencode/plugin/gui"
 import { BuiltinPanel, onIdle, type BuiltinPanelTab } from "@opencode/plugin/gui/builtin"
 import type ToolsDefinition from "./index"
 import { checkpointViews } from "./checkpoints/view"
+import { Tools, type ToolId } from "./contract"
 import { domainsViews } from "./domains/view"
 import { gitViews } from "./git/view"
 import { publishViews } from "./publish/view"
@@ -27,6 +29,29 @@ const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
   const checkpoints = checkpointViews(getOwner(), open)
   const publish = publishViews(getOwner(), open)
   const domains = domainsViews(getOwner(), open)
+
+  // The tool each session shows, so another plugin can open a tool before the panel renders.
+  const [selected, setSelected] = createStore<Record<string, ToolId | undefined>>({})
+
+  const select = (key: string, tool: ToolId) => {
+    const keep = new Set(open())
+
+    setSelected(
+      produce((draft) => {
+        Object.keys(draft)
+          .filter((item) => !keep.has(item))
+          .forEach((item) => delete draft[item])
+        draft[key] = tool
+      }),
+    )
+  }
+
+  ctx.provide(Tools, {
+    open(session, tool) {
+      select(session.key, tool)
+      layout.open(`${ctx.id}:tools`, session)
+    },
+  })
 
   const ToolsPanel = lazy(() => import("./panel"))
 
@@ -58,6 +83,8 @@ const setup: Plugin.Setup<typeof ToolsDefinition> = (ctx) => {
     render: (props) => (
       <Suspense>
         <ToolsPanel
+          tool={selected[props.session.key] ?? "publish"}
+          onTool={(tool) => select(props.session.key, tool)}
           audit={audit(
             () => props.session,
             ctx.t,

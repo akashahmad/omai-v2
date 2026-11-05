@@ -5,6 +5,7 @@ import { BuiltinPanel, BuiltinSlot, BuiltinTimelineCover, onIdle, type BuiltinPa
 import type PreviewDefinition from "./index"
 import { uuid } from "@opencode/util/uuid"
 import { previewViews } from "./view"
+import { Tools } from "../tools/contract"
 import { publishStates } from "./publish"
 import { askNote } from "./visual/ask"
 import { ImageDialog } from "./visual/image-dialog"
@@ -17,6 +18,8 @@ const TAB = "preview"
  */
 const setup: Plugin.Setup<typeof PreviewDefinition> = (ctx) => {
   const layout = ctx.layout
+  // The Tools section, for sending the user from the Publish dialog to Domains.
+  const tools = ctx.use(Tools)
 
   const view = previewViews(getOwner(), {
     // "Ask AI" attaches the element to the composer, so a bigger change can be described in words.
@@ -97,7 +100,15 @@ const setup: Plugin.Setup<typeof PreviewDefinition> = (ctx) => {
     render: (input) => (
       <Show when={input.section === "preview" && input.session.project}>
         <Suspense>
-          <PreviewToolbar view={view(() => input.session)} publish={publish(() => input.session)} />
+          <PreviewToolbar
+            view={view(() => input.session)}
+            publish={publish(() => input.session)}
+            domains={(() => {
+              const live = tools()
+
+              return live.status === "active" ? () => live.value.open(input.session, "domains") : undefined
+            })()}
+          />
         </Suspense>
       </Show>
     ),

@@ -6,7 +6,7 @@ import { batch, createRoot, onCleanup, runWithOwner, type Accessor, type Owner }
 import { createStore, reconcile } from "solid-js/store"
 import { createKeyed, type MountedSession } from "@opencode/plugin/gui"
 import { Publish } from "@opencode/schema/publish"
-import { fixPrompt, liveAddress, slug, type Translate } from "./model"
+import { fixPrompt, liveAddress, primaryDomain, slug, type Translate } from "./model"
 
 /** How an RPC call rejects: the server's error, with the publishing failure as its data. */
 type Failure = {
@@ -311,6 +311,12 @@ function createView(session: Accessor<MountedSession>, t: Translate) {
       const current = site()
 
       return current ? liveAddress(current, state.domains) : undefined
+    },
+    /** The primary custom domain, when one is set; it serves visitors only once active. */
+    primary: () => {
+      const current = site()
+
+      return current ? primaryDomain(current, state.domains) : undefined
     },
     busy: () => state.action,
     error: () => state.error,

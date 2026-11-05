@@ -6,7 +6,7 @@ import { batch, createRoot, onCleanup, runWithOwner, type Accessor, type Owner }
 import { createStore, reconcile } from "solid-js/store"
 import { createKeyed, type MountedSession } from "@opencode/plugin/gui"
 import { Publish } from "@opencode/schema/publish"
-import { liveAddress, slug } from "../tools/contract"
+import { liveAddress, primaryDomain, slug } from "../tools/contract"
 
 /** How an RPC call rejects: the server's error, with the publishing failure as its data. */
 type Failure = {
@@ -35,6 +35,8 @@ type State = {
   check?: { name: string; available: boolean; reason?: string }
   action?: "publish" | "cancel"
   error?: Problem
+  /** The site's custom domains, read while it has a primary one. */
+  domains: Publish.Domain[]
 }
 
 export type PublishState = ReturnType<typeof createState>
@@ -70,7 +72,7 @@ export function publishStates(owner: Owner | null, keep: Accessor<readonly strin
 }
 
 function createState(session: Accessor<MountedSession>) {
-  const [state, setState] = createStore<State>({ status: empty(), loaded: false })
+  const [state, setState] = createStore<State>({ status: empty(), loaded: false, domains: [] })
 
   // Orders status reads: a read that started before a newer status arrived must not overwrite it.
   let version = 0
@@ -163,6 +165,34 @@ function createState(session: Accessor<MountedSession>) {
     },
   )
 
+  // The custom domains, only to tell which one is primary and whether it serves visitors yet.
+  createKeyed(
+    () =>
+      session().server.connected && site()?.primary ? `${session().directory}\u0000${site()?.primary}` : undefined,
+    () => {
+      const controller = new AbortController()
+      const signal = controller.signal
+      const domains = session().server.client.rpc(Publish.DomainsDefinition)
+      const take = (next: Publish.Domains) => setState("domains", reconcile(next.domains.slice(), { key: "hostname" }))
+      onCleanup(() => controller.abort())
+      onCleanup(
+        domains.events.on(
+          "changed",
+          (event) => {
+            if (mine(event)) take(event.data)
+          },
+          { signal },
+        ),
+      )
+      void domains.list({}, { ...scope(), signal }).then(
+        (next) => {
+          if (!signal.aborted) take(next)
+        },
+        () => undefined,
+      )
+    },
+  )
+
   // Asks the server whether the name is free once the user stops typing; a newer name aborts the older check.
   createKeyed(
     () => (choosing() ? draft() : undefined),
@@ -208,11 +238,17 @@ function createState(session: Accessor<MountedSession>) {
     detected: () => state.status.detected,
     /** The platform zone the site lives under, before the first publish too. */
     zone: () => site()?.zone ?? state.status.zone,
-    /** The platform address of the site; undefined before it exists. */
+    /** The address visitors use: the primary custom domain once it is active, else the platform address. */
     address: () => {
       const current = site()
 
-      return current ? liveAddress(current, []) : undefined
+      return current ? liveAddress(current, state.domains) : undefined
+    },
+    /** The primary custom domain, when one is set. */
+    primary: () => {
+      const current = site()
+
+      return current ? primaryDomain(current, state.domains) : undefined
     },
     busy: () => state.action,
     error: () => state.error,

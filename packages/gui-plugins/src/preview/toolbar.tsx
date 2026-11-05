@@ -18,7 +18,12 @@ const kbd =
 const COMPACT_WIDTH = 380
 
 /** The preview's controls in the right panel's toolbar: device, address, open in browser, zoom, options, Publish. */
-export function PreviewToolbar(props: { view: PreviewView; publish: PublishState }) {
+export function PreviewToolbar(props: {
+  view: PreviewView
+  publish: PublishState
+  /** Opens Tools › Domains; undefined while the Tools section can't. */
+  domains?: () => void
+}) {
   const ctx = usePlugin()
   const view = props.view
   const [width, setWidth] = createSignal(Number.POSITIVE_INFINITY)
@@ -352,7 +357,20 @@ export function PreviewToolbar(props: { view: PreviewView; publish: PublishState
             type="button"
             data-action="preview-publish"
             class="flex items-center gap-1.5 h-7 px-2 rounded-full cursor-pointer transition-colors hover:bg-v2-overlay-simple-overlay-hover text-12-medium text-v2-text-text-base"
-            onClick={() => ctx.dialogs.open(() => <PublishDialog publish={props.publish} />)}
+            onClick={() =>
+              ctx.dialogs.open((dialog) => (
+                <PublishDialog
+                  publish={props.publish}
+                  domains={
+                    props.domains &&
+                    (() => {
+                      dialog.close()
+                      props.domains?.()
+                    })
+                  }
+                />
+              ))
+            }
             aria-label={ctx.t("publish.button")}
           >
             <Switch fallback={<Icon name="cloud-upload" size="small" />}>

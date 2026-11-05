@@ -1,6 +1,6 @@
 // Publish from the preview: a compact form of the Publishing tool for the project on screen. Before the first publish it
-// claims the address, while a deploy runs it shows the steps, and once live it shows the site. Custom domains, the
-// deploy history and deleting the site stay in Tools › Publishing.
+// claims the address, while a deploy runs it shows the steps, and once live it shows the site and its primary custom
+// domain, with the way to Tools › Domains. The deploy history and deleting the site stay in Tools › Publishing.
 
 import { createSignal, For, Match, onCleanup, Show, Switch, type JSX } from "solid-js"
 import { usePlugin } from "@opencode/plugin/gui"
@@ -8,7 +8,7 @@ import type { Publish } from "@opencode/schema/publish"
 import { Dialog, DialogBody, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
 import { Icon } from "@opencode/ui/icon"
 import { Loader } from "@opencode/ui/loader"
-import { ago, duration, stepState, STEPS, type StepState } from "../tools/contract"
+import { ago, duration, pill, stepState, STEPS, type StepState } from "../tools/contract"
 import type { Problem, PublishState } from "./publish"
 
 // The brand's navy, the logo's background.
@@ -20,7 +20,11 @@ const secondary =
 
 const card = "flex flex-col gap-3 p-4 rounded-xl border border-v2-border-border-base/70 bg-v2-background-bg-layer-01"
 
-export function PublishDialog(props: { publish: PublishState }) {
+export function PublishDialog(props: {
+  publish: PublishState
+  /** Closes the dialog and opens Tools › Domains; undefined while the Tools section can't. */
+  domains?: () => void
+}) {
   const ctx = usePlugin()
   const publish = props.publish
 
@@ -67,7 +71,7 @@ export function PublishDialog(props: { publish: PublishState }) {
               {(deploy) => <Running publish={publish} deploy={deploy} />}
             </Match>
             <Match when={publish.live() ? publish.site() : undefined}>
-              {(site) => <Live publish={publish} site={site()} />}
+              {(site) => <Live publish={publish} site={site()} domains={props.domains} />}
             </Match>
             <Match when={true}>
               <Setup publish={publish} />
@@ -224,6 +228,10 @@ function Setup(props: { publish: PublishState }) {
           {ctx.t("publish.publish")}
         </button>
       </div>
+      <p class="flex items-center gap-1.5 text-12-regular text-v2-text-text-muted">
+        <Icon name="globe" size="small" class="shrink-0" />
+        {ctx.t("publish.domain.later")}
+      </p>
     </div>
   )
 }
@@ -328,7 +336,7 @@ function StepDot(props: { state: StepState }) {
 }
 
 /** The live site: the address, when it went live, and Republish / Open / Copy. */
-function Live(props: { publish: PublishState; site: Publish.Site }) {
+function Live(props: { publish: PublishState; site: Publish.Site; domains?: () => void }) {
   const ctx = usePlugin()
   const address = () => props.publish.address() ?? props.site.url
 
@@ -368,6 +376,33 @@ function Live(props: { publish: PublishState; site: Publish.Site }) {
             </span>
           )}
         </Show>
+        <Show when={props.publish.primary()}>
+          {(domain) => (
+            <Show
+              when={domain().status === "active"}
+              fallback={
+                <span
+                  data-slot="preview-publish-primary"
+                  class="flex min-w-0 items-center gap-1.5 text-12-regular text-v2-text-text-muted"
+                >
+                  <span
+                    class="size-1.5 shrink-0 rounded-full"
+                    classList={{
+                      "bg-v2-state-fg-danger": domain().status === "error",
+                      "bg-v2-state-fg-warning": domain().status !== "error",
+                    }}
+                  />
+                  <span class="truncate font-medium text-v2-text-text-base">{domain().hostname}</span>
+                  <span class="shrink-0">· {ctx.t(`publish.domain.${pill(domain())}`)}</span>
+                </span>
+              }
+            >
+              <span data-slot="preview-publish-primary" class="truncate text-12-regular text-v2-text-text-muted">
+                {ctx.t("publish.domain.redirects", { host: `${props.site.name}.${props.site.zone}` })}
+              </span>
+            </Show>
+          )}
+        </Show>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
@@ -396,7 +431,53 @@ function Live(props: { publish: PublishState; site: Publish.Site }) {
           {ctx.t("publish.copy")}
         </button>
       </div>
+      <DomainsLink configured={!!props.publish.primary()} open={props.domains} />
     </div>
+  )
+}
+
+/**
+ * Where custom domains live: a link that opens Tools › Domains, or the place spelled out while the Tools section can't
+ * open.
+ */
+function DomainsLink(props: { configured: boolean; open?: () => void }) {
+  const ctx = usePlugin()
+  const title = () => ctx.t(props.configured ? "publish.domain.manage" : "publish.domain.add")
+
+  return (
+    <Show
+      when={props.open}
+      fallback={
+        <div class="flex items-center gap-2.5 -mx-4 -mb-4 mt-1 border-t border-v2-border-border-base px-4 py-3 text-12-regular text-v2-text-text-muted">
+          <Icon name="globe" size="small" class="shrink-0" />
+          <span>{ctx.t("publish.domain.where")}</span>
+        </div>
+      }
+    >
+      {(open) => (
+        <button
+          type="button"
+          data-action="preview-publish-domains"
+          class="group flex items-center gap-3 -mx-4 -mb-4 mt-1 border-t border-v2-border-border-base px-4 py-3 text-start rounded-b-xl cursor-pointer transition-colors hover:bg-v2-overlay-simple-overlay-hover"
+          onClick={() => open()()}
+        >
+          <span class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#1a64d6]/12 text-[#1a64d6]">
+            <Icon name="globe" size="small" />
+          </span>
+          <span class="flex min-w-0 flex-1 flex-col">
+            <span class="text-[13px] font-medium text-v2-text-text-base">{title()}</span>
+            <span class="truncate text-12-regular text-v2-text-text-muted">
+              {ctx.t(props.configured ? "publish.domain.manageHint" : "publish.domain.addHint")}
+            </span>
+          </span>
+          <Icon
+            name="outline-chevron-right"
+            size="small"
+            class="shrink-0 text-v2-icon-icon-muted transition-transform group-hover:translate-x-0.5 rtl:rotate-180"
+          />
+        </button>
+      )}
+    </Show>
   )
 }
 

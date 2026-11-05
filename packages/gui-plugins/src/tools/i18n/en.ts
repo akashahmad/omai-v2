@@ -553,6 +553,10 @@ export default {
   "publish.failed.busy": "A publish is already running.",
   "publish.failed.other": "Something went wrong. Try again.",
 
+  "publish.domain.redirects": "{{host}} sends visitors here.",
+  "publish.domain.add": "Add a custom domain",
+  "publish.domain.addHint": "Use a domain you own, like www.example.com.",
+  "publish.domain.manage": "Manage domains",
   "domains.name": "Domains",
   "domains.title": "Domains",
   "domains.description": "Connect a domain you own to the published site.",

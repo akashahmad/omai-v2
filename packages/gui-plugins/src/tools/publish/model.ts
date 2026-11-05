@@ -53,8 +53,13 @@ export function duration(deploy: Publish.Deploy, now = Date.now()) {
  * The address visitors use: the primary domain once it is active, else the platform subdomain, which serves the site
  * while the primary waits for DNS.
  */
+/** The site's primary custom domain, when one is set and listed; it serves visitors only once it is active. */
+export function primaryDomain(site: Publish.Site, domains: readonly Publish.Domain[]) {
+  return site.primary ? domains.find((domain) => domain.primary && domain.hostname === site.primary) : undefined
+}
+
 export function liveAddress(site: Publish.Site, domains: readonly Publish.Domain[]) {
-  const primary = domains.find((domain) => domain.primary && domain.hostname === site.primary)
+  const primary = primaryDomain(site, domains)
 
   if (primary?.status === "active") return `https://${primary.hostname}`
 

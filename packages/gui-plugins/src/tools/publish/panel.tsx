@@ -9,11 +9,12 @@ import { Dialog, DialogBody, DialogHeader, DialogTitleGroup } from "@opencode/ui
 import { Icon } from "@opencode/ui/icon"
 import { Tooltip } from "@opencode/ui/tooltip"
 import type { Publish } from "@opencode/schema/publish"
+import { pill } from "../contract"
 import { Busy, card, Failure, iconButton, kicker, Note, primary, quiet, secondary, Spinner } from "../ui"
 import { ago, duration, stepState, STEPS, type StepState } from "./model"
 import type { PublishView } from "./view"
 
-export function PublishPanel(props: { view: PublishView }) {
+export function PublishPanel(props: { view: PublishView; onDomains: () => void }) {
   const ctx = usePlugin()
 
   return (
@@ -37,13 +38,13 @@ export function PublishPanel(props: { view: PublishView }) {
       </div>
       {/* A session switch brings another view without remounting the panel; its body starts afresh with it. */}
       <Show when={props.view} keyed>
-        {(view) => <Body view={view} />}
+        {(view) => <Body view={view} onDomains={props.onDomains} />}
       </Show>
     </div>
   )
 }
 
-function Body(props: { view: PublishView }) {
+function Body(props: { view: PublishView; onDomains: () => void }) {
   const ctx = usePlugin()
   const view = props.view
 
@@ -98,7 +99,7 @@ function Body(props: { view: PublishView }) {
             <Setup view={view} />
           </Show>
           <Show when={view.published() ? view.site() : undefined}>
-            {(site) => <Live view={view} site={site()} now={now()} />}
+            {(site) => <Live view={view} site={site()} now={now()} onDomains={props.onDomains} />}
           </Show>
           <Show when={view.history().length > 0}>
             <History view={view} now={now()} />
@@ -414,7 +415,7 @@ function LogText(props: { text: string | undefined; follow?: boolean }) {
 }
 
 /** The live site: the preview's screenshot, the address, when it went live, and Republish / Open / Copy. */
-function Live(props: { view: PublishView; site: Publish.Site; now: number }) {
+function Live(props: { view: PublishView; site: Publish.Site; now: number; onDomains: () => void }) {
   const ctx = usePlugin()
   const address = () => props.view.address() ?? props.site.url
   const urls: string[] = []
@@ -482,6 +483,16 @@ function Live(props: { view: PublishView; site: Publish.Site; now: number }) {
                 </span>
               )}
             </Show>
+            <Show when={props.view.primary()}>
+              {(domain) => (
+                <PrimaryLine
+                  domain={domain()}
+                  subdomain={`${props.site.name}.${props.site.zone}`}
+                  status={ctx.t(`domains.status.${pill(domain())}`)}
+                  redirects={ctx.t("publish.domain.redirects", { host: `${props.site.name}.${props.site.zone}` })}
+                />
+              )}
+            </Show>
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -512,7 +523,68 @@ function Live(props: { view: PublishView; site: Publish.Site; now: number }) {
           </button>
         </div>
       </div>
+      <DomainsLink
+        title={ctx.t(props.view.primary() ? "publish.domain.manage" : "publish.domain.add")}
+        hint={props.view.primary() ? undefined : ctx.t("publish.domain.addHint")}
+        onClick={props.onDomains}
+      />
     </div>
+  )
+}
+
+/**
+ * The primary custom domain under the live address: once active the address above is the domain, and the platform
+ * address redirects to it; before that, the domain and why it doesn't serve visitors yet.
+ */
+function PrimaryLine(props: { domain: Publish.Domain; subdomain: string; status: string; redirects: string }) {
+  return (
+    <Show
+      when={props.domain.status === "active"}
+      fallback={
+        <span data-slot="publish-primary" class="flex min-w-0 items-center gap-1.5 text-12-regular text-v2-text-text-muted">
+          <span
+            class="size-1.5 shrink-0 rounded-full"
+            classList={{
+              "bg-v2-state-fg-danger": props.domain.status === "error",
+              "bg-v2-state-fg-warning": props.domain.status !== "error",
+            }}
+          />
+          <span class="truncate font-medium text-v2-text-text-base">{props.domain.hostname}</span>
+          <span class="shrink-0">· {props.status}</span>
+        </span>
+      }
+    >
+      <span data-slot="publish-primary" class="truncate text-12-regular text-v2-text-text-muted">
+        {props.redirects}
+      </span>
+    </Show>
+  )
+}
+
+/** The way from the live site to its custom domains. */
+function DomainsLink(props: { title: string; hint?: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      data-action="publish-domains"
+      class="group flex w-full items-center gap-3 border-t border-v2-border-border-base px-5 py-3 text-start cursor-pointer transition-colors hover:bg-v2-overlay-simple-overlay-hover"
+      onClick={() => props.onClick()}
+    >
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#1a64d6]/12 text-[#1a64d6]">
+        <Icon name="globe" size="small" />
+      </span>
+      <span class="flex min-w-0 flex-1 flex-col">
+        <span class="text-[13px] font-medium text-v2-text-text-base">{props.title}</span>
+        <Show when={props.hint}>
+          {(hint) => <span class="truncate text-12-regular text-v2-text-text-muted">{hint()}</span>}
+        </Show>
+      </span>
+      <Icon
+        name="outline-chevron-right"
+        size="small"
+        class="shrink-0 text-v2-icon-icon-muted transition-transform group-hover:translate-x-0.5 rtl:rotate-180"
+      />
+    </button>
   )
 }
 
