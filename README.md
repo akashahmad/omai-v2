@@ -1,114 +1,70 @@
 <p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
+  <img src="packages/app/public/web-app-manifest-192x192.png" alt="O M A I + logo" width="96" height="96">
 </p>
-<p align="center">The open source AI coding agent.</p>
-<p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/@opencode/cli"><img alt="npm" src="https://img.shields.io/npm/v/@opencode/cli?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/release.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/release.yml?style=flat-square&branch=dev" /></a>
-</p>
-
-<p align="center">
-  <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a> |
-  <a href="README.zht.md">繁體中文</a> |
-  <a href="README.ko.md">한국어</a> |
-  <a href="README.de.md">Deutsch</a> |
-  <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
-  <a href="README.it.md">Italiano</a> |
-  <a href="README.da.md">Dansk</a> |
-  <a href="README.ja.md">日本語</a> |
-  <a href="README.pl.md">Polski</a> |
-  <a href="README.ru.md">Русский</a> |
-  <a href="README.bs.md">Bosanski</a> |
-  <a href="README.ar.md">العربية</a> |
-  <a href="README.no.md">Norsk</a> |
-  <a href="README.br.md">Português (Brasil)</a> |
-  <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a> |
-  <a href="README.bn.md">বাংলা</a> |
-  <a href="README.gr.md">Ελληνικά</a> |
-  <a href="README.vi.md">Tiếng Việt</a>
-</p>
-
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
+<h1 align="center">O M A I +</h1>
+<p align="center">Build, preview and publish apps with AI.</p>
 
 ---
 
-### Installation
+## What it does
+
+- **AI sessions** that write and change your project's code.
+- **Live preview** of the running app, with visual editing and a website audit.
+- **Git and Checkpoints** to commit, push and pull, and to restore code and conversation to any earlier point.
+- **Publishing and Domains** to put an app online on Cloudflare and connect custom domains.
+
+## Requirements
+
+- [Bun](https://bun.sh) 1.4.4
+- Node.js with npm (to install, run and publish the apps you build)
+- Git
+- Google Chrome (for preview thumbnails)
+
+## Getting started
 
 ```bash
-# YOLO
-curl -fsSL https://opencode.ai/v2/install | bash
-
-# Package managers
-npm i -g @opencode/cli@latest      # or bun/pnpm/yarn
-brew install anomalyco/tap/opencode-v2 # macOS and Linux (recommended, always up to date)
-brew install opencode              # macOS and Linux (official brew formula, updated less)
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-beta              # Arch Linux (Latest from AUR)
-mise use -g opencode               # Any OS
-nix run github:anomalyco/opencode  # Nix
+bun install
+cp .env.sample .env    # then fill in the values
+bun dev serve --port 4096 --cors localhost:3000 # server
+cd packages/app && bun dev -- --port 4444   # web app
 ```
 
-> [!TIP]
-> Remove versions older than 0.1.x before installing.
+Open http://localhost:3000. It talks to the server on port 4096.
 
-### Desktop App (BETA)
+## Environment
 
-OpenCode is also available as a desktop application. Download it from [opencode.ai/download](https://opencode.ai/download).
+The server reads these variables. `bun dev` loads them from `.env` in the repository root.
 
-| Platform              | Download                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-win-x64.exe`     |
-| Linux                 | `.deb`, `.rpm`, or `.AppImage`     |
+| Variable                             | Required       | Description                                                                   |
+| ------------------------------------ | -------------- | ----------------------------------------------------------------------------- |
+| `OMAI_CLOUDFLARE_API_TOKEN`          | For publishing | Cloudflare API token (permissions below)                                      |
+| `OMAI_CLOUDFLARE_ACCOUNT_ID`         | For publishing | Cloudflare account ID                                                         |
+| `OMAI_CLOUDFLARE_PLATFORM_ZONE`      | No             | Zone that published apps are served on, as `<name>.<zone>`. Default `omai.ch` |
+| `OMAI_CLOUDFLARE_DISPATCH_NAMESPACE` | No             | Workers for Platforms dispatch namespace. Default `omai-apps`                 |
+| `OMAI_CLOUDFLARE_APEX_IPS`           | No             | Comma-separated IPs, only if the account has Cloudflare apex proxying         |
+
+Without the Cloudflare variables, everything else works and the Publishing and Domains tools show "not set up".
+
+### Cloudflare API token permissions
+
+Create a custom token at **My Profile → API Tokens** with the permissions below.
+
+| Scope   | Permission           | Access | Used for                                                       |
+| ------- | -------------------- | ------ | -------------------------------------------------------------- |
+| Account | Workers Scripts      | Edit   | Uploading apps to the dispatch namespace                       |
+| Account | Workers KV Storage   | Edit   | The hostname → app map that the dispatcher reads               |
+| Zone    | Workers Routes       | Edit   | Routing the platform zone and custom domains to the dispatcher |
+| Zone    | DNS                  | Edit   | Wildcard and fallback-origin records                           |
+| Zone    | SSL and Certificates | Edit   | Custom hostnames (Cloudflare for SaaS)                         |
+| Zone    | Zone                 | Read   | Looking up the zone                                            |
+
+Limit the token to your account and the platform zone. The account also needs **Workers for Platforms**, and the zone needs **Cloudflare for SaaS** enabled.
+
+## Development
 
 ```bash
-# macOS (Homebrew)
-brew install --cask opencode-desktop
+bun run check          # lint and type-check everything, from the repository root
+cd packages/core && bun test   # tests run from a package directory, never the root
 ```
 
-#### Installation Directory
-
-The install script installs OpenCode to `$HOME/.omai/bin`.
-
-### Agents
-
-OpenCode includes two built-in agents you can switch between with the `Tab` key.
-
-- **build** - Default, full-access agent for development work
-- **plan** - Read-only agent for analysis and code exploration
-  - Denies file edits by default
-  - Asks permission before running bash commands
-  - Ideal for exploring unfamiliar codebases or planning changes
-
-Also included is a **general** subagent for complex searches and multistep tasks.
-This is used internally and can be invoked using `@general` in messages.
-
-Learn more about [agents](https://opencode.ai/v2/docs/agents).
-
-### Documentation
-
-For more info on how to configure OpenCode, [**head over to our docs**](https://opencode.ai/v2/docs).
-
-### Contributing
-
-If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
-
-### Building on OpenCode
-
-If you are working on a project that's related to OpenCode and is using "opencode" as part of its name, for example "opencode-dashboard" or "opencode-mobile", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.
-
----
-
-**Join our community** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)
+See [AGENTS.md](./AGENTS.md) for the code style and patterns

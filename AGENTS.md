@@ -1,23 +1,44 @@
-- After changing the public Protocol or Server `HttpApi`, run `bun run generate` from `packages/client`. Do not edit generated client files directly.
+# O M A I +
+
+O M A I + builds, previews and publishes apps with AI. This monorepo started from opencode, so packages keep the `@opencode/*` scope and some internals still say opencode. Product copy never does.
+
+## Product rules
+
+- **Name:** always write "O M A I +" (spaced) in user-facing copy. Use `omai` only where spaces or symbols are not allowed (ids, env vars, package or script names, hostnames).
+- **Logo:** the brand icon always sits on its blue background. The only exception is the rail's coming-soon slot.
+- **Theme:** Tailwind defaults are reset, so use arbitrary values (`text-[13px]`, `bg-[#0a3a78]`). Brand blue is `#0a3a78` (hover `#082f62`) with white text, and the active tint is `bg-[#1a64d6]/15`. Every clickable element shows a pointer, and every screen works in light and dark.
+- **Copy:** all visible text goes through i18n. Add English only; other locales fall back to it.
+
+## Repository rules
+
+- After changing the public Protocol or Server `HttpApi`, run `bun run generate` from `packages/protocol`, then from `packages/client`. Do not edit generated client files directly.
 - Keep runtime dependencies directed from Schema to Core and Protocol, then from Core and Protocol to Server. Client runtime code may depend on Schema and Protocol but never Core or Server; `sdk` composes Client, Core, and Server.
-- This repository does not use Changesets. Do not add `.changeset` files; follow the existing release workflow instead.
-- The default branch is `dev`. Base branches and worktrees on `origin/dev`, target PRs at `dev`, and diff against `origin/dev` unless told otherwise.
+- **The built server runs on Node.** Never use `Bun.*` APIs in `core`, `server`, `schema` or `protocol` source; use `node:*` modules. Scripts and tests may use Bun.
+- GUI plugins (`packages/gui-plugins`) follow `packages/gui-plugins/AGENTS.md`. The app follows `packages/app/AGENTS.md`.
+- This repository does not use Changesets. Do not add `.changeset` files.
+- Database changes use a generated migration: `bun run migration --name <name>` in `packages/core`.
 
-## Branch Names
+## Git
 
-Use a short branch name of at most three words, separated by hyphens. Do not use slashes or type prefixes such as `feat/` or `fix/`.
+- Branches are `dev` and `production`. Work on the current branch. Do not create branches or worktrees unless asked.
+- Commit only when asked. Never mention AI tools in commits or PRs, and add no attribution trailers.
+- Use conventional commit messages: `type(scope): summary`. Types are `feat`, `fix`, `docs`, `chore`, `refactor` and `test`. Scopes are optional, for example `core`, `server`, `cli`, `app` or `plugin`.
 
-Examples: `session-recovery`, `fix-scroll-state`, `regenerate-sdk`.
+## Local development
 
-## Commits and PR Titles
+- Install with `bun install`, then copy `.env.sample` to `.env` (see README.md for the variables).
+- Server: `bun dev serve --port 4096` from the repository root (loads the root `.env`).
+- Web app: `bun dev -- --port 4444` from `packages/app`.
+- Never restart or kill a developer's running servers. Test against your own instance on another port.
+- Built CLI: `bun run build --single --skip-install` in `packages/cli`. After a build, unregister the service worker in the browser, or it serves the old bundle.
 
-Use conventional commit-style messages and PR titles: `type(scope): summary`.
+## Publishing (Cloudflare)
 
-Valid types are `feat`, `fix`, `docs`, `chore`, `refactor`, and `test`. Scopes are optional; use the affected package or area when helpful, e.g. `core`, `server`, `cli`, `app`, or `plugin`.
-
-Examples: `fix(app): simplify thinking toggle styling`, `docs: update contributing guide`, `chore(client): regenerate types`.
-
-For user-facing `feat`, `fix` and `perf` PRs, add a small looping animated SVG of the change under `### Visual` in the PR body (a `svg` code block, 240×72, for example a dock growing out of the composer or spinners turning in step). Draw with `currentColor` and opacity so it works in light and dark, make the unanimated state a good still (it is shown under reduced motion), animate with CSS or SMIL only, and keep it under 8 KB with no scripts or external references. The desktop beta's "What's new" dialog shows it.
+- Publishing and Domains use Cloudflare Workers for Platforms and Cloudflare for SaaS (`packages/core/src/publish`). Credentials come from `OMAI_CLOUDFLARE_*` env vars.
+- **The Cloudflare account is shared with a live production project.** Code may only create, change or delete scripts, KV keys and custom hostnames recorded in our own database. Never touch anything else.
+- The platform setup script (`bun --env-file=../../.env script/publish-platform.ts` in `packages/core`) only creates what is missing. Run it with `--dry-run` first. It redeploys the dispatcher, so check existing sites before and after.
+- Automated tests use the local fake Cloudflare server in `packages/core/test/publish`, never the real account. Real end-to-end checks use new `omai-e2e-*` names and delete them afterwards.
+- Builds run in a staging copy under the data directory, never in the user's project, with an allowlisted environment. Build code must never see server secrets.
 
 ## Style Guide
 
@@ -148,7 +169,7 @@ const table = sqliteTable("session", {
 - `packages/protocol/test/experimental-identifiers.test.ts` enforces the path and identifier match in both directions; the SDK namespace follows from the path.
 - An experimental field or parameter on a stable endpoint goes under an `experimental` key (`experimental.<name>`), the same way config does (`config.experimental.*`).
 - New endpoints and new default behaviors start experimental.
-- To graduate one, move the route out of `/api/experimental`, drop the `experimental.` prefix, and note it in `CHANGELOG.md`.
+- To graduate one, move the route out of `/api/experimental`, and drop the `experimental.` prefix.
 - Experimental HTTP routes change without aliases: rename or remove the route, then update the callers.
 - A breaking move of shipped SDK or plugin API (including moving it under `experimental`) keeps the old path and type names as deprecated aliases of the new ones until the next minor, each marked `@deprecated` with the replacement and "Removed in the next minor". Generated SDK moves get them from the codegen (`compile(..., { aliases: true })` in `packages/client/script/generate.ts`), not by hand.
 - Experimental plugin hooks are named `experimental.*` (`experimental.ws.handshake`).
@@ -158,7 +179,7 @@ const table = sqliteTable("session", {
 - Avoid mocks as much as possible, you shouldn't be using globalThis.\* at all unless it's the only option.
 - Test actual implementation, do not duplicate logic into tests
 - Tests cannot run from repo root (guard: `do-not-run-tests-from-root`); run from package directories such as `packages/core`.
-- Before writing or changing tests, read the matching skill in `.omai/skills`: `unit-tests` (bun test), `app-e2e-tests` (Playwright in `packages/app/e2e`) or `component-tests` (Playwright on stories, `packages/stories`). They cover what has made tests slow or flaky in CI.
+- Look at existing tests in the same package for the harness and style before adding one.
 
 ## Checks
 
