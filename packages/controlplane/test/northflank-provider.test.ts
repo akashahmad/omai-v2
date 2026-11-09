@@ -50,7 +50,7 @@ describe("NorthflankVmProvider", () => {
     const address = await p.provider.create(spec())
     const service = [...fake.state.services.values()][0]!
     const volume = [...fake.state.volumes.values()][0]!
-    expect(service.name).toBe(`omai-vm-${PROJECT}`)
+    expect(service.name).toBe(`omai-vm-${PROJECT.replace(/-/g, "")}`)
     expect(volume.name.startsWith("omai-vol-")).toBe(true)
     expect(volume.name.length).toBeLessThanOrEqual(39)
     expect(volume.mount).toBe("/home/omai")
@@ -73,7 +73,7 @@ describe("NorthflankVmProvider", () => {
       vmID: service.id,
       host: `http://${service.id}:4096`,
       home: "/home/omai",
-      preview: `https://preview--${service.id}--abcd.code.run`,
+      preview: `https://preview--${service.id}--abcdefghijkl.code.run`,
     })
   })
 
@@ -81,7 +81,7 @@ describe("NorthflankVmProvider", () => {
     const p = provider()
     fake.state.hideNew = 3
     const address = await p.provider.create(spec())
-    expect(address.vmID).toBe(`omai-vm-${PROJECT}`)
+    expect(address.vmID).toBe(`omai-vm-${PROJECT.replace(/-/g, "")}`)
     expect([...fake.state.services.values()][0]!.instances).toBe(1)
     expect([...fake.state.volumes.values()][0]!.attachedTo).toBe(address.vmID)
   })
@@ -91,7 +91,7 @@ describe("NorthflankVmProvider", () => {
     fake.state.raceNextCreate = true
     const address = await p.provider.create(spec())
     expect(fake.state.services.size).toBe(1)
-    expect(address.vmID).toBe(`omai-vm-${PROJECT}`)
+    expect(address.vmID).toBe(`omai-vm-${PROJECT.replace(/-/g, "")}`)
     // Created again (a retried project): the same service and volume, with the new token.
     const again = await p.provider.create({ ...spec(), env: { ...spec().env, OMAI_PROJECT_TOKEN: "new-token" } })
     expect(again.vmID).toBe(address.vmID)
@@ -164,7 +164,7 @@ describe("NorthflankVmProvider", () => {
   test("public VMs expose the api port and use its public address", async () => {
     const p = provider({ OMAI_APP_ORIGIN: "http://localhost:4455", OMAI_NORTHFLANK_PUBLIC_VMS: "true" })
     const address = await p.provider.create(spec())
-    expect(address.host).toBe(`https://api--${address.vmID}--abcd.code.run`)
+    expect(address.host).toBe(`https://api--${address.vmID}--abcdefghijkl.code.run`)
   })
 
   test("public VMs are refused outside localhost", () => {
@@ -185,6 +185,13 @@ describe("NorthflankVmProvider", () => {
     expect(() =>
       provider({ OMAI_CONTROL_PLANE_VM_URL: "", OMAI_APP_ORIGIN: "http://localhost:4455", OMAI_NORTHFLANK_PUBLIC_VMS: "true" }),
     ).not.toThrow()
+  })
+
+  test("the longest prefix still fits the preview port's address", async () => {
+    const p = provider({ OMAI_NORTHFLANK_NAME_PREFIX: "omai-e2e-xyz" })
+    const address = await p.provider.create(spec())
+    expect(address.vmID.startsWith("omai-e2e-xyz-vm-")).toBe(true)
+    expect(address.preview).toBeDefined()
   })
 
   test("missing Northflank variables are named", () => {

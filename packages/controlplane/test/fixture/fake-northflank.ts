@@ -80,6 +80,12 @@ export async function fakeNorthflank() {
       }))
     if (key === "POST /services/deployment") {
       if (services.some((item) => item.name === body.name)) return fail(res, 409, "A service with this name exists")
+      // A public port's address is `<port>--<service>--<namespace>.code.run`; its first label is at most 63 characters
+      // (the namespace is 12 characters on Northflank).
+      const long = (body.ports ?? []).find(
+        (port: FakeService["ports"][number]) => port.public && `${port.name}--${body.name}--abcdefghijkl`.length > 63,
+      )
+      if (long) return fail(res, 400, `DNS length for port "${long.name}" would exceed total length of 63 characters.`)
       const service: FakeService = {
         id: body.name,
         project,
@@ -91,7 +97,7 @@ export async function fakeNorthflank() {
         env: body.runtimeEnvironment ?? {},
         ports: (body.ports ?? []).map((port: FakeService["ports"][number]) => ({
           ...port,
-          ...(port.public ? { dns: `${port.name}--${body.name}--abcd.code.run` } : {}),
+          ...(port.public ? { dns: `${port.name}--${body.name}--abcdefghijkl.code.run` } : {}),
         })),
         plan: body.billing?.deploymentPlan,
         volumes: [],

@@ -40,7 +40,9 @@ export function make(
   const running = new Map<string, VmAddress>()
   const listed: { at: number; ids?: Promise<string[]> } = { at: 0 }
 
-  const serviceName = (projectID: string) => `${servicePrefix}${slug(projectID)}`
+  // A public port's address is `<port>--<service>--<12-character namespace>.code.run`, and its first label is at most 63
+  // characters: with the `preview` port that leaves 40 for the name, the whole project ID without dashes for prefix `omai`.
+  const serviceName = (projectID: string) => `${servicePrefix}${slug(projectID).replace(/-/g, "")}`.slice(0, 40)
   const volumeName = (projectID: string) => `${nf.prefix}-vol-${slug(projectID).replace(/-/g, "")}`.slice(0, 39)
   const ours = (vmID: string) => {
     if (!vmID.startsWith(servicePrefix)) throw new Error(`Not a VM of this control plane: ${vmID}`)
