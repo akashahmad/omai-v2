@@ -458,7 +458,8 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         setTabLayout(value: TabLayout) {
           setStore("appearance", "tabLayout", value)
         },
-        sidebarOpen: withFallback(() => store.appearance?.sidebarOpen, true),
+        // Closed until someone opens it with its toggle; their choice is kept from then on.
+        sidebarOpen: withFallback(() => store.appearance?.sidebarOpen, false),
         setSidebarOpen(value: boolean) {
           setStore("appearance", "sidebarOpen", value)
         },
