@@ -179,3 +179,19 @@ test("a reconnect does not ask the volatile event stream to replay", async () =>
     ctx.dispose()
   }
 })
+
+// Over a slow line (a far-away server behind a router) the first event can take seconds; that is not a dead stream.
+test("a server slow to send its first event still connects on the first try", async () => {
+  const fake = server()
+  const ctx = setup(fake, 10_000)
+  try {
+    await until(() => fake.streams.length === 1)
+    await new Promise((resolve) => setTimeout(resolve, 2_500))
+    fake.streams[0].write(`data: ${JSON.stringify(connected)}\n\n`)
+    await until(() => ctx.connection.status() === "connected")
+    expect(fake.streams).toHaveLength(1)
+    expect(fake.streams[0].aborted).toBe(false)
+  } finally {
+    ctx.dispose()
+  }
+}, 10_000)

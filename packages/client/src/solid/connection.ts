@@ -29,7 +29,9 @@ export type ClientConnectionOptions = {
   }
 }
 
-const connectTimeout = 2_000
+// How long a new stream may take to send its first event. A far-away server behind a router can take seconds over a
+// slow line, and giving up early only starts the same slow connect again, so this allows for that.
+const connectTimeout = 15_000
 const reconnectDelay = 1_000
 const connectionHistoryLimit = 50
 export const defaultIdleTimeout = 45_000
