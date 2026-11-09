@@ -4,6 +4,8 @@
 # The platform server (admins' shared providers) is an `omai serve` the control plane starts itself, so this image
 # carries the same linux-x64 binary as the VMs.
 FROM --platform=$BUILDPLATFORM oven/bun:1.4.4 AS cli
+# The build runs the Node it embeds in the binary, which needs libatomic.
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
 RUN bun install --os=* --cpu=* --ignore-scripts && bun run --cwd packages/core fix-node-pty
@@ -23,6 +25,8 @@ COPY --from=bundle /src/packages/controlplane/dist/node ./dist/node
 COPY --from=bundle /src/packages/controlplane/migration ./migration
 # PGlite and pg, kept outside the bundle, at the versions its package.json pins.
 RUN cd dist/node && npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+# The omai binary embeds Node 26, which needs libatomic.
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 && rm -rf /var/lib/apt/lists/*
 COPY --from=cli /omai/ /opt/omai/
 RUN ln -s /opt/omai/bin/omai /usr/local/bin/omai && omai --version
 RUN mkdir -p /data && chown node:node /data

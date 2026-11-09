@@ -4,6 +4,8 @@
 # The builder runs on the build machine's own platform and cross-builds the linux-x64 binary, so an arm64 laptop
 # builds at full speed. It is not part of the image.
 FROM --platform=$BUILDPLATFORM oven/bun:1.4.4 AS builder
+# The build runs the Node it embeds in the binary, which needs libatomic.
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
 RUN bun install --os=* --cpu=* --ignore-scripts && bun run --cwd packages/core fix-node-pty
@@ -14,7 +16,7 @@ FROM debian:bookworm-slim
 
 # Rarely changing layers first: system packages, Node 22 and the package managers.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl gnupg git ripgrep unzip chromium fonts-liberation \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg git ripgrep unzip chromium fonts-liberation libatomic1 \
   && mkdir -p /etc/apt/keyrings \
   && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
   && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
