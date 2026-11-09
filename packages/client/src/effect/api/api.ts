@@ -2561,9 +2561,9 @@ export interface ExperimentalApi<E = never> {
 
 export type ExperimentalPlatformProvidersOutput = ReadonlyArray<{
   readonly id: string
-  readonly auth: "bearer" | "x-api-key" | "x-goog-api-key"
-  readonly key: string
-  readonly bases: ReadonlyArray<string>
+  readonly integrationID: string
+  readonly value: Credential.Key | Credential.OAuth
+  readonly hosts: ReadonlyArray<string>
   readonly models: ReadonlyArray<{ readonly id: string; readonly api: string }>
 }>
 export type ExperimentalPlatformProvidersOperation<E = never> = () => Effect.Effect<
@@ -2571,8 +2571,19 @@ export type ExperimentalPlatformProvidersOperation<E = never> = () => Effect.Eff
   E
 >
 
+export type ExperimentalPlatformHostsOutput = { readonly [x: string]: ReadonlyArray<string> }
+export type ExperimentalPlatformHostsOperation<E = never> = () => Effect.Effect<ExperimentalPlatformHostsOutput, E>
+
+export type ExperimentalPlatformRefreshInput = { readonly integrationID: string; readonly value: Credential.OAuth }
+export type ExperimentalPlatformRefreshOutput = Credential.OAuth
+export type ExperimentalPlatformRefreshOperation<E = never> = (
+  input: ExperimentalPlatformRefreshInput,
+) => Effect.Effect<ExperimentalPlatformRefreshOutput, E>
+
 export interface ExperimentalPlatformApi<E = never> {
   readonly providers: ExperimentalPlatformProvidersOperation<E>
+  readonly hosts: ExperimentalPlatformHostsOperation<E>
+  readonly refresh: ExperimentalPlatformRefreshOperation<E>
 }
 
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
@@ -3020,6 +3031,21 @@ export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
 /** @deprecated Use `ExperimentalPlatformProvidersOperation`. Removed in the next minor. */
 export type PlatformProvidersOperation<E = never> = ExperimentalPlatformProvidersOperation<E>
 
+/** @deprecated Use `ExperimentalPlatformHostsOutput`. Removed in the next minor. */
+export type PlatformHostsOutput = ExperimentalPlatformHostsOutput
+
+/** @deprecated Use `ExperimentalPlatformHostsOperation`. Removed in the next minor. */
+export type PlatformHostsOperation<E = never> = ExperimentalPlatformHostsOperation<E>
+
+/** @deprecated Use `ExperimentalPlatformRefreshInput`. Removed in the next minor. */
+export type PlatformRefreshInput = ExperimentalPlatformRefreshInput
+
+/** @deprecated Use `ExperimentalPlatformRefreshOutput`. Removed in the next minor. */
+export type PlatformRefreshOutput = ExperimentalPlatformRefreshOutput
+
+/** @deprecated Use `ExperimentalPlatformRefreshOperation`. Removed in the next minor. */
+export type PlatformRefreshOperation<E = never> = ExperimentalPlatformRefreshOperation<E>
+
 /** @deprecated Use `ExperimentalMigrationV1StatusOutput`. Removed in the next minor. */
 export type MigrationV1StatusOutput = ExperimentalMigrationV1StatusOutput
 
@@ -3112,6 +3138,12 @@ export interface AppApi<E = never> {
   readonly platform: {
     /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
     readonly providers: ExperimentalPlatformProvidersOperation<E>
+
+    /** @deprecated Use `client.experimental.platform.hosts`. Removed in the next minor. */
+    readonly hosts: ExperimentalPlatformHostsOperation<E>
+
+    /** @deprecated Use `client.experimental.platform.refresh`. Removed in the next minor. */
+    readonly refresh: ExperimentalPlatformRefreshOperation<E>
   }
 
   /** @deprecated Use `client.experimental.migration`. Removed in the next minor. */

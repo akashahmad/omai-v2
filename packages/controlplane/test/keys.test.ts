@@ -30,9 +30,16 @@ async function setup() {
     value: [
       {
         id: "openai",
-        auth: "bearer",
-        key: "sk-shared",
-        bases: ["https://api.openai.com/v1"],
+        integrationID: "openai",
+        value: {
+          type: "oauth",
+          methodID: "chatgpt",
+          access: "at-shared",
+          refresh: "rt-shared",
+          expires: 1,
+          metadata: { clientID: "c" },
+        },
+        hosts: ["api.openai.com"],
         models: [
           { id: "gpt-5", api: "gpt-5" },
           { id: "gpt-4", api: "gpt-4" },
@@ -40,16 +47,36 @@ async function setup() {
       },
       {
         id: "groq",
-        auth: "bearer",
-        key: "gsk",
-        bases: ["https://api.groq.com"],
+        integrationID: "groq",
+        value: { type: "key", key: "gsk" },
+        hosts: ["api.groq.com"],
         models: [{ id: "llama", api: "llama" }],
       },
     ],
   }
+  const refreshes: unknown[] = []
   const platformServer = await listen(
     createServer((req, res) => {
       if (req.headers["x-omai-platform-secret"] !== "s3") return res.writeHead(404).end()
+      if (req.url === "/api/experimental/platform/hosts")
+        return res.writeHead(200).end(JSON.stringify({ openai: ["api.openai.com", "chatgpt.com"] }))
+      if (req.url === "/api/experimental/platform/refresh") {
+        const chunks: Buffer[] = []
+        req.on("data", (chunk: Buffer) => chunks.push(chunk))
+        req.on("end", () => {
+          const input = JSON.parse(Buffer.concat(chunks).toString()) as { value: Record<string, unknown> }
+          refreshes.push(input)
+          // Slow, so two callers overlap.
+          setTimeout(
+            () =>
+              res
+                .writeHead(200)
+                .end(JSON.stringify({ ...input.value, access: "at-new", refresh: "rt-new", expires: 9e12 })),
+            50,
+          )
+        })
+        return
+      }
       res.writeHead(exported.status).end(JSON.stringify(exported.value))
     }),
   )
@@ -65,13 +92,22 @@ async function setup() {
     },
     now: h.time.now,
   })
-  return { ...h, keys, exported, switched }
+  return { ...h, keys, exported, switched, refreshes }
 }
 
 describe("Keys", () => {
-  test("shared: connected providers with their real key and only switched-on models", async () => {
+  test("shared: connected providers and only switched-on models, never their secret", async () => {
     const s = await setup()
-    expect(await s.keys.shared()).toEqual([{ id: "openai", key: "sk-shared", models: ["gpt-5"] }])
+    expect(await s.keys.shared()).toEqual([
+      {
+        id: "openai",
+        integrationID: "openai",
+        type: "oauth",
+        methodID: "chatgpt",
+        metadata: { clientID: "c" },
+        models: ["gpt-5"],
+      },
+    ])
   })
 
   test("shared keeps the last good list when the platform server fails", async () => {
@@ -79,7 +115,16 @@ describe("Keys", () => {
     await s.keys.shared()
     s.exported.status = 500
     s.time.advance(60_000)
-    expect(await s.keys.shared()).toEqual([{ id: "openai", key: "sk-shared", models: ["gpt-5"] }])
+    expect(await s.keys.shared()).toEqual([
+      {
+        id: "openai",
+        integrationID: "openai",
+        type: "oauth",
+        methodID: "chatgpt",
+        metadata: { clientID: "c" },
+        models: ["gpt-5"],
+      },
+    ])
   })
 
   test("personal credentials belong to one user", async () => {
@@ -142,7 +187,16 @@ describe("Keys", () => {
     expect(await s.keys.shared()).toBeUndefined()
     s.exported.status = 200
     // A failure is not cached: the next ask succeeds at once.
-    expect(await s.keys.shared()).toEqual([{ id: "openai", key: "sk-shared", models: ["gpt-5"] }])
+    expect(await s.keys.shared()).toEqual([
+      {
+        id: "openai",
+        integrationID: "openai",
+        type: "oauth",
+        methodID: "chatgpt",
+        metadata: { clientID: "c" },
+        models: ["gpt-5"],
+      },
+    ])
   })
 
   test("a credential that can't be decrypted is left out, never sent as empty", async () => {
@@ -150,5 +204,70 @@ describe("Keys", () => {
     await s.keys.put(s.a, { id: "c1", integrationID: "openai", label: "Mine", value: key("sk-a"), updatedAt: 1 })
     await s.db.update(UserCredentialTable).set({ value: "broken.sealed.value" })
     expect(await s.keys.personal(s.a)).toEqual([])
+  })
+
+  const signIn = (access: string, expires: number) => ({
+    type: "oauth",
+    methodID: "chatgpt",
+    access,
+    refresh: "rt-a",
+    expires,
+    metadata: { clientID: "c" },
+  })
+
+  test("a user's sign-in reaches their VMs only as a stand-in; a stand-in never overwrites it", async () => {
+    const s = await setup()
+    await s.keys.put(s.a, {
+      id: "c1",
+      integrationID: "openai",
+      label: "ChatGPT",
+      value: signIn("at-a", 9e12),
+      updatedAt: 1,
+    })
+    expect(await s.keys.personal(s.a)).toEqual([
+      {
+        id: "c1",
+        integrationID: "openai",
+        label: "ChatGPT",
+        value: { ...signIn("omai-gw.u~c1", 253_402_300_799_000), refresh: "omai-gw.u~c1" },
+        updatedAt: 1,
+        deleted: false,
+      },
+    ])
+    const back = (await s.keys.personal(s.a))[0]!
+    expect(
+      await s.keys.put(s.a, { id: "c1", integrationID: "openai", label: "x", value: back.value, updatedAt: 99 }),
+    ).toBe("stale")
+    expect(await s.keys.secret(s.a, "u~c1")).toEqual({ secret: "at-a", hosts: ["api.openai.com", "chatgpt.com"] })
+  })
+
+  test("the gateway's secrets: the shared one while its models are on, a user's own only for that user", async () => {
+    const s = await setup()
+    expect(await s.keys.secret(s.b, "s~openai")).toEqual({ secret: "at-shared", hosts: ["api.openai.com"] })
+    // groq has no switched-on models, so it is not shared.
+    expect(await s.keys.secret(s.b, "s~groq")).toBeUndefined()
+    await s.keys.put(s.a, { id: "k1", integrationID: "openai", label: "Key", value: key("sk-a"), updatedAt: 1 })
+    expect(await s.keys.secret(s.a, "u~k1")).toMatchObject({ secret: "sk-a" })
+    expect(await s.keys.secret(s.b, "u~k1")).toBeUndefined()
+    expect(await s.keys.secret(s.a, "nope")).toBeUndefined()
+  })
+
+  test("a sign-in about to expire is refreshed once, here, for every caller", async () => {
+    const s = await setup()
+    await s.keys.put(s.a, {
+      id: "c1",
+      integrationID: "openai",
+      label: "ChatGPT",
+      value: signIn("at-old", 1),
+      updatedAt: 1,
+    })
+    const [first, second] = await Promise.all([s.keys.secret(s.a, "u~c1"), s.keys.secret(s.a, "u~c1")])
+    expect(first?.secret).toBe("at-new")
+    expect(second?.secret).toBe("at-new")
+    expect(s.refreshes).toHaveLength(1)
+    expect(s.refreshes[0]).toMatchObject({ integrationID: "openai", value: { access: "at-old", refresh: "rt-a" } })
+    // Stored, so the next call needs no refresh.
+    expect((await s.keys.secret(s.a, "u~c1"))?.secret).toBe("at-new")
+    expect(s.refreshes).toHaveLength(1)
   })
 })

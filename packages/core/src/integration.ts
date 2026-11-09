@@ -182,6 +182,14 @@ export interface Interface extends State.Transformable<Editor> {
     readonly resolve: (
       connection: IntegrationConnection.Info,
     ) => Effect.Effect<Credential.Value | undefined, AuthorizationError>
+    /**
+     * Refreshes a sign-in that is kept elsewhere (a user's, held by a multi-user control plane) with its method's own
+     * refresh, without storing it. Undefined when the method can't refresh.
+     */
+    readonly refresh: (
+      integrationID: ID,
+      value: Credential.OAuth,
+    ) => Effect.Effect<Credential.OAuth | undefined, AuthorizationError>
     /** Runs a key method and stores the resulting credential. */
     readonly key: (input: {
       /** Integration receiving the credential. */
@@ -724,6 +732,11 @@ const layer = Layer.effect(
               }),
             ),
           )
+        }),
+        refresh: Effect.fn("Integration.connection.refresh")(function* (integrationID, value) {
+          const refresh = state.get().integrations.get(integrationID)?.implementations.get(value.methodID)?.refresh
+          if (!refresh) return undefined
+          return yield* authorize(refresh(value).pipe(Effect.timeout("30 seconds")))
         }),
         key: Effect.fn("Integration.connection.key")(function* (input) {
           const method = state

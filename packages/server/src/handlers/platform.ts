@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto"
 import { PlatformProviders } from "@opencode/core/platform/providers"
-import { FileNotFoundError } from "@opencode/protocol/errors"
+import { FileNotFoundError, InvalidRequestError } from "@opencode/protocol/errors"
 import { Effect } from "effect"
 import type { HttpServerRequest } from "effect/http"
 import { HttpApiBuilder } from "effect/http-api"
@@ -13,7 +13,24 @@ const missing = new FileNotFoundError({ path: "/api/experimental/platform/provid
  * platform server, and only to a request carrying its secret, so no admin's browser (or anything else) reads them.
  */
 export const PlatformHandler = HttpApiBuilder.group(Api, "server.platform", (handlers) =>
-  Effect.succeed(handlers.handle("platform.providers", (ctx) => providers(ctx.request))),
+  Effect.succeed(
+    handlers
+      .handle("platform.providers", (ctx) => providers(ctx.request))
+      .handle("platform.hosts", (ctx) =>
+        allowed(ctx.request.headers["x-omai-platform-secret"], process.env.OMAI_PLATFORM_SECRET)
+          ? PlatformProviders.hosts
+          : Effect.fail(missing),
+      )
+      .handle("platform.refresh", (ctx) =>
+        Effect.gen(function* () {
+          if (!allowed(ctx.request.headers["x-omai-platform-secret"], process.env.OMAI_PLATFORM_SECRET))
+            return yield* missing
+          const value = yield* PlatformProviders.refresh(ctx.payload)
+          if (!value) return yield* new InvalidRequestError({ message: "This sign-in can't be refreshed" })
+          return value
+        }),
+      ),
+  ),
 )
 
 function providers(request: HttpServerRequest.HttpServerRequest) {

@@ -1,19 +1,18 @@
 import { describe, expect, test } from "bun:test"
+import { Credential } from "@opencode/core/credential"
+import { Integration } from "@opencode/core/integration"
 import { PlatformProviders } from "@opencode/core/platform/providers"
 
 describe("PlatformProviders", () => {
-  test("auth styles per package; providers without plain API keys are unsupported", () => {
-    expect(PlatformProviders.auth("@ai-sdk/anthropic")).toBe("x-api-key")
-    expect(PlatformProviders.auth("aisdk:@ai-sdk/anthropic")).toBe("x-api-key")
-    expect(PlatformProviders.auth("@opencode/ai/providers/anthropic")).toBe("x-api-key")
-    expect(PlatformProviders.auth("@ai-sdk/google")).toBe("x-goog-api-key")
-    expect(PlatformProviders.auth("@opencode/ai/providers/google/interactions")).toBe("x-goog-api-key")
-    expect(PlatformProviders.auth("@opencode/ai/providers/openai/responses")).toBe("bearer")
-    expect(PlatformProviders.auth("@ai-sdk/openai-compatible")).toBe("bearer")
-    expect(PlatformProviders.auth("@opencode/ai/providers/google-vertex/messages")).toBeUndefined()
-    expect(PlatformProviders.auth("@opencode/ai/providers/amazon-bedrock")).toBeUndefined()
-    expect(PlatformProviders.auth("@opencode/ai/providers/azure/chat")).toBeUndefined()
-    expect(PlatformProviders.auth(undefined)).toBeUndefined()
+  test("only packages that sign requests themselves or run a local tool can't be shared", () => {
+    expect(PlatformProviders.shareable("@ai-sdk/anthropic")).toBe(true)
+    expect(PlatformProviders.shareable("@opencode/ai/providers/openai/responses")).toBe(true)
+    expect(PlatformProviders.shareable("@ai-sdk/openai-compatible")).toBe(true)
+    expect(PlatformProviders.shareable("@opencode/ai/providers/github-copilot")).toBe(true)
+    expect(PlatformProviders.shareable("@opencode/ai/providers/google-vertex/messages")).toBe(false)
+    expect(PlatformProviders.shareable("@opencode/ai/providers/amazon-bedrock")).toBe(false)
+    expect(PlatformProviders.shareable("@opencode/ai/providers/claude-agent")).toBe(false)
+    expect(PlatformProviders.shareable(undefined)).toBe(false)
   })
 
   test("a provider's API base falls back to its package's built-in address", () => {
@@ -28,31 +27,44 @@ describe("PlatformProviders", () => {
     expect(PlatformProviders.base({ package: "@ai-sdk/openai-compatible" })).toBeUndefined()
   })
 
-  test("select keeps key-connected, supported providers with every base their models use", () => {
+  test("select shares key and sign-in providers with the hosts their models use", () => {
     const providers = [
-      { id: "openai", package: "@ai-sdk/openai" },
+      { id: "openai", integrationID: "openai", package: "@ai-sdk/openai" },
       { id: "groq", package: "@ai-sdk/openai-compatible", settings: { baseURL: "https://api.groq.com/openai/v1" } },
       { id: "vertex", package: "@opencode/ai/providers/google-vertex" },
       { id: "nokey", package: "@ai-sdk/anthropic" },
-      { id: "oauth", package: "@ai-sdk/openai" },
+      {
+        id: "copilot",
+        integrationID: "github-copilot",
+        package: "@opencode/ai/providers/github-copilot",
+        settings: { baseURL: "https://api.githubcopilot.com" },
+      },
     ]
     const models = [
       { id: "gpt-eu", modelID: "gpt-5", providerID: "openai", settings: { baseURL: "https://eu.api.openai.com/v1" } },
       { id: "gpt-5", providerID: "openai" },
       { id: "llama", providerID: "groq" },
+      { id: "c", providerID: "copilot" },
     ]
-    const keys = new Map<string, { type: string; key?: string }>([
+    const signIn: Credential.Value = {
+      type: "oauth",
+      methodID: Integration.MethodID.make("m"),
+      access: "at",
+      refresh: "rt",
+      expires: 1,
+    }
+    const credentials = new Map<string, Credential.Value>([
       ["openai", { type: "key", key: "sk-1" }],
       ["groq", { type: "key", key: "gsk-2" }],
       ["vertex", { type: "key", key: "v" }],
-      ["oauth", { type: "oauth" }],
+      ["copilot", signIn],
     ])
-    expect(PlatformProviders.select({ providers, models, keys })).toEqual([
+    expect(PlatformProviders.select({ providers, models, credentials })).toEqual([
       {
         id: "openai",
-        auth: "bearer",
-        key: "sk-1",
-        bases: ["https://api.openai.com/v1", "https://eu.api.openai.com/v1"],
+        integrationID: "openai",
+        value: { type: "key", key: "sk-1" },
+        hosts: ["api.openai.com", "eu.api.openai.com", "chatgpt.com"],
         models: [
           { id: "gpt-eu", api: "gpt-5" },
           { id: "gpt-5", api: "gpt-5" },
@@ -60,11 +72,40 @@ describe("PlatformProviders", () => {
       },
       {
         id: "groq",
-        auth: "bearer",
-        key: "gsk-2",
-        bases: ["https://api.groq.com/openai/v1"],
+        integrationID: "groq",
+        value: { type: "key", key: "gsk-2" },
+        hosts: ["api.groq.com"],
         models: [{ id: "llama", api: "llama" }],
       },
+      {
+        id: "copilot",
+        integrationID: "github-copilot",
+        value: signIn,
+        hosts: [
+          "api.githubcopilot.com",
+          "api.github.com",
+          "api.individual.githubcopilot.com",
+          "api.business.githubcopilot.com",
+          "api.enterprise.githubcopilot.com",
+        ],
+        models: [{ id: "c", api: "c" }],
+      },
     ])
+  })
+
+  test("hosts by integration cover every shareable provider, merged per integration", () => {
+    const providers = [
+      { id: "openai", package: "@ai-sdk/openai" },
+      {
+        id: "openai-eu",
+        integrationID: "openai",
+        package: "@ai-sdk/openai",
+        settings: { baseURL: "https://eu.api.openai.com/v1" },
+      },
+      { id: "vertex", package: "@opencode/ai/providers/google-vertex" },
+    ]
+    expect(PlatformProviders.hostsByIntegration({ providers, models: [], credentials: new Map() })).toEqual({
+      openai: ["api.openai.com", "chatgpt.com", "eu.api.openai.com"],
+    })
   })
 })

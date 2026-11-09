@@ -400,6 +400,7 @@ function resourceMcpLayer(
           connection: {
             active: unusedIntegration,
             resolve: unusedIntegration,
+            refresh: unusedIntegration,
             key: unusedIntegration,
             external: unusedIntegration,
             activate: unusedIntegration,

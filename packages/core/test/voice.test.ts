@@ -43,6 +43,7 @@ const mockIntegration = (
     connection: {
       active: unused,
       resolve,
+      refresh: unused,
       key: unused,
       external: unused,
       activate: unused,

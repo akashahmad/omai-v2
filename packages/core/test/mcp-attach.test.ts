@@ -36,6 +36,7 @@ const it = testEffect(
         connection: {
           active: unused,
           resolve: unused,
+          refresh: unused,
           key: unused,
           external: unused,
           activate: unused,

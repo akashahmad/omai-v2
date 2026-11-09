@@ -351,14 +351,6 @@ export type ProjectVmUpload = { files: number }
 
 export type ProjectVmBusy = { busy: boolean; reasons: Array<string> }
 
-export type PlatformProvider = {
-  id: string
-  auth: "bearer" | "x-api-key" | "x-goog-api-key"
-  key: string
-  bases: Array<string>
-  models: Array<{ id: string; api: string }>
-}
-
 export type ReferenceGitSource = { type: "git"; repository: string; branch?: string }
 
 export type VcsBranch = { current?: string; default?: string }
@@ -2129,6 +2121,14 @@ export type GenerateDecisionAnswer =
 export type VoiceModelsResponse = { data: { models: Array<VoiceModel>; default?: string | undefined } }
 
 export type VoiceSessionResponse = { data: { transport: VoiceTransport } }
+
+export type PlatformProvider = {
+  id: string
+  integrationID: string
+  value: CredentialKey | CredentialOAuth
+  hosts: Array<string>
+  models: Array<{ id: string; api: string }>
+}
 
 export type CredentialValue = CredentialOAuth | CredentialKey | CredentialExternal
 
@@ -4661,6 +4661,22 @@ export type ExperimentalProjectVmBusyOutput = ProjectVmBusy
 
 export type ExperimentalPlatformProvidersOutput = Array<PlatformProvider>
 
+export type ExperimentalPlatformHostsOutput = { [x: string]: Array<string> }
+
+export type ExperimentalPlatformRefreshInput = {
+  readonly integrationID: string
+  readonly value: {
+    readonly type: "oauth"
+    readonly methodID: string
+    readonly refresh: string
+    readonly access: string
+    readonly expires: number
+    readonly metadata?: { readonly [x: string]: JsonValue }
+  }
+}
+
+export type ExperimentalPlatformRefreshOutput = CredentialOAuth
+
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 
 export type ShellListOutput = { location: LocationPublicRef; data: Array<ShellInfo1> }
@@ -4945,6 +4961,15 @@ export type FileUnwatchOutput = ExperimentalFileUnwatchOutput
 
 /** @deprecated Use `ExperimentalPlatformProvidersOutput`. Removed in the next minor. */
 export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
+
+/** @deprecated Use `ExperimentalPlatformHostsOutput`. Removed in the next minor. */
+export type PlatformHostsOutput = ExperimentalPlatformHostsOutput
+
+/** @deprecated Use `ExperimentalPlatformRefreshInput`. Removed in the next minor. */
+export type PlatformRefreshInput = ExperimentalPlatformRefreshInput
+
+/** @deprecated Use `ExperimentalPlatformRefreshOutput`. Removed in the next minor. */
+export type PlatformRefreshOutput = ExperimentalPlatformRefreshOutput
 
 /** @deprecated Use `ExperimentalMigrationV1StatusOutput`. Removed in the next minor. */
 export type MigrationV1StatusOutput = ExperimentalMigrationV1StatusOutput

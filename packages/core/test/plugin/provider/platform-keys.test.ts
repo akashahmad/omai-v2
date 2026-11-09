@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { mkdtemp, readFile, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { Integration } from "@opencode/core/integration"
 import { PlatformKeys } from "@opencode/core/plugin/provider/platform-keys"
 
 const providers = [
@@ -10,8 +11,15 @@ const providers = [
   { id: "local", models: [{ id: "m" }] },
 ]
 const shared = [
-  { id: "openai", key: "sk-shared", models: ["gpt-5"] },
-  { id: "groq", key: "gsk", models: ["llama"] },
+  {
+    id: "openai",
+    integrationID: "openai",
+    type: "oauth" as const,
+    methodID: "chatgpt",
+    metadata: { clientID: "c" },
+    models: ["gpt-5"],
+  },
+  { id: "groq", integrationID: "groq", type: "key" as const, models: ["llama"] },
 ]
 
 describe("PlatformKeys", () => {
@@ -22,21 +30,42 @@ describe("PlatformKeys", () => {
     expect(PlatformKeys.target({ ...env, OMAI_PROJECT_ID: "platform" })).toBeUndefined()
   })
 
-  test("shared providers get their real key and only switched-on models; others are left alone", () => {
+  test("shared providers keep only switched-on models; others are left alone", () => {
     expect(PlatformKeys.plan(providers, shared, new Set())).toEqual([
-      { id: "openai", apiKey: "sk-shared", remove: ["gpt-4"] },
-      { id: "groq", apiKey: "gsk", remove: [] },
+      { id: "openai", remove: ["gpt-4"] },
+      { id: "groq", remove: [] },
     ])
   })
 
-  test("a personal credential for the same provider wins; without it the shared key is back", () => {
-    expect(PlatformKeys.plan(providers, shared, new Set(["openai"]))).toEqual([{ id: "groq", apiKey: "gsk", remove: [] }])
+  test("a personal credential for the same provider wins; without it the shared one is back", () => {
+    expect(PlatformKeys.plan(providers, shared, new Set(["openai"]))).toEqual([{ id: "groq", remove: [] }])
     expect(PlatformKeys.plan(providers, shared, new Set()).map((item) => item.id)).toEqual(["openai", "groq"])
   })
 
   test("a model switched off disappears", () => {
-    const off = [{ id: "openai", key: "sk-shared", models: [] as string[] }]
-    expect(PlatformKeys.plan(providers, off, new Set())).toEqual([{ id: "openai", apiKey: "sk-shared", remove: ["gpt-5", "gpt-4"] }])
+    const off = [{ ...shared[0]!, models: [] as string[] }]
+    expect(PlatformKeys.plan(providers, off, new Set())).toEqual([{ id: "openai", remove: ["gpt-5", "gpt-4"] }])
+  })
+
+  test("each shared integration the user hasn't connected gets a stand-in credential, never the secret", () => {
+    expect(PlatformKeys.standIns(shared, new Set(["groq"]))).toEqual([
+      {
+        id: "cred_shared_openai",
+        integrationID: "openai",
+        label: "Shared",
+        value: {
+          type: "oauth",
+          methodID: Integration.MethodID.make("chatgpt"),
+          access: "omai-gw.s~openai",
+          refresh: "omai-gw.s~openai",
+          expires: 253_402_300_799_000,
+          metadata: { clientID: "c" },
+        },
+      },
+    ])
+    expect(PlatformKeys.standIns(shared, new Set(["openai"]))).toEqual([
+      { id: "cred_shared_groq", integrationID: "groq", label: "Shared", value: { type: "key", key: "omai-gw.s~groq" } },
+    ])
   })
 
   test("the last list is kept on disk, owner-only, and read back when the control plane is down", async () => {

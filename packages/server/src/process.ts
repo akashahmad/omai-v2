@@ -17,6 +17,7 @@ import { createServer } from "node:http"
 import { ServerAuth } from "./auth"
 import { ProjectVmBusy } from "@opencode/core/project-vm/busy"
 import { ProjectVmCredentials } from "@opencode/core/project-vm/credentials"
+import { ProjectVmGateway } from "@opencode/core/project-vm/gateway"
 import { ProjectVmUsage } from "@opencode/core/project-vm/usage"
 import { ProjectVmSummary } from "@opencode/core/project-vm/summary"
 import { ProjectVmThumbnail } from "@opencode/core/project-vm/thumbnail"
@@ -61,6 +62,14 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
 ) {
   const password = options.password || undefined
   const vm = ServerAuth.vmFromEnv()
+  // On a project's MicroVM, calls holding a stand-in credential go through the control plane's gateway. Installed
+  // before anything takes a reference to fetch.
+  if (vm && process.env.OMAI_CONTROL_PLANE_URL && process.env.OMAI_PROJECT_ID && process.env.OMAI_PROJECT_TOKEN)
+    ProjectVmGateway.install({
+      url: process.env.OMAI_CONTROL_PLANE_URL,
+      projectID: process.env.OMAI_PROJECT_ID,
+      token: process.env.OMAI_PROJECT_TOKEN,
+    })
   const hostname = options.hostname ?? "127.0.0.1"
   // Without a password anything that can reach the port can drive the server, so only this machine may. A MicroVM
   // has no password but only accepts VM tokens for its own project.

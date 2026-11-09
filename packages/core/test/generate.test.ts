@@ -49,6 +49,7 @@ const integrations = Layer.mock(Integration.Service, {
   connection: {
     active: () => Effect.undefined,
     resolve: () => Effect.die("unused"),
+    refresh: () => Effect.die("unused"),
     key: () => Effect.die("unused"),
     external: () => Effect.die("unused"),
     activate: () => Effect.die("unused"),
@@ -357,6 +358,7 @@ describe("image and decision generation", () => {
             metadata: { server: "https://console.example", orgID: "org_123", orgName: "Acme" },
           }),
         ),
+      refresh: () => Effect.die("unused"),
       key: () => Effect.die("unused"),
       external: () => Effect.die("unused"),
       activate: () => Effect.die("unused"),

@@ -276,6 +276,9 @@ import type {
   ExperimentalProjectVmUploadOutput,
   ExperimentalProjectVmBusyOutput,
   ExperimentalPlatformProvidersOutput,
+  ExperimentalPlatformHostsOutput,
+  ExperimentalPlatformRefreshInput,
+  ExperimentalPlatformRefreshOutput,
   ShellListInput,
   ShellListOutput,
   ShellCreateInput,
@@ -1758,6 +1761,29 @@ export function make(options: ClientOptions) {
             },
             requestOptions,
           ),
+        hosts: (requestOptions?: RequestOptions) =>
+          request<ExperimentalPlatformHostsOutput>(
+            {
+              method: "GET",
+              path: `/api/experimental/platform/hosts`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        refresh: (input: ExperimentalPlatformRefreshInput, requestOptions?: RequestOptions) =>
+          request<ExperimentalPlatformRefreshOutput>(
+            {
+              method: "POST",
+              path: `/api/experimental/platform/refresh`,
+              body: { integrationID: input["integrationID"], value: input["value"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
       },
       migration: {
         v1: {
@@ -2814,6 +2840,10 @@ export function make(options: ClientOptions) {
     platform: {
       /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
       providers: client.experimental.platform.providers,
+      /** @deprecated Use `client.experimental.platform.hosts`. Removed in the next minor. */
+      hosts: client.experimental.platform.hosts,
+      /** @deprecated Use `client.experimental.platform.refresh`. Removed in the next minor. */
+      refresh: client.experimental.platform.refresh,
     },
     /** @deprecated Use `client.experimental.migration`. Removed in the next minor. */
     migration: {

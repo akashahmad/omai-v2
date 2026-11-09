@@ -13707,8 +13707,142 @@
             }
           }
         },
-        "description": "The providers connected on this platform server with an API key, with their keys and API base URLs, for the control plane's model gateway. Experimental: may change without compatibility guarantees.",
-        "summary": "List the platform's providers and keys"
+        "description": "The providers connected on this platform server with an API key or a sign-in, with their current credentials and hosts, for the control plane's model gateway. Experimental: may change without compatibility guarantees.",
+        "summary": "List the platform's providers and credentials"
+      }
+    },
+    "/api/experimental/platform/hosts": {
+      "get": {
+        "tags": ["experimental"],
+        "operationId": "experimental.platform.hosts",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError | LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Every host each shareable integration's requests go to, connected or not, so the control plane's model gateway can check where a credential is sent. Experimental: may change without compatibility guarantees.",
+        "summary": "List each integration's hosts"
+      }
+    },
+    "/api/experimental/platform/refresh": {
+      "post": {
+        "tags": ["experimental"],
+        "operationId": "experimental.platform.refresh",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Credential.OAuth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Credential.OAuth"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError | LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Runs the integration's own refresh for a sign-in the control plane keeps for a user, and returns the new tokens. Experimental: may change without compatibility guarantees.",
+        "summary": "Refresh a sign-in",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformRefreshInput"
+              }
+            }
+          },
+          "required": true
+        }
       }
     },
     "/api/shell": {
@@ -21324,14 +21458,20 @@
           "id": {
             "type": "string"
           },
-          "auth": {
-            "type": "string",
-            "enum": ["bearer", "x-api-key", "x-goog-api-key"]
-          },
-          "key": {
+          "integrationID": {
             "type": "string"
           },
-          "bases": {
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Credential.Key"
+              },
+              {
+                "$ref": "#/components/schemas/Credential.OAuth"
+              }
+            ]
+          },
+          "hosts": {
             "type": "array",
             "items": {
               "type": "string"
@@ -21354,7 +21494,20 @@
             }
           }
         },
-        "required": ["id", "auth", "key", "bases", "models"],
+        "required": ["id", "integrationID", "value", "hosts", "models"],
+        "additionalProperties": false
+      },
+      "PlatformRefreshInput": {
+        "type": "object",
+        "properties": {
+          "integrationID": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Credential.OAuth"
+          }
+        },
+        "required": ["integrationID", "value"],
         "additionalProperties": false
       },
       "Plugin.Features": {

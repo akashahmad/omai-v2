@@ -5,6 +5,7 @@ import { Schema } from "effect"
 import type { Auth } from "../auth.js"
 import type { Domains } from "../domains.js"
 import { Refusal, type Publishing } from "../publishing.js"
+import { Gateway } from "../gateway.js"
 import type { Keys } from "../keys.js"
 import type { Projects } from "../projects.js"
 import { bearer, body, bytes, jsonDecoder, send } from "./http.js"
@@ -71,9 +72,18 @@ export function make(deps: {
 
   const status = { ok: 204, stale: 409, forbidden: 404 } as const
 
+  const gateway = Gateway.make({
+    owner: async (projectID, token) =>
+      (await deps.projects.verifyProjectToken(projectID, token)) ? deps.projects.owner(projectID) : undefined,
+    secret: (userID, ref) => deps.keys.secret(userID, ref),
+  })
+
   return async function handle(req: IncomingMessage, res: ServerResponse) {
     const requested = new URL(req.url ?? "/", "http://internal")
     const pathname = requested.pathname
+    // A VM's model call holding a stand-in: the real secret is swapped in here and the call goes on to the provider.
+    const call = Gateway.match(pathname)
+    if (call) return gateway(req, res, call)
     // A VM's model keys: the admin's shared providers and its owner's own credentials.
     const keys = /^\/internal\/projects\/([^/]+)\/keys$/.exec(pathname)
     if (keys && req.method === "GET") {
