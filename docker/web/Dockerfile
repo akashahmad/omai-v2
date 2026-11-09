@@ -9,6 +9,9 @@ COPY . .
 RUN bun install --ignore-scripts
 RUN cd packages/app \
   && OMAI_CHANNEL=prod VITE_OMAI_API_URL="$VITE_OMAI_API_URL" VITE_OMAI_SESSION_IDLE_MS="$VITE_OMAI_SESSION_IDLE_MS" bun run build
+# Compressed once here, so the small web container only sends files (nginx's gzip_static).
+RUN find packages/app/dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.json' -o -name '*.svg' -o -name '*.webmanifest' -o -name '*.wasm' -o -name '*.txt' \) -size +1k \
+  -exec gzip -k -9 {} +
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY docker/web/nginx.conf /etc/nginx/conf.d/default.conf

@@ -10,12 +10,22 @@ on:
         description: Image tag
         required: true
         default: v1
-      images:
-        description: Which images to build
-        required: true
-        default: all
-        type: choice
-        options: [all, controlplane, router, web, microvm]
+      controlplane:
+        description: Control plane
+        type: boolean
+        default: false
+      router:
+        description: Router
+        type: boolean
+        default: false
+      web:
+        description: Web app
+        type: boolean
+        default: false
+      microvm:
+        description: MicroVM (smoke-tested before it is pushed)
+        type: boolean
+        default: false
       api_url:
         description: "Web app only: the control plane's address, e.g. https://api.omai.ch (else the VITE_OMAI_API_URL variable)"
         required: false
@@ -32,36 +42,50 @@ env:
   IMAGE_PREFIX: docker.io/jj123dev/omai
 
 jobs:
+  # Turns the ticked boxes into the list of service images to build.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.pick.outputs.services }}
+    steps:
+      - id: pick
+        env:
+          CONTROLPLANE: ${{ inputs.controlplane }}
+          ROUTER: ${{ inputs.router }}
+          WEB: ${{ inputs.web }}
+          MICROVM: ${{ inputs.microvm }}
+        run: |
+          picked=()
+          [ "$CONTROLPLANE" = true ] && picked+=('"controlplane"')
+          [ "$ROUTER" = true ] && picked+=('"router"')
+          [ "$WEB" = true ] && picked+=('"web"')
+          if [ ${#picked[@]} -eq 0 ] && [ "$MICROVM" != true ]; then echo "Tick at least one image"; exit 1; fi
+          echo "services=[$(IFS=,; echo "${picked[*]}")]" >> "$GITHUB_OUTPUT"
+
   services:
     name: ${{ matrix.image }}
-    if: inputs.images == 'all' || inputs.images == 'controlplane' || inputs.images == 'router' || inputs.images == 'web'
+    needs: plan
+    if: needs.plan.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        image: [controlplane, router, web]
+        image: ${{ fromJSON(needs.plan.outputs.services) }}
     steps:
-      - name: Skip images that weren't asked for
-        id: wanted
-        run: echo "build=${{ inputs.images == 'all' || inputs.images == matrix.image }}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
-        if: steps.wanted.outputs.build == 'true'
       - name: Check the web app's control plane address
-        if: steps.wanted.outputs.build == 'true' && matrix.image == 'web'
+        if: matrix.image == 'web'
         env:
           API_URL: ${{ inputs.api_url || vars.VITE_OMAI_API_URL }}
         run: |
           test -n "$API_URL" || { echo "Set the api_url input or the VITE_OMAI_API_URL repository variable"; exit 1; }
           echo "API_URL=$API_URL" >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@v3
-        if: steps.wanted.outputs.build == 'true'
       - uses: docker/login-action@v3
-        if: steps.wanted.outputs.build == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/build-push-action@v6
-        if: steps.wanted.outputs.build == 'true'
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
@@ -75,7 +99,8 @@ jobs:
 
   microvm:
     name: microvm
-    if: inputs.images == 'all' || inputs.images == 'microvm'
+    needs: plan
+    if: inputs.microvm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,4 +116,6 @@ jobs:
       # Builds the image, runs it with a volume and only the VM's variables, and pushes it only if every check passes.
       - name: Build, smoke-test and push
         working-directory: packages/controlplane
-        run: bun script/vm-image.ts --image ${{ env.IMAGE_PREFIX }}-microvm --tag ${{ inputs.tag }} --push
+        env:
+          TAG: ${{ inputs.tag }}
+        run: bun script/vm-image.ts --image "$IMAGE_PREFIX-microvm" --tag "$TAG" --push
