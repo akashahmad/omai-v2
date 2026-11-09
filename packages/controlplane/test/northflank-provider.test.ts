@@ -110,12 +110,15 @@ describe("NorthflankVmProvider", () => {
       "OMAI_APP_ORIGIN",
       "OMAI_CONTROL_PLANE_URL",
       "OMAI_PREVIEW_PORT",
+      "OMAI_PROJECTS_HOME",
       "OMAI_PROJECT_ID",
       "OMAI_PROJECT_SLUG",
       "OMAI_PROJECT_TOKEN",
       "OMAI_TOKEN_PUBLIC_KEY",
     ])
     expect([...fake.state.services.values()][0]!.env.OMAI_APP_ORIGIN).toBe("https://app.omai.test")
+    // The server knows it serves a project (and where its folder lives) only from this.
+    expect([...fake.state.services.values()][0]!.env.OMAI_PROJECTS_HOME).toBe("/home/omai")
   })
 
   test("opening a running VM twice costs no API call the second time", async () => {

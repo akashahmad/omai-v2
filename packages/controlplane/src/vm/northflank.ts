@@ -127,6 +127,8 @@ export function make(
         ...Object.fromEntries(Object.entries(spec.env).filter(([key]) => ALLOWED_ENV.has(key))),
         OMAI_APP_ORIGIN: config.appOrigin,
         OMAI_PREVIEW_PORT: String(config.previewPort),
+        // The volume: the server serves the project at `<home>/<slug>` only when this is set.
+        OMAI_PROJECTS_HOME: HOME,
       }
       const service = await ensureService(spec, env)
       const volumeID = await ensureVolume(spec.projectID)
