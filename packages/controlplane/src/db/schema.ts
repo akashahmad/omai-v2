@@ -119,6 +119,21 @@ export const ModelUsageTable = pgTable(
 )
 
 /** Users' own provider credentials, synced to all of that user's VMs. `value` is sealed; a delete leaves a tombstone. */
+/** A user's own switch for one model, kept for every project and browser of theirs. */
+export const UserModelTable = pgTable(
+  "user_model",
+  {
+    user_id: text()
+      .notNull()
+      .references(() => UserTable.id),
+    provider_id: text().notNull(),
+    model_id: text().notNull(),
+    visible: boolean().notNull(),
+    updated_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.user_id, table.provider_id, table.model_id] })],
+)
+
 export const UserCredentialTable = pgTable(
   "user_credential",
   {

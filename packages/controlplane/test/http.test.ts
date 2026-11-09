@@ -523,4 +523,24 @@ describe("control plane http", () => {
     expect(shared.body).toEqual([{ providerID: "openai", modelID: "gpt-5" }])
     expect((await s.call("GET", "/models/shared")).status).toBe(401)
   })
+
+  test("each user's model switches are their own, and the last switch wins", async () => {
+    const s = await setup()
+    const a = await s.login("a")
+    const b = await s.login("b")
+    const gpt = { providerID: "openai", modelID: "gpt-5" }
+    expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: true } })).status).toBe(204)
+    expect(
+      (await s.call("PUT", "/models/mine", { token: a.token, body: { providerID: "anthropic", modelID: "x", visible: false } }))
+        .status,
+    ).toBe(204)
+    expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: false } })).status).toBe(204)
+    expect((await s.call("GET", "/models/mine", { token: a.token })).body).toEqual([
+      { providerID: "anthropic", modelID: "x", visible: false },
+      { ...gpt, visible: false },
+    ])
+    expect((await s.call("GET", "/models/mine", { token: b.token })).body).toEqual([])
+    expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: "yes" } })).status).toBe(400)
+    expect((await s.call("GET", "/models/mine")).status).toBe(401)
+  })
 })

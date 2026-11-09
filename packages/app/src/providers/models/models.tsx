@@ -213,7 +213,13 @@ export const { use: useModels, provider: ModelsProvider } = createSimpleContext(
   init: (props: { directory?: string; visibility?: VisibilitySource } = {}) => {
     const session = useControlPlaneOptional()
     // Multi-user mode: the models an admin shared always show; the user's own follow their switches.
-    const shared = session ? createSharedVisibility(() => session.client.models.shared()) : undefined
+    const shared = session
+      ? createSharedVisibility({
+          shared: () => session.client.models.shared(),
+          mine: () => session.client.models.mine(),
+          save: (item) => session.client.models.setMine(item),
+        })
+      : undefined
 
     return createModelsController(
       () => props.directory,

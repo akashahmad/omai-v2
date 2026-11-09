@@ -33,6 +33,7 @@ const ErrorSchema = Schema.Struct({ error: Schema.String })
 const ClaimsSchema = Schema.Struct({ exp: Schema.Number })
 
 const ModelKeySchema = Schema.Struct({ providerID: Schema.String, modelID: Schema.String })
+const ModelSwitchSchema = Schema.Struct({ providerID: Schema.String, modelID: Schema.String, visible: Schema.Boolean })
 
 export type User = typeof UserSchema.Type
 
@@ -206,6 +207,9 @@ export function make(
     models: {
       /** The models an admin shared with everyone (names only). */
       shared: () => json("/models/shared", {}, Schema.Array(ModelKeySchema)),
+      /** The user's own model switches, the same in all their projects. */
+      mine: () => json("/models/mine", {}, Schema.Array(ModelSwitchSchema)),
+      setMine: (item: typeof ModelSwitchSchema.Type) => empty("/models/mine", { method: "PUT", body: body(item) }),
     },
     /** Platform settings, for admins: the platform server (provider keys) and the models switched on for everyone. */
     platform: {

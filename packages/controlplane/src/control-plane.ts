@@ -6,6 +6,7 @@ import { InternalHttp } from "./http/internal.js"
 import { PublicHttp } from "./http/public.js"
 import { Domains } from "./domains.js"
 import { Platform } from "./platform.js"
+import { UserModels } from "./user-models.js"
 import { Publishing } from "./publishing.js"
 import { Keys } from "./keys.js"
 import { Locks } from "./locks.js"
@@ -34,7 +35,7 @@ export async function start(config: Config, db: Db) {
   const domains = Domains.make({ db, config: settings, locks })
   internal.serve(InternalHttp.make({ auth, projects, keys, publishing, domains }))
   const pub = await listen(config.port, "0.0.0.0")
-  pub.serve(PublicHttp.make({ config: settings, auth, projects, platform }))
+  pub.serve(PublicHttp.make({ config: settings, auth, projects, platform, models: UserModels.make(db) }))
   const stopSweeper = Sweeper.make({ db, config: settings, lifecycle: projects.lifecycle, provider }).start()
   return {
     port: pub.port,

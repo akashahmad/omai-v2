@@ -6,9 +6,16 @@ import type { Auth, Issued } from "../auth.js"
 import type { Config } from "../config.js"
 import type { Platform } from "../platform.js"
 import type { Projects } from "../projects.js"
+import type { UserModels } from "../user-models.js"
 import { bearer, body, cookies, jsonDecoder, send } from "./http.js"
 
-type Deps = { config: Config; auth: Auth; projects: ReturnType<typeof Projects.make>; platform: Platform }
+type Deps = {
+  config: Config
+  auth: Auth
+  projects: ReturnType<typeof Projects.make>
+  platform: Platform
+  models: ReturnType<typeof UserModels.make>
+}
 type Context = {
   req: IncomingMessage
   res: ServerResponse
@@ -24,6 +31,13 @@ type Route =
 const Login = jsonDecoder(Schema.Struct({ login: Schema.String, password: Schema.String }))
 const Signup = jsonDecoder(Schema.Struct({ username: Schema.String, email: Schema.String, password: Schema.String }))
 const Name = jsonDecoder(Schema.Struct({ name: Schema.String }))
+const ModelSwitch = jsonDecoder(
+  Schema.Struct({
+    providerID: Schema.String.check(Schema.isMaxLength(200)),
+    modelID: Schema.String.check(Schema.isMaxLength(200)),
+    visible: Schema.Boolean,
+  }),
+)
 const Models = jsonDecoder(
   Schema.Struct({
     models: Schema.Array(Schema.Struct({ providerID: Schema.String, modelID: Schema.String })).check(
@@ -245,6 +259,24 @@ export function make(deps: Deps) {
       path: /^\/models\/shared$/,
       auth: true,
       run: async (ctx) => send(ctx.res, 200, await deps.platform.models(), ctx.headers),
+    },
+    {
+      // The signed-in user's own model switches, the same in all their projects.
+      method: "GET",
+      path: /^\/models\/mine$/,
+      auth: true,
+      run: async (ctx, session) => send(ctx.res, 200, await deps.models.list(session.userID), ctx.headers),
+    },
+    {
+      method: "PUT",
+      path: /^\/models\/mine$/,
+      auth: true,
+      run: async (ctx, session) => {
+        const input = await body(ctx.req, ModelSwitch)
+        if (!input) return send(ctx.res, 400, { error: "invalid" }, ctx.headers)
+        await deps.models.set(session.userID, input)
+        send(ctx.res, 204, undefined, ctx.headers)
+      },
     },
     // Platform settings: admins only. To everyone else these routes don't exist.
     {
