@@ -4,12 +4,12 @@
 # The builder runs on the build machine's own platform and cross-builds the linux-x64 binary, so an arm64 laptop
 # builds at full speed. It is not part of the image.
 FROM --platform=$BUILDPLATFORM oven/bun:1.4.4 AS builder
-# The build runs the Node it embeds in the binary, which needs libatomic.
-RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
 RUN bun install --os=* --cpu=* --ignore-scripts && bun run --cwd packages/core fix-node-pty
-RUN cd packages/cli && OMAI_CHANNEL=prod OMAI_TARGET=linux-x64 bun run build --single --skip-install --outdir=dist-vm \
+# The VM's server is compiled with Bun, like local development runs it: built for Node, it hung partway through
+# unpacking an uploaded zip.
+RUN cd packages/cli && OMAI_CHANNEL=prod OMAI_TARGET=linux-x64 bun run build:bun --single --skip-install --outdir=dist-vm \
   && cp -r dist-vm/cli-linux-x64 /omai
 
 FROM debian:bookworm-slim
