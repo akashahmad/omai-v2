@@ -1,7 +1,6 @@
-import { createWriteStream } from "node:fs"
+import { closeSync, openSync, writeSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import path from "node:path"
-import { pipeline } from "node:stream/promises"
 import yauzl from "yauzl"
 
 export class UnzipError extends Error {}
@@ -30,7 +29,7 @@ export async function unzip(input: { zip: string; directory: string; maxBytes: n
       const stream = await new Promise<NodeJS.ReadableStream>((resolve, reject) =>
         zip.openReadStream(item.entry, (error, read) => (error ? reject(error) : resolve(read))),
       )
-      await pipeline(stream, createWriteStream(target, { mode: item.mode }))
+      await write(stream, target, item.mode)
     }
     return { files: planned.filter((item) => !item.directory).length }
   } finally {
@@ -86,5 +85,25 @@ function readEntries(zip: yauzl.ZipFile) {
     zip.on("end", () => resolve(entries))
     zip.on("error", (error: Error) => reject(new UnzipError(`Not a valid zip file: ${error.message}`)))
     zip.readEntry()
+  })
+}
+
+/**
+ * Writes an entry as its chunks arrive, each written before the next is read. Not a pipe into a write stream: in the
+ * Node build that stalled partway through a large stored file, so the upload never answered.
+ */
+function write(stream: NodeJS.ReadableStream, target: string, mode: number) {
+  return new Promise<void>((resolve, reject) => {
+    const fd = openSync(target, "w", mode)
+    const finish = (error?: Error) => {
+      closeSync(fd)
+      if (error) return reject(error)
+      resolve()
+    }
+    stream.on("data", (chunk: Buffer) => {
+      for (let offset = 0; offset < chunk.length; ) offset += writeSync(fd, chunk, offset)
+    })
+    stream.once("end", () => finish())
+    stream.once("error", (error: Error) => finish(error))
   })
 }

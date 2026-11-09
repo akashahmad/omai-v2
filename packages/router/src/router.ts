@@ -333,6 +333,9 @@ export async function start(options: Options) {
       res.end()
     })
   })
+  // Node cuts off a request whose body is still arriving after 5 minutes. A big zip over a slow line takes longer, so
+  // bodies get an hour; headers still have to arrive within Node's 60 s.
+  server.requestTimeout = 60 * 60_000
   server.on("upgrade", (req, socket, head) => {
     void upgrade(req, socket, head).catch(() => socket.destroy())
   })

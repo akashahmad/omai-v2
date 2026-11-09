@@ -222,6 +222,9 @@ function bind(hostname: string, port: number) {
     const parentScope = yield* Scope.Scope
     const serverScope = yield* Scope.fork(parentScope)
     const server = createServer()
+    // Node cuts off a request whose body is still arriving after 5 minutes; a project's zip over a slow line takes
+    // longer. Headers still have to arrive within Node's 60 s.
+    server.requestTimeout = 60 * 60_000
     return yield* Effect.gen(function* () {
       const http = yield* NodeHttpServer.make(() => server, { port, host: hostname })
       yield* Effect.addFinalizer(() => Effect.sync(() => server.closeAllConnections()))
