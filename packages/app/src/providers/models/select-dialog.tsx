@@ -141,6 +141,7 @@ const ModelList: Component<{
   }
 
   function ModelRows(props: { items: ModelItem[]; mobile?: boolean }) {
+    const free = useFreeModel()
     return (
       <SettingsList variant="catalog">
         <For each={props.items}>
@@ -163,11 +164,11 @@ const ModelList: Component<{
                     placement="right-start"
                     gutter={12}
                     openDelay={0}
-                    value={<ModelTooltip model={item} latest={item.latest} free={isFreeModel(item)} v2 />}
+                    value={<ModelTooltip model={item} latest={item.latest} free={free(item)} v2 />}
                   >
                     <span class="min-w-0 truncate">{item.name}</span>
                   </Tooltip>
-                  <Show when={isFreeModel(item)}>
+                  <Show when={free(item)}>
                     <Badge class="shrink-0">{language.t("model.tag.free")}</Badge>
                   </Show>
                   <Show when={item.latest}>
@@ -432,6 +433,17 @@ function createModelSelectorController(input: {
   onSelect: () => void
 }) {
   const model = input.model ?? useLocal().model
+  const data = useData()
+  const location = useWorkspaceLocation()
+
+  // The server's catalog can grow after the app first loaded it (a project's VM refreshes its catalog and shared
+  // providers just after it starts), so a picker asks for the current lists each time it opens.
+  data.location.provider.invalidate(location().ref)
+  data.location.model.invalidate(location().ref)
+  void Promise.all([
+    data.location.provider.sync(location().ref),
+    data.location.model.sync(location().ref),
+  ]).catch(() => undefined)
 
   const allModels = createMemo(() =>
     model
@@ -514,6 +526,25 @@ const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const round = (value: number) => Math.round(value * 1000) / 1000
 
 type ModelRow = { id: string; item: ModelItem; group: ModelGroup }
+
+/**
+ * Whether a model is free. A price of 0 from a provider connected with a sign-in (a ChatGPT or Copilot plan) means
+ * the plan pays for it, not that it is free.
+ */
+function useFreeModel() {
+  const data = useData()
+  const location = useWorkspaceLocation()
+
+  return (item: ModelItem) => {
+    if (!isFreeModel(item)) return false
+    const integrationID = item.provider.integrationID ?? item.provider.id
+    const connection = data.location.integration
+      .list(location().ref)
+      ?.find((integration) => integration.id === integrationID)?.connections[0]
+
+    return !(connection?.type === "credential" && connection.method === "oauth")
+  }
+}
 
 function createChatgptPlan(current: () => string | undefined) {
   const data = useData()
@@ -837,6 +868,7 @@ export function DialogSelectModel(props: { provider?: string; model?: ModelState
   }
 
   const Row = (row: { model: ModelRow; attrs: SearchListRow }) => {
+    const free = useFreeModel()
     const item = () => row.model.item
     const selected = () => controller.current() === modelKey(item())
     const active = () => row.attrs["data-active"] !== undefined
@@ -874,7 +906,7 @@ export function DialogSelectModel(props: { provider?: string; model?: ModelState
           <Show when={row.model.group.title}>
             <span class="min-w-0 shrink-[999] truncate text-v2-text-text-faint">{item().provider.name}</span>
           </Show>
-          <Show when={isFreeModel(item())}>
+          <Show when={free(item())}>
             <Badge class="shrink-0">{language.t("model.tag.free")}</Badge>
           </Show>
           <Show when={item().latest}>
