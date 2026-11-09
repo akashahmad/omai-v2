@@ -70,9 +70,10 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
     )
   const port = Option.fromNullishOr(options.port)
   // The preview plugin listens beside the server, on the same host, and asks for a ticket when the server has a
-  // password. The password itself is cleared from the environment at startup, so only the fact is passed on.
+  // password. The password itself is cleared from the environment at startup, so only the fact is passed on. A MicroVM
+  // asks too, unless its control plane made its preview public (`OMAI_PREVIEW_PUBLIC=1`).
   process.env.OMAI_PREVIEW_HOSTNAME = hostname
-  process.env.OMAI_PREVIEW_AUTH = password || vm ? "1" : "0"
+  process.env.OMAI_PREVIEW_AUTH = password || (vm && process.env.OMAI_PREVIEW_PUBLIC !== "1") ? "1" : "0"
   const shutdown = yield* Latch.make()
   const status = yield* Status.make()
   const bound = yield* listen({ hostname, port })

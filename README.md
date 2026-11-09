@@ -156,6 +156,8 @@ The control plane sets these when it creates a project's VM. Never set them by h
 | `OMAI_TOKEN_PUBLIC_KEY`  | Verifies VM access tokens                                                                                |
 | `OMAI_APP_ORIGIN`        | The web app's origin, the only one the VM's server accepts requests from                                 |
 | `OMAI_PREVIEW_PORT`      | The preview's port, public on Northflank; the VM asks the control plane for its public address           |
+| `OMAI_PREVIEW_PUBLIC`    | `1`: the preview's public address works for anyone while the VM runs, with no ticket from the app        |
+| `OMAI_PROJECTS_HOME`     | The volume, `/home/omai`; the project lives in `<home>/<slug>`                                           |
 
 ### Web app
 

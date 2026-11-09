@@ -129,6 +129,8 @@ export function make(
         OMAI_PREVIEW_PORT: String(config.previewPort),
         // The volume: the server serves the project at `<home>/<slug>` only when this is set.
         OMAI_PROJECTS_HOME: HOME,
+        // The preview's public address works for anyone while the VM runs, with no ticket from the app.
+        OMAI_PREVIEW_PUBLIC: "1",
       }
       const service = await ensureService(spec, env)
       const volumeID = await ensureVolume(spec.projectID)
