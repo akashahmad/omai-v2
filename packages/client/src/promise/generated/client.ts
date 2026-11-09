@@ -272,6 +272,10 @@ import type {
   ExperimentalPreviewThumbnailsOutput,
   ExperimentalPreviewThumbnailInput,
   ExperimentalPreviewThumbnailOutput,
+  ExperimentalProjectVmInitOutput,
+  ExperimentalProjectVmUploadOutput,
+  ExperimentalProjectVmBusyOutput,
+  ExperimentalPlatformProvidersOutput,
   ShellListInput,
   ShellListOutput,
   ShellCreateInput,
@@ -1707,6 +1711,54 @@ export function make(options: ClientOptions) {
             requestOptions,
           ),
       },
+      "project-vm": {
+        init: (requestOptions?: RequestOptions) =>
+          request<ExperimentalProjectVmInitOutput>(
+            {
+              method: "POST",
+              path: `/api/experimental/project-vm/init`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        upload: (requestOptions?: RequestOptions) =>
+          request<ExperimentalProjectVmUploadOutput>(
+            {
+              method: "POST",
+              path: `/api/experimental/project-vm/upload`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404, 409],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        busy: (requestOptions?: RequestOptions) =>
+          request<ExperimentalProjectVmBusyOutput>(
+            {
+              method: "GET",
+              path: `/api/experimental/project-vm/busy`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      platform: {
+        providers: (requestOptions?: RequestOptions) =>
+          request<ExperimentalPlatformProvidersOutput>(
+            {
+              method: "GET",
+              path: `/api/experimental/platform/providers`,
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
       migration: {
         v1: {
           status: (requestOptions?: RequestOptions) =>
@@ -2757,6 +2809,11 @@ export function make(options: ClientOptions) {
       watch: client.experimental.file.watch,
       /** @deprecated Use `client.experimental.file.unwatch`. Removed in the next minor. */
       unwatch: client.experimental.file.unwatch,
+    },
+    /** @deprecated Use `client.experimental.platform`. Removed in the next minor. */
+    platform: {
+      /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
+      providers: client.experimental.platform.providers,
     },
     /** @deprecated Use `client.experimental.migration`. Removed in the next minor. */
     migration: {

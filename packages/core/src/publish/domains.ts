@@ -1,6 +1,5 @@
 export * as PublishDomains from "./domains.js"
 
-import { Resolver } from "node:dns/promises"
 import { asc, eq, sql } from "drizzle-orm"
 import { Context, Effect, Layer, PubSub, Schema, Semaphore, Stream } from "effect"
 import { Publish } from "@opencode/schema/publish"
@@ -9,6 +8,8 @@ import { Database } from "../database/database.js"
 import { Cloudflare, CloudflareError } from "./cloudflare.js"
 import { PublishConfig } from "./config.js"
 import { isApex, isHostname, normalizeHostname } from "./name.js"
+import { PublishDns } from "./dns.js"
+import { PublishRemote } from "./remote.js"
 import { PublishRouting } from "./routing.js"
 import { PublishError } from "./service.js"
 import { PublishDomainTable, PublishSiteTable } from "./sql.js"
@@ -24,10 +25,6 @@ export const CHECK_INTERVAL = 10_000
  * pending, and active domains only need an occasional read to notice one removed on Cloudflare.
  */
 export const ACTIVE_CHECK_INTERVAL = 300_000
-
-export type Resolved = { cname: string[]; a: string[] }
-/** Looks up a host's CNAME and A records; a failed lookup answers empty lists. */
-export type Resolve = (host: string) => Promise<Resolved>
 
 export interface Interface {
   readonly list: (projectID: string) => Effect.Effect<Publish.Domains>
@@ -51,12 +48,13 @@ type Row = typeof PublishDomainTable.$inferSelect
 type Site = typeof PublishSiteTable.$inferSelect
 type Target = { config: PublishConfig.Config; site: Site; rows: Row[] }
 
-export const layerWith = (resolve: Resolve) =>
+export const layerWith = (resolve: PublishDns.Resolve) =>
   Layer.effect(
     Service,
     Effect.gen(function* () {
       const db = (yield* Database.Service).db
-      const changed = yield* PubSub.unbounded<string>()
+      // A change on a VM carries the control plane's answer; a local one is read again.
+      const changed = yield* PubSub.unbounded<{ projectID: string; domains?: Publish.Domains }>()
       // A change removes keys by diffing the rows before it against the rows after it, so a project's changes run
       // one at a time. Different projects never share keys and run concurrently.
       const locks = new Map<string, Semaphore.Semaphore>()
@@ -88,12 +86,14 @@ export const layerWith = (resolve: Resolve) =>
         if (!site?.time_published) return { configured: true, domains: [] } satisfies Publish.Domains
         const rows = yield* rowsOf(projectID)
         const primary = rows.find((row) => row.is_primary)
-        const domains = yield* Effect.promise(async () => {
-          const target = await resolve(PublishConfig.target(config.zone))
-          return Promise.all(
-            rows.map(async (row) => toDomain(row, records(row.hostname, config, await resolve(row.hostname), target))),
-          )
-        })
+        const found = yield* Effect.promise(() =>
+          PublishDns.recordsOf(
+            resolve,
+            config,
+            rows.map((row) => ({ hostname: row.hostname, ownership: ownershipOf(row) })),
+          ),
+        )
+        const domains = rows.map((row, index) => toDomain(row, found[index] ?? []))
         return {
           configured: true,
           site: {
@@ -150,7 +150,7 @@ export const layerWith = (resolve: Resolve) =>
           )
         }).pipe(
           Semaphore.withPermit(lockOf(projectID)),
-          Effect.ensuring(PubSub.publish(changed, projectID)),
+          Effect.ensuring(PubSub.publish(changed, { projectID })),
           Effect.andThen(view(projectID)),
         )
 
@@ -308,43 +308,58 @@ export const layerWith = (resolve: Resolve) =>
           "diff",
         )
 
+      // On a project's MicroVM the control plane owns the domains and does every Cloudflare call.
+      const remote = () => {
+        const target = PublishRemote.target(process.env)
+        return target ? PublishRemote.client(target).domains : undefined
+      }
+      const forwarded = (projectID: string, work: () => Promise<Publish.Domains>, changes = true) =>
+        Effect.tryPromise({
+          try: work,
+          catch: (error) =>
+            error instanceof PublishRemote.RemoteError
+              ? new PublishError({ kind: error.kind, message: error.message })
+              : new PublishError({ kind: "other", message: error instanceof Error ? error.message : "The request failed." }),
+        }).pipe(Effect.tap((domains) => (changes ? PubSub.publish(changed, { projectID, domains }) : Effect.void)))
+
       return Service.of({
-        list: view,
-        add,
-        remove,
-        setPrimary,
-        check,
+        list: (projectID) => {
+          const client = remote()
+          // A list the control plane can't answer shows no domains rather than failing the panel.
+          if (client)
+            return forwarded(projectID, () => client.list(), false).pipe(
+              Effect.catch(() => Effect.succeed({ configured: true, domains: [] } satisfies Publish.Domains)),
+            )
+          return view(projectID)
+        },
+        add: (projectID, hostname, primary) => {
+          const client = remote()
+          return client ? forwarded(projectID, () => client.add(hostname, primary)) : add(projectID, hostname, primary)
+        },
+        remove: (projectID, hostname) => {
+          const client = remote()
+          return client ? forwarded(projectID, () => client.remove(hostname)) : remove(projectID, hostname)
+        },
+        setPrimary: (projectID, hostname) => {
+          const client = remote()
+          return client ? forwarded(projectID, () => client.setPrimary(hostname)) : setPrimary(projectID, hostname)
+        },
+        check: (projectID, hostname) => {
+          const client = remote()
+          return client ? forwarded(projectID, () => client.check(hostname)) : check(projectID, hostname)
+        },
         changes: (projectID) =>
           Stream.fromPubSub(changed).pipe(
-            Stream.filter((id) => id === projectID),
-            Stream.mapEffect(() => view(projectID)),
+            Stream.filter((item) => item.projectID === projectID),
+            Stream.mapEffect((item) => (item.domains ? Effect.succeed(item.domains) : view(projectID))),
           ),
       })
     }),
   )
 
-export const layer = layerWith(lookup)
+export const layer = layerWith(PublishDns.lookup)
 
 export const node = makeGlobalNode({ service: Service, layer, deps: [Database.node] })
-
-/** The DNS records a domain needs, each marked with whether DNS already shows it. */
-export function records(host: string, config: PublishConfig.Config, seen: Resolved, target: Resolved) {
-  const value = PublishConfig.target(config.zone)
-  if (!isApex(host))
-    return [
-      { type: "CNAME", name: host, value, ok: seen.cname.some((name) => sameHost(name, value)) },
-    ] satisfies Publish.DnsRecord[]
-  if (config.apexIPs.length > 0)
-    return config.apexIPs.map((ip) => ({
-      type: "A",
-      name: host,
-      value: ip,
-      ok: seen.a.includes(ip),
-    })) satisfies Publish.DnsRecord[]
-  // A flattened record shows up as the target's addresses rather than as a CNAME.
-  const ok = seen.cname.some((name) => sameHost(name, value)) || seen.a.some((ip) => target.a.includes(ip))
-  return [{ type: "ALIAS", name: host, value, ok }] satisfies Publish.DnsRecord[]
-}
 
 const decodeKind = Schema.decodeUnknownSync(Publish.Kind)
 const decodeStatus = Schema.decodeUnknownSync(Publish.DomainStatus)
@@ -353,19 +368,13 @@ const decodeOwnership = Schema.decodeUnknownOption(
 )
 const SAAS_DISABLED: ReadonlySet<number> = new Set([1404, 1456])
 
-// One quick try: a slow name server must not hold up every view.
-const resolver = new Resolver({ timeout: 2_000, tries: 1 })
-
-async function lookup(host: string) {
-  const found = await Promise.all([
-    resolver.resolveCname(host).catch(() => []),
-    resolver.resolve4(host).catch(() => []),
-  ])
-  return { cname: found[0], a: found[1] }
+function ownershipOf(row: Row) {
+  const decoded = row.verification ? decodeOwnership(row.verification) : undefined
+  return decoded?._tag === "Some" ? decoded.value : undefined
 }
 
 function toDomain(row: Row, dns: Publish.DnsRecord[]): Publish.Domain {
-  const ownership = row.verification ? decodeOwnership(row.verification) : undefined
+  const ownership = ownershipOf(row)
   return {
     hostname: row.hostname,
     primary: row.is_primary,
@@ -373,9 +382,7 @@ function toDomain(row: Row, dns: Publish.DnsRecord[]): Publish.Domain {
     ssl: row.ssl,
     apex: isApex(row.hostname),
     records: dns,
-    ...(ownership?._tag === "Some"
-      ? { verification: { type: "TXT", name: ownership.value.name, value: ownership.value.value } }
-      : {}),
+    ...(ownership ? { verification: { type: "TXT", name: ownership.name, value: ownership.value } } : {}),
     ...(row.error ? { error: row.error } : {}),
   }
 }
@@ -394,10 +401,6 @@ function own(target: Target, input: string) {
   const row = target.rows.find((item) => item.hostname === host)
   if (row) return Effect.succeed(row)
   return fail("invalid", "This domain isn't connected to this site.")
-}
-
-function sameHost(a: string, b: string) {
-  return a.toLowerCase().replace(/\.$/, "") === b.toLowerCase().replace(/\.$/, "")
 }
 
 function fail(kind: Publish.FailureKind, message: string) {

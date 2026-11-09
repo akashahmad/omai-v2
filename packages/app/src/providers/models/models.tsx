@@ -1,3 +1,5 @@
+import { useControlPlaneOptional } from "@/controlplane/session"
+import { createSharedVisibility } from "@/controlplane/shared-models"
 import { type Accessor, createMemo } from "solid-js"
 import { createSimpleContext } from "@opencode/ui/context"
 import { useProviders } from "@/providers/catalog/providers"
@@ -45,7 +47,19 @@ export function uniqueModels(models: ModelKey[]) {
   })
 }
 
-const createModelsController = (directory: Accessor<string | undefined>) => {
+/**
+ * Where a model's on/off switch lives when not (only) in this browser. `visible` answering undefined, or no `set`,
+ * leaves that model to the browser's own switches.
+ */
+export type VisibilitySource = {
+  visible(model: ModelKey): boolean | undefined
+  set?(model: ModelKey, visible: boolean): void
+}
+
+const createModelsController = (
+  directory: Accessor<string | undefined>,
+  source: Accessor<VisibilitySource | undefined>,
+) => {
   const providers = useProviders(() => directory())
   const models = useGlobal().models
   const store = models.store
@@ -114,6 +128,9 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
   }
 
   const visible = (model: ModelKey) => {
+    const decided = source()?.visible(model)
+
+    if (decided !== undefined) return decided
     const key = modelKey(model)
     const state = visibility().get(key)
 
@@ -128,6 +145,9 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
   }
 
   const setVisibility = (model: ModelKey, state: boolean) => {
+    const override = source()?.set
+
+    if (override) return override(model, state)
     update(model, state ? "show" : "hide")
   }
 
@@ -190,7 +210,14 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
 export const { use: useModels, provider: ModelsProvider } = createSimpleContext({
   name: "Models",
   gate: false,
-  init: (props: { directory?: string } = {}) => {
-    return createModelsController(() => props.directory)
+  init: (props: { directory?: string; visibility?: VisibilitySource } = {}) => {
+    const session = useControlPlaneOptional()
+    // Multi-user mode: the models an admin shared always show; the user's own follow their switches.
+    const shared = session ? createSharedVisibility(() => session.client.models.shared()) : undefined
+
+    return createModelsController(
+      () => props.directory,
+      () => props.visibility ?? shared,
+    )
   },
 })

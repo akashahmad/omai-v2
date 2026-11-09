@@ -26,8 +26,8 @@ O M A I + builds, previews and publishes apps with AI. This monorepo started fro
 
 ## Local development
 
-- Install with `bun install`, then copy `.env.sample` to `.env` (see README.md for the variables).
-- Server: `bun dev serve --port 4096` from the repository root (loads the root `.env`).
+- Install with `bun install`, then copy `.env.sample` to `.env.local` (local, no MicroVMs) and `.env.prod` (Northflank MicroVMs in project `omaiv2`). README.md lists the variables. Never point anything at the Northflank project `omai`: it is the old production app.
+- Server: `bun dev serve --port 4096` from the repository root (loads `.env.local`). `bun dev:prod serve --port 4096` loads `.env.prod` instead.
 - Web app: `bun dev -- --port 4444` from `packages/app`.
 - Never restart or kill a developer's running servers. Test against your own instance on another port.
 - Built CLI: `bun run build --single --skip-install` in `packages/cli`. After a build, unregister the service worker in the browser, or it serves the old bundle.
@@ -36,7 +36,7 @@ O M A I + builds, previews and publishes apps with AI. This monorepo started fro
 
 - Publishing and Domains use Cloudflare Workers for Platforms and Cloudflare for SaaS (`packages/core/src/publish`). Credentials come from `OMAI_CLOUDFLARE_*` env vars.
 - **The Cloudflare account is shared with a live production project.** Code may only create, change or delete scripts, KV keys and custom hostnames recorded in our own database. Never touch anything else.
-- The platform setup script (`bun --env-file=../../.env script/publish-platform.ts` in `packages/core`) only creates what is missing. Run it with `--dry-run` first. It redeploys the dispatcher, so check existing sites before and after.
+- The platform setup script (`bun --env-file=../../.env.local script/publish-platform.ts` in `packages/core`) only creates what is missing. Run it with `--dry-run` first. It redeploys the dispatcher, so check existing sites before and after.
 - Automated tests use the local fake Cloudflare server in `packages/core/test/publish`, never the real account. Real end-to-end checks use new `omai-e2e-*` names and delete them afterwards.
 - Builds run in a staging copy under the data directory, never in the user's project, with an allowlisted environment. Build code must never see server secrets.
 

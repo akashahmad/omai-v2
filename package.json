@@ -7,7 +7,10 @@
   "type": "module",
   "packageManager": "bun@1.4.4",
   "scripts": {
-    "dev": "bun run --env-file=../../.env --cwd packages/cli src/index.ts",
+    "dev": "bun run --env-file=../../.env.local --cwd packages/cli src/index.ts",
+    "dev:prod": "bun run --env-file=../../.env.prod --cwd packages/cli src/index.ts",
+    "dev:multi": "bun run --env-file=.env.local script/dev-multi.ts",
+    "dev:multi:prod": "bun run --env-file=.env.prod script/dev-multi.ts",
     "dev:web": "bun --cwd packages/app dev",
     "lint": "oxlint && ast-grep scan -c script/ast-grep/gui-plugins/sgconfig.yml && bun script/sdk-docs.ts",
     "lint:changed": "bun script/lint-changed.ts",

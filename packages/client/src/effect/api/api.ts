@@ -2513,6 +2513,15 @@ export type ExperimentalPreviewThumbnailsOperation<E = never> = () => Effect.Eff
   E
 >
 
+export type ExperimentalProjectVmInitOutput = { readonly directory: string; readonly created: boolean }
+export type ExperimentalProjectVmInitOperation<E = never> = () => Effect.Effect<ExperimentalProjectVmInitOutput, E>
+
+export type ExperimentalProjectVmUploadOutput = { readonly files: number }
+export type ExperimentalProjectVmUploadOperation<E = never> = () => Effect.Effect<ExperimentalProjectVmUploadOutput, E>
+
+export type ExperimentalProjectVmBusyOutput = { readonly busy: boolean; readonly reasons: ReadonlyArray<string> }
+export type ExperimentalProjectVmBusyOperation<E = never> = () => Effect.Effect<ExperimentalProjectVmBusyOutput, E>
+
 export interface ExperimentalApi<E = never> {
   readonly persistentPty: {
     readonly read: ExperimentalPersistentPtyReadOperation<E>
@@ -2543,6 +2552,27 @@ export interface ExperimentalApi<E = never> {
     readonly delete: ExperimentalArtifactsDeleteOperation<E>
   }
   readonly preview: { readonly thumbnails: ExperimentalPreviewThumbnailsOperation<E> }
+  readonly "project-vm": {
+    readonly init: ExperimentalProjectVmInitOperation<E>
+    readonly upload: ExperimentalProjectVmUploadOperation<E>
+    readonly busy: ExperimentalProjectVmBusyOperation<E>
+  }
+}
+
+export type ExperimentalPlatformProvidersOutput = ReadonlyArray<{
+  readonly id: string
+  readonly auth: "bearer" | "x-api-key" | "x-goog-api-key"
+  readonly key: string
+  readonly bases: ReadonlyArray<string>
+  readonly models: ReadonlyArray<{ readonly id: string; readonly api: string }>
+}>
+export type ExperimentalPlatformProvidersOperation<E = never> = () => Effect.Effect<
+  ExperimentalPlatformProvidersOutput,
+  E
+>
+
+export interface ExperimentalPlatformApi<E = never> {
+  readonly providers: ExperimentalPlatformProvidersOperation<E>
 }
 
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
@@ -2984,6 +3014,12 @@ export type FileUnwatchOutput = ExperimentalFileUnwatchOutput
 /** @deprecated Use `ExperimentalFileUnwatchOperation`. Removed in the next minor. */
 export type FileUnwatchOperation<E = never> = ExperimentalFileUnwatchOperation<E>
 
+/** @deprecated Use `ExperimentalPlatformProvidersOutput`. Removed in the next minor. */
+export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
+
+/** @deprecated Use `ExperimentalPlatformProvidersOperation`. Removed in the next minor. */
+export type PlatformProvidersOperation<E = never> = ExperimentalPlatformProvidersOperation<E>
+
 /** @deprecated Use `ExperimentalMigrationV1StatusOutput`. Removed in the next minor. */
 export type MigrationV1StatusOutput = ExperimentalMigrationV1StatusOutput
 
@@ -3005,6 +3041,9 @@ export type GenerateApi<E = never> = ExperimentalGenerateApi<E>
 /** @deprecated Use `ExperimentalVoiceApi`. Removed in the next minor. */
 export type VoiceApi<E = never> = ExperimentalVoiceApi<E>
 
+/** @deprecated Use `ExperimentalPlatformApi`. Removed in the next minor. */
+export type PlatformApi<E = never> = ExperimentalPlatformApi<E>
+
 /** @deprecated Use `ExperimentalMigrationApi`. Removed in the next minor. */
 export type MigrationApi<E = never> = ExperimentalMigrationApi<E>
 
@@ -3021,6 +3060,7 @@ export interface AppApi<E = never> {
     readonly integration: ExperimentalIntegrationApi<E>
     readonly mcp: ExperimentalMcpApi<E>
     readonly file: ExperimentalFileApi<E>
+    readonly platform: ExperimentalPlatformApi<E>
     readonly migration: ExperimentalMigrationApi<E>
     readonly config: ExperimentalConfigApi<E>
   }
@@ -3066,6 +3106,12 @@ export interface AppApi<E = never> {
 
     /** @deprecated Use `client.experimental.voice.session`. Removed in the next minor. */
     readonly session: ExperimentalVoiceSessionOperation<E>
+  }
+
+  /** @deprecated Use `client.experimental.platform`. Removed in the next minor. */
+  readonly platform: {
+    /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
+    readonly providers: ExperimentalPlatformProvidersOperation<E>
   }
 
   /** @deprecated Use `client.experimental.migration`. Removed in the next minor. */

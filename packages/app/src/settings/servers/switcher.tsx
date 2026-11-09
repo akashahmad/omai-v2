@@ -32,11 +32,7 @@ export function SettingsServerSwitcher() {
           >
             <ServerDot health={health(selected())} unreachable={unreachable(selected())} />
             <span class="settings-server-switcher-label">{language.t("settings.server.switcher.label")}</span>
-            <ServerLabel
-              class="settings-server-switcher-name"
-              server={selected().connection}
-              name={selected().name}
-            />
+            <ServerLabel class="settings-server-switcher-name" server={selected().connection} name={selected().name} />
             <Icon name="chevron-down" class="settings-server-switcher-chevron" />
           </Menu.Trigger>
           <Menu.Portal>
@@ -46,7 +42,12 @@ export function SettingsServerSwitcher() {
                   {(server) => (
                     <Menu.RadioItem value={server.key} closeOnSelect>
                       <ServerDot health={health(server)} unreachable={unreachable(server)} />
-                      <ServerLabel class="settings-server-switcher-option" server={server.connection} name={server.name} hint />
+                      <ServerLabel
+                        class="settings-server-switcher-option"
+                        server={server.connection}
+                        name={server.name}
+                        hint
+                      />
                       <Show when={unreachable(server)}>
                         <span class="settings-server-switcher-status">
                           {language.t("settings.server.switcher.unreachable")}

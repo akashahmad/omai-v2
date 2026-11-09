@@ -5,6 +5,8 @@ export type SettingsRootTab =
   | "shortcuts"
   | "providers"
   | "models"
+  | "shared-providers"
+  | "shared-models"
   | "extensions"
   | "servers"
   | "experimental"
@@ -48,6 +50,8 @@ const rootTabs: Record<SettingsRootTab, true> = {
   shortcuts: true,
   providers: true,
   models: true,
+  "shared-providers": true,
+  "shared-models": true,
   extensions: true,
   servers: true,
   experimental: true,

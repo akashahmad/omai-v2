@@ -2,6 +2,7 @@ import { createMemo } from "solid-js"
 import { ServerConnection, useServers } from "@/runtime/server/registry"
 import { usePluginServers, type PluginServer } from "@/runtime/plugin/servers"
 import type { ServerHealth } from "@/runtime/server/health"
+import { isPlatformConnection } from "@/controlplane/platform"
 
 export type SettingsServer = {
   key: ServerConnection.Key
@@ -51,7 +52,14 @@ export function useSettingsServers() {
   const servers = useServers()
   const plugins = usePluginServers()
 
-  return createMemo(() => settingsServers(servers.list, plugins.entries(), servers.label))
+  // The platform server backs an admin's Providers and Models pages only; it is never a server to pick.
+  return createMemo(() =>
+    settingsServers(
+      servers.list.filter((conn) => conn.type !== "http" || !isPlatformConnection(conn.http.url)),
+      plugins.entries(),
+      servers.label,
+    ),
+  )
 }
 
 /** Whether a server's pages can load: it runs and its last health check did not fail. */

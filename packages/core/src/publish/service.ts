@@ -13,7 +13,9 @@ import { PublishConfig } from "./config.js"
 import { detectKind } from "./detect.js"
 import { validName } from "./name.js"
 import { LOG_TAIL, run } from "./pipeline.js"
+import { PublishRemote } from "./remote.js"
 import { PublishDeployTable, PublishDomainTable, PublishSiteTable } from "./sql.js"
+import { ProjectVmBusy } from "../project-vm/busy.js"
 
 /** Deploys kept per project. */
 export const HISTORY = 10
@@ -59,7 +61,9 @@ type Running = {
   done: Deferred.Deferred<void>
 }
 
-type Site = typeof PublishSiteTable.$inferSelect
+/** The site a publish uploads to; `first` while no version of it is live yet. */
+type Target = { name: string; first: boolean }
+type Platform = { configured: boolean; zone?: string; site?: Publish.Site }
 
 const layer = Layer.effect(
   Service,
@@ -79,10 +83,19 @@ const layer = Layer.effect(
       .run()
       .pipe(Effect.orDie)
 
+    // On a project's MicroVM the control plane owns the site and does every Cloudflare call. Read per call, so the
+    // environment decides, as it does for the local Cloudflare settings.
+    const remote = () => {
+      const target = PublishRemote.target(process.env)
+      return target ? PublishRemote.client(target) : undefined
+    }
+    // The last answer per project, shown while the control plane can't be reached.
+    const known = new Map<string, Platform>()
+
     const siteOf = (projectID: string) =>
       db.select().from(PublishSiteTable).where(eq(PublishSiteTable.project_id, projectID)).get().pipe(Effect.orDie)
 
-    const status = Effect.fnUntraced(function* (projectID: string, directory: string) {
+    const localPlatform = Effect.fnUntraced(function* (projectID: string) {
       const config = PublishConfig.read()
       const site = yield* siteOf(projectID)
       const primary = yield* db
@@ -91,16 +104,6 @@ const layer = Layer.effect(
         .where(and(eq(PublishDomainTable.project_id, projectID), eq(PublishDomainTable.is_primary, true)))
         .get()
         .pipe(Effect.orDie)
-      const running = runs.get(projectID)?.deploy
-      const rows = yield* db
-        .select()
-        .from(PublishDeployTable)
-        .where(eq(PublishDeployTable.project_id, projectID))
-        .orderBy(desc(PublishDeployTable.time_started))
-        .limit(HISTORY)
-        .all()
-        .pipe(Effect.orDie)
-      const detected = yield* Effect.promise(() => detectKind(directory))
       return {
         configured: config !== undefined,
         ...(config ? { zone: config.zone } : {}),
@@ -116,6 +119,44 @@ const layer = Layer.effect(
               },
             }
           : {}),
+      } satisfies Platform
+    })
+
+    const remotePlatform = (client: PublishRemote.Client, projectID: string) =>
+      Effect.promise(() =>
+        client.status().then(
+          (answer): Platform => {
+            const platform = {
+              configured: answer.configured,
+              ...(answer.zone ? { zone: answer.zone } : {}),
+              ...(answer.site ? { site: answer.site } : {}),
+            }
+            known.set(projectID, platform)
+            return platform
+          },
+          (): Platform => known.get(projectID) ?? { configured: true },
+        ),
+      )
+
+    const platformOf = (projectID: string) => {
+      const client = remote()
+      return client ? remotePlatform(client, projectID) : localPlatform(projectID)
+    }
+
+    const status = Effect.fnUntraced(function* (projectID: string, directory: string) {
+      const platform = yield* platformOf(projectID)
+      const running = runs.get(projectID)?.deploy
+      const rows = yield* db
+        .select()
+        .from(PublishDeployTable)
+        .where(eq(PublishDeployTable.project_id, projectID))
+        .orderBy(desc(PublishDeployTable.time_started))
+        .limit(HISTORY)
+        .all()
+        .pipe(Effect.orDie)
+      const detected = yield* Effect.promise(() => detectKind(directory))
+      return {
+        ...platform,
         ...(running ? { running: running } : {}),
         history: rows.filter((row) => row.id !== running?.id).map(fromRow),
         detected:
@@ -126,6 +167,8 @@ const layer = Layer.effect(
     const notify = (projectID: string) => PubSub.publish(changed, projectID).pipe(Effect.asVoid)
 
     const available = Effect.fnUntraced(function* (projectID: string, name: string) {
+      const client = remote()
+      if (client) return yield* forward(() => client.available(name))
       const config = yield* requireConfig()
       const invalid = validName(name)
       if (invalid) return { available: false, reason: invalid }
@@ -141,9 +184,17 @@ const layer = Layer.effect(
 
     /** Reserves the name for a first publish: our row first (unique), then the placeholder when no script exists. */
     const claim = Effect.fnUntraced(function* (projectID: string, name: string | undefined) {
+      const client = remote()
+      if (client) {
+        const site = (yield* remotePlatform(client, projectID)).site
+        if (site) return { name: site.name, first: !site.publishedAt } satisfies Target
+        if (!name) return yield* new PublishError({ kind: "invalid", message: "Choose a name for the site." })
+        const claimed = yield* forward(() => client.claim(name))
+        return { name: claimed.name, first: !claimed.publishedAt } satisfies Target
+      }
       const config = yield* requireConfig()
       const existing = yield* siteOf(projectID)
-      if (existing) return existing
+      if (existing) return { name: existing.name, first: !existing.time_published } satisfies Target
       if (!name) return yield* new PublishError({ kind: "invalid", message: "Choose a name for the site." })
       const free = yield* available(projectID, name)
       if (!free.available)
@@ -159,7 +210,7 @@ const layer = Layer.effect(
       yield* cloudflare(async () => {
         if (!(await cf.scriptExists(name))) await cf.claimScript(name, projectID)
       }).pipe(Effect.tapError(() => release(projectID)))
-      return yield* siteOf(projectID).pipe(Effect.map((site) => site ?? { ...row, kind: null, time_published: null }))
+      return { name, first: true } satisfies Target
     })
 
     const release = (projectID: string) =>
@@ -181,6 +232,9 @@ const layer = Layer.effect(
         }
         // Registered before the first yield, so a concurrent call joins this run.
         runs.set(input.projectID, entry)
+        // On a MicroVM, a publish in progress keeps the VM from pausing until the run is recorded as finished.
+        const release = ProjectVmBusy.hold("publish")
+        void Effect.runPromise(Deferred.await(entry.done)).then(release, release)
         const started = yield* start(input, entry).pipe(
           // Also on interruption, so a caller that goes away never leaves the project looking busy.
           Effect.onError((cause) =>
@@ -199,7 +253,8 @@ const layer = Layer.effect(
       input: { projectID: string; directory: string; name?: string; sessionID?: string },
       entry: Running,
     ) {
-      const config = yield* requireConfig()
+      const client = remote()
+      const upload = client ? { remote: client } : { config: yield* requireConfig() }
       const site = yield* claim(input.projectID, input.name)
       yield* db
         .insert(PublishDeployTable)
@@ -213,7 +268,7 @@ const layer = Layer.effect(
         })
         .run()
         .pipe(Effect.orDie)
-      yield* execute({ projectID: input.projectID, directory: input.directory, config, site, entry }).pipe(
+      yield* execute({ projectID: input.projectID, directory: input.directory, upload, site, entry }).pipe(
         Effect.forkIn(lifetime, { startImmediately: true }),
       )
       yield* notify(input.projectID)
@@ -223,12 +278,12 @@ const layer = Layer.effect(
     const execute = Effect.fnUntraced(function* (input: {
       projectID: string
       directory: string
-      config: PublishConfig.Config
-      site: Site
+      upload: { config: PublishConfig.Config } | { remote: PublishRemote.Client }
+      site: Target
       entry: Running
     }) {
       const entry = input.entry
-      const first = !input.site.time_published
+      const first = input.site.first
       const onStage = (stage: Publish.Stage) => {
         const now = Date.now()
         entry.deploy = {
@@ -251,7 +306,7 @@ const layer = Layer.effect(
           directory: input.directory,
           dataDir: global.data,
           name: input.site.name,
-          config: input.config,
+          upload: input.upload,
           first,
           signal: entry.abort.signal,
           onStage,
@@ -268,15 +323,16 @@ const layer = Layer.effect(
       const now = Date.now()
       const stages = entry.deploy.stages.map((item) => (item.finishedAt ? item : { ...item, finishedAt: now }))
 
-      if (result.ok) {
+      // On a VM the control plane recorded the live version itself.
+      if (result.ok && "config" in input.upload) {
         yield* db
           .update(PublishSiteTable)
           .set({ kind: result.kind, time_published: now })
           .where(eq(PublishSiteTable.project_id, input.projectID))
           .run()
           .pipe(Effect.orDie)
-        entry.deploy = { ...entry.deploy, status: "live", kind: result.kind, finishedAt: now, stages }
       }
+      if (result.ok) entry.deploy = { ...entry.deploy, status: "live", kind: result.kind, finishedAt: now, stages }
 
       if (!result.ok) {
         const cancelled = entry.abort.signal.aborted
@@ -290,8 +346,15 @@ const layer = Layer.effect(
           stages,
         }
         // A site that was live keeps its script: the upload replaces it atomically, so the old version still serves.
-        if (first) {
-          const cf = Cloudflare.client(input.config)
+        const upload = input.upload
+        if (first && "remote" in upload)
+          yield* Effect.promise(() => upload.remote.release()).pipe(
+            Effect.catchCause(() =>
+              Effect.sync(() => entry.log.append("\nReleasing the reserved name failed.\n")),
+            ),
+          )
+        if (first && "config" in upload) {
+          const cf = Cloudflare.client(upload.config)
           yield* Effect.promise(async () => {
             if ((await cf.scriptOwner(input.site.name)) === input.projectID) await cf.deleteScript(input.site.name)
           }).pipe(
@@ -354,6 +417,17 @@ const layer = Layer.effect(
     })
 
     const remove = Effect.fnUntraced(function* (projectID: string, confirm: string) {
+      const client = remote()
+      if (client) {
+        const running = runs.get(projectID)
+        if (running) {
+          running.abort.abort()
+          yield* Deferred.await(running.done)
+        }
+        yield* forward(() => client.remove(confirm))
+        known.delete(projectID)
+        return yield* notify(projectID)
+      }
       const config = yield* requireConfig()
       const site = yield* siteOf(projectID)
       if (!site) return yield* new PublishError({ kind: "not-published", message: "This project has no site." })
@@ -437,6 +511,17 @@ function requireConfig() {
   const config = PublishConfig.read()
   if (config) return Effect.succeed(config)
   return Effect.fail(new PublishError({ kind: "not-configured", message: "Publishing isn't set up on this server." }))
+}
+
+/** Calls the control plane, reporting its refusals as they are. */
+function forward<A>(work: () => Promise<A>) {
+  return Effect.tryPromise({
+    try: work,
+    catch: (error) =>
+      error instanceof PublishRemote.RemoteError
+        ? new PublishError({ kind: error.kind, message: error.message })
+        : new PublishError({ kind: "other", message: error instanceof Error ? error.message : "The request failed." }),
+  })
 }
 
 /** Runs Cloudflare calls, reporting Cloudflare's own message and nothing from the raw response. */

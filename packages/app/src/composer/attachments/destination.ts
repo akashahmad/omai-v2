@@ -40,7 +40,13 @@ export function useAttachmentDestination(controls: Accessor<ComposerControls>) {
 // fetch cannot report upload progress and Chromium only streams request bodies over HTTP/2, so
 // the one request that needs both goes through XMLHttpRequest. The browser streams the File
 // from disk; nothing is buffered in the renderer.
-function write(url: URL, file: File, password: string | undefined, report: (loaded: number) => void, signal: AbortSignal) {
+function write(
+  url: URL,
+  file: File,
+  password: string | undefined,
+  report: (loaded: number) => void,
+  signal: AbortSignal,
+) {
   return new Promise<string>((resolve, reject) => {
     if (signal.aborted) return reject(new DOMException("Upload aborted", "AbortError"))
     const xhr = new XMLHttpRequest()

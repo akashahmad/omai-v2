@@ -60,6 +60,9 @@ function start(input: {
   limits?: ControllerInput["limits"]
   fix?: ControllerInput["fix"]
   thumbnail?: ControllerInput["thumbnail"]
+  auth?: boolean
+  port?: number
+  origin?: () => string | undefined
 }) {
   const states: Preview.State[] = []
   const store = input.store ?? memoryStore()
@@ -78,6 +81,9 @@ function start(input: {
     limits: input.limits,
     fix: input.fix,
     thumbnail: input.thumbnail,
+    auth: input.auth,
+    port: input.port,
+    origin: input.origin,
   })
   controllers.push(controller)
   return { controller, states, store }
@@ -89,6 +95,22 @@ function get(port: number, url = "/") {
       const chunks: Buffer[] = []
       res.on("data", (chunk: Buffer) => chunks.push(chunk))
       res.on("end", () => resolve(Buffer.concat(chunks).toString()))
+    })
+    req.on("error", reject)
+    req.end()
+  })
+}
+
+function fetchRaw(port: number, url: string, cookie?: string) {
+  return new Promise<{ status: number; cookie: string }>((resolve, reject) => {
+    const req = request({ host: "127.0.0.1", port, path: url, headers: cookie ? { cookie } : {} }, (res) => {
+      res.resume()
+      res.on("end", () =>
+        resolve({
+          status: res.statusCode ?? 0,
+          cookie: (res.headers["set-cookie"] ?? []).map((value) => value.split(";")[0]).join("; "),
+        }),
+      )
     })
     req.on("error", reject)
     req.end()
@@ -217,6 +239,47 @@ describe("controller", () => {
 
     expect(second.state).toBe("running")
     expect(second.port).toBe(first.port)
+  }, 30_000)
+
+  // On a VM the preview's port is published by Northflank, so it can't be a saved or free one.
+  test("OMAI_PREVIEW_PORT fixes the proxy port", async () => {
+    const dir = await project()
+    const { freePort } = await import("@opencode/core/preview/ports")
+    const fixed = await freePort()
+    const store = memoryStore({ port: fixed + 1 })
+    const { controller } = start({ ...dir, store, port: fixed })
+    const status = await controller.start()
+
+    expect(status.port).toBe(fixed)
+    expect(await get(fixed)).toContain("fake dev server")
+    expect(store.values.get("port")).toBe(fixed + 1)
+  }, 30_000)
+
+  test("the status carries the public origin once it is known", async () => {
+    const dir = await project()
+    const origin: { value?: string } = {}
+    const { controller } = start({ ...dir, origin: () => origin.value })
+    expect(controller.status().origin).toBeUndefined()
+    origin.value = "https://p--preview.code.run"
+    expect(controller.status().origin).toBe("https://p--preview.code.run")
+    expect((await controller.start()).origin).toBe("https://p--preview.code.run")
+  }, 30_000)
+
+  // The VM's server restarts (and will on every pause and resume); a preview the browser already entered must not
+  // say its link expired.
+  test("keeps the preview sign-in across server restarts", async () => {
+    const dir = await project()
+    const store = memoryStore()
+    const first = start({ ...dir, store, auth: true })
+    const status = await first.controller.start()
+    const entered = await fetchRaw(status.port!, `/__omai/enter?ticket=${first.controller.ticket()}&to=%2F`)
+    await first.controller.close()
+    const second = start({ ...dir, store, auth: true })
+    const again = await second.controller.start()
+
+    expect(entered.status).toBe(302)
+    expect((await fetchRaw(again.port!, "/", entered.cookie)).status).toBe(200)
+    expect((await fetchRaw(again.port!, "/")).status).toBe(401)
   }, 30_000)
 
   test("asks the AI once per version of the project, unless asked again", async () => {

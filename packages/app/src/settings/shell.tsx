@@ -1,11 +1,26 @@
 import { Tabs } from "@opencode/ui/tabs"
 import { useDialog } from "@opencode/ui/context/dialog"
-import { createEffect, createMemo, For, on, onCleanup, onMount, Show, Switch, Match, type Accessor } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  For,
+  on,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+  Match,
+  type Accessor,
+} from "solid-js"
 import { createStore } from "solid-js/store"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useTabs } from "@/shell/tabs/tabs"
 import { useGlobal, useServerCtx } from "@/runtime/server/runtime"
-import { ServerConnection } from "@/runtime/server/registry"
+import { ServerConnection, useServers } from "@/runtime/server/registry"
+import { useControlPlaneOptional } from "@/controlplane/session"
+import { createPlatformVisibility } from "@/controlplane/platform-models"
+import { sharedSettingsTabs } from "@/controlplane/settings-tabs"
 import type { LocalProject } from "@/shell/state/layout"
 import { DialogServer } from "@/servers/connect/dialog"
 import { LocationProvider } from "@/workspaces/location"
@@ -190,6 +205,7 @@ function RootSettings() {
   const surface = useSettingsSurface()
   const global = useGlobal()
   const inventory = useSettingsServers()
+  const platform = usePlatformSettings()
 
   const [state, setState] = createStore<{ modelProvider: string | undefined }>({ modelProvider: undefined })
 
@@ -226,6 +242,17 @@ function RootSettings() {
       label: language.t("settings.group.workspace"),
       items: serverTabs.map((item) => ({ ...item, label: language.t(item.label) })),
     },
+    // Multi-user admins: the providers and models O M A I + offers everyone.
+    ...(platform.tabs().length > 0
+      ? [
+          {
+            label: language.t("settings.group.shared"),
+            items: platform
+              .tabs()
+              .map((value) => ({ value, icon: pageIcons[value], label: language.t(pageLabels[value]) })),
+          },
+        ]
+      : []),
     {
       label: language.t("settings.group.personal"),
       items: [...rootClientTabs.map((item) => ({ ...item, label: language.t(item.label) })), ...pluginTabs()],
@@ -331,6 +358,29 @@ function RootSettings() {
           </SettingsServerDataScope>
         )}
       </Show>
+      {/* Multi-user admins: the shared providers and models every user's projects get. */}
+      <Show when={platform.connection()} keyed>
+        {(server) => (
+          <SettingsServerDataScope server={server} visibility={platform.visibility}>
+            <Tabs.Content value="shared-providers" class="settings-panel">
+              <SettingsProviders
+                directory={undefined}
+                onSelectProvider={(providerID) => {
+                  setState("modelProvider", providerID)
+                  surface.select("shared-models")
+                }}
+              />
+            </Tabs.Content>
+            <Tabs.Content value="shared-models" class="settings-panel">
+              <SettingsModels
+                active={surface.view().tab === "shared-models"}
+                provider={state.modelProvider}
+                onReveal={() => setState("modelProvider", undefined)}
+              />
+            </Tabs.Content>
+          </SettingsServerDataScope>
+        )}
+      </Show>
       <Tabs.Content value="servers" class="settings-panel">
         <Show
           when={multiple() ? undefined : inventory()[0]}
@@ -404,4 +454,38 @@ function useSettingsDirectory(server: Accessor<ServerConnection.Any | undefined>
 
     return draft?.type === "draft" && draft.server === key ? draft.directory : undefined
   })
+}
+
+/**
+ * Multi-user mode: an admin's Shared providers and Shared models pages work on the platform server (the keys every
+ * user's projects get), and the Shared models switches are saved on the control plane. Nobody else sees either page.
+ */
+function usePlatformSettings() {
+  const session = useControlPlaneOptional()
+  const servers = useServers()
+  const admin = () => session?.state.user?.admin === true
+
+  const [connection] = createResource(
+    () => (admin() ? session : undefined),
+    async (current) => {
+      const opened = await current.client.platform.open()
+
+      return servers.add({
+        type: "http",
+        http: { url: opened.routerUrl, password: opened.token },
+        displayName: "O M A I +",
+      })
+    },
+  )
+
+  return {
+    tabs: () => sharedSettingsTabs({ multiUser: session !== undefined, admin: admin() }),
+    connection: () => (connection.state === "ready" ? connection() : undefined),
+    visibility: session
+      ? createPlatformVisibility({
+          load: () => (admin() ? session.client.platform.models() : Promise.resolve([])),
+          save: (models) => session.client.platform.setModels(models),
+        })
+      : undefined,
+  }
 }

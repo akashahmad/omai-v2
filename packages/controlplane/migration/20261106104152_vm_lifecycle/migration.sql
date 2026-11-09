@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "last_activity_at" timestamp with time zone;

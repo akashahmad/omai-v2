@@ -2,6 +2,7 @@ import { ArtifactEndpoints } from "./artifact.js"
 import { MediaGetEndpoint } from "./media.js"
 import { PersistentPtyGroup } from "./persistent-pty.js"
 import { PreviewThumbnailEndpoints } from "./preview-thumbnail.js"
+import { ProjectVmEndpoints } from "./project-vm.js"
 import { ScheduleEndpoints } from "./schedule.js"
 
 /** `server.experimental`: routes under /api/experimental, without compatibility guarantees. */
@@ -10,4 +11,5 @@ export const ExperimentalGroup = PersistentPtyGroup.add(
   ...ScheduleEndpoints,
   ...ArtifactEndpoints,
   ...PreviewThumbnailEndpoints,
+  ...ProjectVmEndpoints,
 )

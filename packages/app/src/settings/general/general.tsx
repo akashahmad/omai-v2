@@ -6,12 +6,7 @@ import { TimelineDetailControl } from "@/settings/timeline-detail"
 import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
 import { PluginSettingsSections } from "@/runtime/plugin/settings-page-view"
-import {
-  type BackgroundActivity,
-  type FollowUpBehavior,
-  type TimelineWidth,
-  useSettings,
-} from "@/settings/model"
+import { type BackgroundActivity, type FollowUpBehavior, type TimelineWidth, useSettings } from "@/settings/model"
 import { formatKeybind } from "@/shell/commands/command"
 import { SettingsList } from "@/settings/list"
 import { SettingsRow } from "@/settings/row"

@@ -104,9 +104,7 @@ export function createComposerControls(input: { model?: ModelSelection } = {}) {
       },
       model: {
         selection,
-        providerName:
-          key &&
-          composerProviderName(key.providerID, providers.all()),
+        providerName: key && composerProviderName(key.providerID, providers.all()),
         label: key && modelLabels().get(composerModelLabelKey(key.providerID, key.modelID)),
         paid: providers.paid().length > 0,
         // The session's model applies only to its agent, so resolve agents before showing a model.

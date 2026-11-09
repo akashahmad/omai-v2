@@ -2495,7 +2495,10 @@
   background: var(--settings-brand);
 }
 
-.settings-nav-groups [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected]) [data-slot="tabs-v2-trigger-content"] > svg {
+.settings-nav-groups
+  [data-slot="tabs-v2-trigger-wrapper"]:has([data-selected])
+  [data-slot="tabs-v2-trigger-content"]
+  > svg {
   background: var(--settings-brand);
   color: #fff;
 }

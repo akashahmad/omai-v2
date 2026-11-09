@@ -17,7 +17,7 @@ let fake: Awaited<ReturnType<typeof fakeCloudflare>>
 let root: Awaited<ReturnType<typeof tmpdir>>
 const paths = { data: "" }
 /** What the fake resolver answers, by host. Unknown hosts resolve to nothing. */
-const dns = new Map<string, { cname: string[]; a: string[] }>()
+const dns = new Map<string, { cname: string[]; a: string[]; txt?: string[] }>()
 
 beforeAll(async () => {
   fake = await fakeCloudflare()
@@ -273,9 +273,21 @@ describe("PublishDomains", () => {
       const alias = yield* domains.add("prj_apex", "apex.edu")
 
       expect(alias.domains[0]?.apex).toBe(true)
+      const token = alias.domains[0]?.verification?.value ?? ""
+      // A flattened root shows only addresses, so Cloudflare can't see the CNAME and needs the TXT record to verify it.
       expect(alias.domains[0]?.records).toEqual([
         { type: "ALIAS", name: "apex.edu", value: "domains.omai.test", ok: true },
+        { type: "TXT", name: "_cf-custom-hostname.apex.edu", value: token, ok: false },
       ])
+      expect(token).not.toBe("")
+
+      dns.set("_cf-custom-hostname.apex.edu", { cname: [], a: [], txt: [token] })
+      expect((yield* domains.list("prj_apex")).domains[0]?.records[1]).toEqual({
+        type: "TXT",
+        name: "_cf-custom-hostname.apex.edu",
+        value: token,
+        ok: true,
+      })
 
       process.env.OMAI_CLOUDFLARE_APEX_IPS = "192.0.2.10, 192.0.2.11"
       dns.set("apex.edu", { cname: [], a: ["192.0.2.10"] })

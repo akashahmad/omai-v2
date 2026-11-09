@@ -345,6 +345,20 @@ export type ArtifactID = string
 
 export type ArtifactTime = { created: number; updated: number }
 
+export type ProjectVmInit = { directory: string; created: boolean }
+
+export type ProjectVmUpload = { files: number }
+
+export type ProjectVmBusy = { busy: boolean; reasons: Array<string> }
+
+export type PlatformProvider = {
+  id: string
+  auth: "bearer" | "x-api-key" | "x-goog-api-key"
+  key: string
+  bases: Array<string>
+  models: Array<{ id: string; api: string }>
+}
+
 export type ReferenceGitSource = { type: "git"; repository: string; branch?: string }
 
 export type VcsBranch = { current?: string; default?: string }
@@ -4639,6 +4653,14 @@ export type ExperimentalPreviewThumbnailInput = { readonly projectID: string }
 
 export type ExperimentalPreviewThumbnailOutput = globalThis.Uint8Array
 
+export type ExperimentalProjectVmInitOutput = ProjectVmInit
+
+export type ExperimentalProjectVmUploadOutput = ProjectVmUpload
+
+export type ExperimentalProjectVmBusyOutput = ProjectVmBusy
+
+export type ExperimentalPlatformProvidersOutput = Array<PlatformProvider>
+
 export type ShellListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 
 export type ShellListOutput = { location: LocationPublicRef; data: Array<ShellInfo1> }
@@ -4920,6 +4942,9 @@ export type FileUnwatchInput = ExperimentalFileUnwatchInput
 
 /** @deprecated Use `ExperimentalFileUnwatchOutput`. Removed in the next minor. */
 export type FileUnwatchOutput = ExperimentalFileUnwatchOutput
+
+/** @deprecated Use `ExperimentalPlatformProvidersOutput`. Removed in the next minor. */
+export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
 
 /** @deprecated Use `ExperimentalMigrationV1StatusOutput`. Removed in the next minor. */
 export type MigrationV1StatusOutput = ExperimentalMigrationV1StatusOutput

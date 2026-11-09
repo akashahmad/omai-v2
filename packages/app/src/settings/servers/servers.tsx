@@ -115,7 +115,10 @@ function SettingsServersHeader(props: { title: string; onAddServer: () => void }
   )
 }
 
-function ServerConnectionRow(props: { entry: SettingsServer; onServerChange?: (server: ServerConnection.Any) => void }) {
+function ServerConnectionRow(props: {
+  entry: SettingsServer
+  onServerChange?: (server: ServerConnection.Any) => void
+}) {
   const dialog = useDialog()
   const language = useLanguage()
   const controller = useServerCollectionController()

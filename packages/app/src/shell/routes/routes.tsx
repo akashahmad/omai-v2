@@ -13,6 +13,8 @@ import { SettingsSurfaceProvider } from "@/settings/surface"
 import Shell from "@/shell/shell"
 import { requireServerKey } from "./session"
 import { PluginAttachment } from "@/runtime/plugin/root"
+import { multiUser } from "@/controlplane/client"
+import { ControlPlaneRoot, RequireSignedIn } from "@/controlplane/session"
 
 export const File = lazy(() => import("@opencode/session-ui/file").then((module) => ({ default: module.File })))
 
@@ -21,6 +23,10 @@ const loadSessionRoute = () => Promise.all([import("@/session/route"), File.prel
 const DraftRoute = lazy(() => import("@/new-session/route").then((module) => ({ default: module.DraftRoute })))
 
 const SettingsScreen = lazy(() => import("@/settings/shell").then((module) => ({ default: module.SettingsScreen })))
+
+const LoginPage = lazy(() => import("@/controlplane/login").then((module) => ({ default: module.LoginPage })))
+
+const SignupPage = lazy(() => import("@/controlplane/signup").then((module) => ({ default: module.SignupPage })))
 
 const ConnectServerScreen = lazy(() =>
   import("@/servers/connect/screen").then((module) => ({ default: module.ConnectServerScreen })),
@@ -44,34 +50,57 @@ export function preloadRoute(url: string) {
 }
 
 export function AppRoutes() {
+  if (multiUser()) return <MultiUserRoutes />
+
+  return <Route component={AppLayout}>{appPages()}</Route>
+}
+
+function appPages() {
   return (
-    <Route component={AppLayout}>
+    <>
       <Route path="/" component={ProjectsLanding} />
       <Route path="/projects" component={AllProjects} />
       <Route path="/sessions" component={Home} />
       <Route path="/settings" component={SettingsScreen} />
-      <Route
-        path="/server/:serverKey/session/:id"
-        component={() => (
-          <SessionRouteFrame>
-            <Suspense
-              fallback={
-                <div class="flex min-h-0 flex-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
-                  <SessionPanelFrame raised>
-                    <BrandLoader />
-                  </SessionPanelFrame>
-                </div>
-              }
-            >
-              <TargetServerRoute>
-                <TargetSessionRouteContent />
-              </TargetServerRoute>
-            </Suspense>
-          </SessionRouteFrame>
-        )}
-      />
+      <Route path="/server/:serverKey/session/:id" component={SessionRoute} />
       <Route path="/new-session" component={DraftRoute} />
+    </>
+  )
+}
+
+/**
+ * Multi-user mode: login and signup are public; every other page is the usual app, behind a session. Projects come
+ * from the control plane, and each opened project is its own server connection.
+ */
+function MultiUserRoutes() {
+  return (
+    <Route component={ControlPlaneRoot}>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
+      <Route component={RequireSignedIn}>
+        <Route component={AppLayout}>{appPages()}</Route>
+      </Route>
     </Route>
+  )
+}
+
+function SessionRoute() {
+  return (
+    <SessionRouteFrame>
+      <Suspense
+        fallback={
+          <div class="flex min-h-0 flex-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+            <SessionPanelFrame raised>
+              <BrandLoader />
+            </SessionPanelFrame>
+          </div>
+        }
+      >
+        <TargetServerRoute>
+          <TargetSessionRouteContent />
+        </TargetServerRoute>
+      </Suspense>
+    </SessionRouteFrame>
   )
 }
 
@@ -102,6 +131,18 @@ function AppLayout(props: ParentProps) {
 
     return global.servers.health[ServerConnection.key(only)]?.unauthorized ? only : undefined
   }
+
+  // In multi-user mode there is no server to connect to by hand: the shell shows even before a project is opened.
+  if (multiUser())
+    return (
+      <LayoutProvider>
+        <SettingsSurfaceProvider>
+          <PluginAttachment>
+            <Shell>{props.children}</Shell>
+          </PluginAttachment>
+        </SettingsSurfaceProvider>
+      </LayoutProvider>
+    )
 
   return (
     <Show when={servers.list.length > 0 && !signedOut()} fallback={<ConnectServerScreen url={signedOut()?.http.url} />}>

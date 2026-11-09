@@ -161,7 +161,6 @@ export const SettingsProjectGeneral: Component<{
           </Show>
 
           <AutoAcceptPermissionsSetting project={props.project} server={props.server} />
-
         </SettingsList>
       </div>
     </>
@@ -213,4 +212,3 @@ const AutoAcceptPermissionsSetting: Component<{ project: LocalProject; server: S
     </Show>
   )
 }
-

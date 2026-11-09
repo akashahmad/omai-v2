@@ -1,6 +1,6 @@
 import { createServer } from "node:http"
 import type { AddressInfo } from "node:net"
-import type { Config } from "../../src/publish/config"
+import type { Config } from "../../src/publish/config.js"
 
 /** An in-memory stand-in for the Cloudflare endpoints the publish client uses. */
 export async function fakeCloudflare() {

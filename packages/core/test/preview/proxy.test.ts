@@ -34,6 +34,7 @@ type Options = {
   upstream: () => Upstream
   auth?: Parameters<typeof openProxy>[0]["auth"]
   uploads?: Parameters<typeof openProxy>[0]["uploads"]
+  crossSite?: boolean
 }
 
 async function proxy(options: Options): Promise<Proxy> {
@@ -46,6 +47,7 @@ async function proxy(options: Options): Promise<Proxy> {
     visual: (parent) => `/* visual editor for ${parent} */`,
     uploads: options.uploads ?? (() => undefined),
     events: { subscribe: () => () => {} },
+    crossSite: options.crossSite,
   })
   closers.push(opened.close)
   return opened
@@ -282,5 +284,53 @@ describe("proxy", () => {
     expect(entered.headers["set-cookie"]?.join("\n")).toContain("HttpOnly")
     expect(entered.headers["set-cookie"]?.join("\n")).toContain("SameSite=Lax")
     expect(allowed.body).toBe("secret")
+  })
+
+  // On a VM the preview has its own public address (a code.run site), so the app's frame is cross-site, where browsers
+  // drop SameSite=Lax cookies.
+  test("a cross-site preview sets cookies a third-party frame keeps", async () => {
+    const app = await upstream((_, res) => res.end("secret"))
+    const opened = await proxy({
+      upstream: () => ({ kind: "port", port: app.port }),
+      auth: { verify: (value) => value === "pass", exchange: (ticket) => (ticket === "good" ? "pass" : undefined) },
+      crossSite: true,
+    })
+    const entered = await get(opened.port, "/__omai/enter?ticket=good&parent=https%3A%2F%2Fapp.omai.ch&to=%2F")
+    const cookies = entered.headers["set-cookie"] ?? []
+
+    expect(cookies.length).toBe(2)
+    for (const value of cookies) {
+      expect(value).toContain("SameSite=None")
+      expect(value).toContain("Secure")
+      expect(value).toContain("Partitioned")
+      expect(value).not.toContain("SameSite=Lax")
+    }
+  })
+
+  // The frame keeps its first entry address, so a reload sends the used ticket again: the cookie it already holds
+  // must let it back in.
+  test("re-entering with a used ticket works while the cookie is valid", async () => {
+    const app = await upstream((_, res) => res.end("secret"))
+    const used = new Set<string>()
+    const opened = await proxy({
+      upstream: () => ({ kind: "port", port: app.port }),
+      auth: {
+        verify: (value) => value === "pass",
+        exchange: (ticket) => {
+          if (ticket !== "good" || used.has(ticket)) return undefined
+          used.add(ticket)
+          return "pass"
+        },
+      },
+    })
+    const first = await get(opened.port, "/__omai/enter?ticket=good&to=%2Fx")
+    const cookies = (first.headers["set-cookie"] ?? []).map((value) => value.split(";")[0]).join("; ")
+    const again = await get(opened.port, "/__omai/enter?ticket=good&to=%2Fx", { cookie: cookies })
+    const stranger = await get(opened.port, "/__omai/enter?ticket=good&to=%2Fx")
+
+    expect(first.status).toBe(302)
+    expect(again.status).toBe(302)
+    expect(again.headers.location).toBe("/x")
+    expect(stranger.status).toBe(401)
   })
 })

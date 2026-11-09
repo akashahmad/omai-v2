@@ -5,11 +5,15 @@ import { Menu } from "@opencode/ui/menu"
 import { For, Show } from "solid-js"
 import { useServerAddItems } from "@/runtime/plugin/servers"
 import { useLanguage } from "@/runtime/i18n/language"
+import { multiUser } from "@/controlplane/client"
 
 /** The add-server button; plugins that add their own kinds of server turn it into a menu. */
 export function AddServerMenu(props: { onAddServer: () => void; compact?: boolean }) {
   const language = useLanguage()
   const items = useServerAddItems()
+
+  // Multi-user mode: servers are the user's projects, opened from the projects page, never added by hand.
+  if (multiUser()) return null
 
   return (
     <Show

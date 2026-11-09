@@ -89,6 +89,7 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/which": "3.0.4",
+    "@types/yauzl": "2.10.3",
     "drizzle-kit": "catalog:",
     "fast-check": "catalog:",
     "happy-dom": "20.0.11"
@@ -106,10 +107,10 @@
     "@modelcontextprotocol/client": "2.3.1",
     "@modelcontextprotocol/core": "2.3.1",
     "@modelcontextprotocol/server": "2.3.1",
-    "@opencode/pty": "0.4.0",
     "@opencode/ai": "workspace:*",
     "@opencode/codemode": "workspace:*",
     "@opencode/plugin": "workspace:*",
+    "@opencode/pty": "0.4.0",
     "@opencode/schema": "workspace:*",
     "@opencode/util": "workspace:*",
     "@parcel/watcher": "2.5.1",
@@ -131,6 +132,7 @@
     "lighthouse": "13.4.1",
     "mime-types": "3.0.2",
     "which": "6.0.1",
+    "yauzl": "3.2.0",
     "zod": "catalog:"
   },
   "peerDependencies": {

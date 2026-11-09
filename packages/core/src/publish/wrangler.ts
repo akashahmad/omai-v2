@@ -56,6 +56,34 @@ export function wranglerConfig(kind: Publish.Kind, input: { name: string; stage:
   }
 }
 
+/**
+ * The deploy config for an uploaded bundle laid out as `<root>/assets` and `<root>/worker`. Built from the kind alone,
+ * like `wranglerConfig`: the worker was already bundled by `bundleArgs`, so it is uploaded as is, and nothing in the
+ * upload can add bindings.
+ */
+export function uploadConfig(kind: Publish.Kind, input: { name: string; root: string; entry?: string }) {
+  const local = wranglerConfig(kind, { name: input.name, stage: input.root, output: "assets" })
+  const assets = path.join(input.root, "assets")
+  if (!("main" in local)) return { ...local, assets: { ...local.assets, directory: assets } }
+  const worker = path.join(input.root, "worker")
+  return {
+    name: local.name,
+    compatibility_date: local.compatibility_date,
+    main: path.join(worker, input.entry ?? path.basename(local.main)),
+    no_bundle: true,
+    find_additional_modules: true,
+    base_dir: worker,
+    rules: [{ type: "ESModule", globs: ["**/*.js", "**/*.mjs"] }],
+    assets: { directory: assets, binding: "ASSETS" },
+    compatibility_flags: local.compatibility_flags,
+  }
+}
+
+/** Bundles the worker into `outdir` without uploading; needs no Cloudflare credentials. */
+export function bundleArgs(input: { name: string; config: string; outdir: string }) {
+  return ["deploy", "--dry-run", "--outdir", input.outdir, "--name", input.name, "--config", input.config]
+}
+
 export function deployArgs(input: { name: string; namespace: string; config: string }) {
   return ["deploy", "--dispatch-namespace", input.namespace, "--name", input.name, "--config", input.config]
 }

@@ -591,7 +591,7 @@ export default {
   "domains.copied": "Copied",
   "domains.copy.failed": "This could not be copied.",
   "domains.apex.hint":
-    "Root domains can't use a CNAME at most DNS providers. Use an ALIAS, ANAME or flattened CNAME record if yours offers one. DNS changes can take up to a few hours to show.",
+    "Root domains can't use a CNAME at most DNS providers. Use an ALIAS, ANAME or flattened CNAME record if yours offers one, and add the TXT record too: it proves the domain is yours, because a flattened record doesn't show where it points. DNS changes can take up to a few hours to show.",
   "domains.moving.title": "Moving from another host?",
   "domains.moving.body":
     "Add this TXT record first to verify the domain before you switch its DNS, so the site has a certificate the moment it moves.",

@@ -65,13 +65,7 @@ export function SettingsServerUnavailable(props: {
               {language.t("settings.server.unreachable.description", { server: props.entry.name })}
             </div>
             <div class="settings-server-unavailable-actions">
-              <Button
-                size="normal"
-                variant="neutral"
-                icon="refresh"
-                disabled={state.retrying}
-                onClick={retry}
-              >
+              <Button size="normal" variant="neutral" icon="refresh" disabled={state.retrying} onClick={retry}>
                 {language.t("settings.server.unreachable.retry")}
               </Button>
               <Button size="normal" variant="ghost-muted" onClick={edit}>

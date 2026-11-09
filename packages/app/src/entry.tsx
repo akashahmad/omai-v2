@@ -14,6 +14,7 @@ import zh from "@/runtime/i18n/zh"
 import { authFromToken } from "@/runtime/server/api"
 import { version } from "../package.json"
 import { ServerConnection } from "@/runtime/server/registry"
+import { multiUser } from "@/controlplane/client"
 
 const getLocale = () => {
   if (typeof navigator === "undefined") return "en" as const
@@ -67,8 +68,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     },
     integrations: (integrations) => {
       return integrations.filter(
-        (i) =>
-          i.name !== "Breadcrumbs" && !(import.meta.env.OMAI_CHANNEL === "prod" && i.name === "GlobalHandlers"),
+        (i) => i.name !== "Breadcrumbs" && !(import.meta.env.OMAI_CHANNEL === "prod" && i.name === "GlobalHandlers"),
       )
     },
   })
@@ -85,16 +85,18 @@ if (root instanceof HTMLElement && root.dataset.omaiMounted === undefined) {
 
     if (standalone) restorePwaRoute()
 
-    const server: ServerConnection.Http | undefined = web.currentServerUrl
-      ? {
-          type: "http",
-          authToken: !!auth,
-          http: {
-            url: web.currentServerUrl,
-            ...auth,
-          },
-        }
-      : undefined
+    // Multi-user mode has no server of its own: each opened project is a connection to its VM.
+    const server: ServerConnection.Http | undefined =
+      !multiUser() && web.currentServerUrl
+        ? {
+            type: "http",
+            authToken: !!auth,
+            http: {
+              url: web.currentServerUrl,
+              ...auth,
+            },
+          }
+        : undefined
 
     render(
       () => (

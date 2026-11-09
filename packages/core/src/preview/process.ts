@@ -64,6 +64,30 @@ function signal(pid: number, name: NodeJS.Signals) {
   }
 }
 
+/** Runs `command` in its own process group; the group is killed on abort or after `timeout`. */
+export async function runGroup(input: {
+  command: string
+  cwd: string
+  env: Record<string, string>
+  timeout: number
+  signal: AbortSignal
+  onLog: (chunk: string) => void
+}) {
+  if (input.signal.aborted) return null
+  const running = spawnGroup({ command: input.command, cwd: input.cwd, env: input.env, onLog: input.onLog })
+  const stop = () => void running.stop()
+  input.signal.addEventListener("abort", stop, { once: true })
+  const state = { timedOut: false }
+  const timer = setTimeout(() => {
+    state.timedOut = true
+    stop()
+  }, input.timeout)
+  const code = await running.exited
+  clearTimeout(timer)
+  input.signal.removeEventListener("abort", stop)
+  return state.timedOut ? ("timeout" as const) : code
+}
+
 /** The last `LOG_BUFFER` characters of a process's output. */
 export class LogBuffer {
   private value = ""

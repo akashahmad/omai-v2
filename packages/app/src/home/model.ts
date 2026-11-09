@@ -71,11 +71,20 @@ export function createHomeController() {
     void tabs.newDraft({ server: ServerConnection.key(conn), directory })
   }
 
-  function openProjectSession(conn: ServerConnection.Any, directory: string, session: SessionInfo) {
+  /** `preview` opens the side panel, which shows the project's preview first; false closes it. */
+  function openProjectSession(
+    conn: ServerConnection.Any,
+    directory: string,
+    session: SessionInfo,
+    options?: { preview?: boolean },
+  ) {
     const ctx = global.ensureServerCtx(conn)
     void ctx.data.session.message.sync(session.id).catch(() => undefined)
     void startTransition(() => {
       const tab = tabs.addSessionTab({ server: ServerConnection.key(conn), sessionId: session.id })
+
+      // Opening a project decides the side panel both ways: the tab may be reused and still hold the last project's.
+      if (options?.preview !== undefined) tabs.setRegion(tab, "side", options.preview)
       tabs.select(tab)
       ctx.data.session.remember(session)
       ctx.projects.touch(directory)

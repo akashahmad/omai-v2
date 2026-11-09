@@ -6,6 +6,7 @@ import { Context, Effect, Layer } from "effect"
 import { makeGlobalNode } from "@opencode/util/effect/app-node"
 import { Database } from "../database/database.js"
 import { PreviewThumbnailTable } from "./sql.js"
+import { ProjectVmThumbnail } from "../project-vm/thumbnail.js"
 
 type DatabaseService = Database.Interface["db"]
 
@@ -22,7 +23,11 @@ export const hash = (data: Uint8Array) => createHash("sha256").update(data).dige
 /** One project's screenshot, or undefined when its preview never ran. */
 export const read = Effect.fnUntraced(function* (db: DatabaseService, projectID: string) {
   const row = yield* db
-    .select({ hash: PreviewThumbnailTable.hash, data: PreviewThumbnailTable.data, time: PreviewThumbnailTable.time_updated })
+    .select({
+      hash: PreviewThumbnailTable.hash,
+      data: PreviewThumbnailTable.data,
+      time: PreviewThumbnailTable.time_updated,
+    })
     .from(PreviewThumbnailTable)
     .where(eq(PreviewThumbnailTable.project_id, projectID))
     .get()
@@ -34,7 +39,11 @@ export const read = Effect.fnUntraced(function* (db: DatabaseService, projectID:
 /** Which projects have a screenshot and its hash, without the images. */
 export const list = Effect.fnUntraced(function* (db: DatabaseService) {
   const rows = yield* db
-    .select({ projectID: PreviewThumbnailTable.project_id, hash: PreviewThumbnailTable.hash, time: PreviewThumbnailTable.time_updated })
+    .select({
+      projectID: PreviewThumbnailTable.project_id,
+      hash: PreviewThumbnailTable.hash,
+      time: PreviewThumbnailTable.time_updated,
+    })
     .from(PreviewThumbnailTable)
     .all()
     .pipe(Effect.orDie)
@@ -42,15 +51,32 @@ export const list = Effect.fnUntraced(function* (db: DatabaseService) {
   return rows
 })
 
+/** The newest screenshot of any project here, or undefined. A MicroVM serves one project, so this is its own. */
+export const latest = Effect.fnUntraced(function* (db: DatabaseService) {
+  const newest = (yield* list(db)).toSorted((a, b) => b.time - a.time)[0]
+
+  if (!newest) return undefined
+
+  return yield* read(db, newest.projectID)
+})
+
 const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const db = (yield* Database.Service).db
+    // On a project's MicroVM every new screenshot also goes to the control plane, for the projects page.
+    const vm = ProjectVmThumbnail.target()
 
     return Service.of({
       save: (projectID, data) => {
         const now = Date.now()
-        const row = { project_id: projectID, hash: hash(data), data: Buffer.from(data), time_created: now, time_updated: now }
+        const row = {
+          project_id: projectID,
+          hash: hash(data),
+          data: Buffer.from(data),
+          time_created: now,
+          time_updated: now,
+        }
 
         return db
           .insert(PreviewThumbnailTable)
@@ -60,7 +86,11 @@ const layer = Layer.effect(
             set: { hash: row.hash, data: row.data, time_updated: now },
           })
           .run()
-          .pipe(Effect.orDie, Effect.asVoid)
+          .pipe(
+            Effect.orDie,
+            Effect.tap(() => (vm ? Effect.promise(() => ProjectVmThumbnail.push(vm, data)) : Effect.void)),
+            Effect.asVoid,
+          )
       },
     })
   }),

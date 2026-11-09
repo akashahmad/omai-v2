@@ -11,9 +11,23 @@ import { useSettings } from "@/settings/model"
 import { useSettingsDialog } from "@/settings/command"
 import type { OpenProject } from "@/shell/sessions-panel"
 import { sidebarToggleCommand } from "@/shell/shell"
+import { Menu } from "@opencode/ui/menu"
+import { useControlPlaneOptional } from "@/controlplane/session"
 
 const BUTTON =
   "flex size-9 shrink-0 items-center justify-center rounded-[8px] text-v2-icon-icon-muted transition-colors hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-icon-icon-base focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-icon-icon-base focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-v2-overlay-simple-overlay-hover aria-pressed:text-v2-icon-icon-base aria-[current=page]:bg-v2-overlay-simple-overlay-hover aria-[current=page]:text-v2-icon-icon-base"
+
+const ACCOUNT =
+  "mt-1 flex size-9 shrink-0 cursor-default items-center justify-center rounded-full border border-v2-border-border-muted text-v2-icon-icon-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-v2-border-border-base"
+
+function AccountGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="7" r="3.25" stroke="currentColor" stroke-width="1.25" />
+      <path d="M3.75 16.5c.9-3 3.3-4.5 6.25-4.5s5.35 1.5 6.25 4.5" stroke="currentColor" stroke-width="1.25" />
+    </svg>
+  )
+}
 
 /** The always-visible strip down the window's start edge: navigation, the session's panels and the account. */
 export function Rail(props: { project: OpenProject }) {
@@ -25,6 +39,8 @@ export function Rail(props: { project: OpenProject }) {
   const settings = useSettings()
   const openSettings = useSettingsDialog()
   const project = props.project
+  // Multi-user mode: the account slot holds the signed-in user and log out.
+  const controlPlane = useControlPlaneOptional()
 
   // Terminal, file tree and the side panel belong to an open session.
   const inSession = () => layout.route().type === "session"
@@ -198,21 +214,46 @@ export function Rail(props: { project: OpenProject }) {
           <PanelGlyph />
         </button>
       </RailItem>
-      {/* There is no sign-in yet; the account slot holds its place. */}
-      <RailItem label={language.t("rail.account")}>
-        <button
-          type="button"
-          data-action="rail-account"
-          aria-label={language.t("rail.account")}
-          aria-disabled="true"
-          class="mt-1 flex size-9 shrink-0 cursor-default items-center justify-center rounded-full border border-v2-border-border-muted text-v2-icon-icon-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-v2-border-border-base"
-        >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <circle cx="10" cy="7" r="3.25" stroke="currentColor" stroke-width="1.25" />
-            <path d="M3.75 16.5c.9-3 3.3-4.5 6.25-4.5s5.35 1.5 6.25 4.5" stroke="currentColor" stroke-width="1.25" />
-          </svg>
-        </button>
-      </RailItem>
+      <Show
+        when={controlPlane}
+        fallback={
+          // There is no sign-in yet; the account slot holds its place.
+          <RailItem label={language.t("rail.account")}>
+            <button
+              type="button"
+              data-action="rail-account"
+              aria-label={language.t("rail.account")}
+              aria-disabled="true"
+              class={ACCOUNT}
+            >
+              <AccountGlyph />
+            </button>
+          </RailItem>
+        }
+      >
+        {(session) => (
+          <Menu gutter={6} modal={false} placement="right-end">
+            <Menu.Trigger
+              as="button"
+              type="button"
+              data-action="rail-account"
+              aria-label={language.t("rail.account")}
+              class={`${ACCOUNT} cursor-pointer hover:text-v2-icon-icon-base`}
+            >
+              <AccountGlyph />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content>
+                <div class="px-2 py-1.5 text-12-regular text-v2-text-text-muted">{session().state.user?.username}</div>
+                <Menu.Separator />
+                <Menu.Item data-action="rail-logout" onSelect={() => void session().logout()}>
+                  {language.t("auth.logout")}
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu>
+        )}
+      </Show>
     </nav>
   )
 }

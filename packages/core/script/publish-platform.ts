@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // Idempotent setup for the Workers for Platforms + Cloudflare for SaaS publishing stack. Run from packages/core:
-//   bunx bun@1.4.4 --env-file=../../.env script/publish-platform.ts [--dry-run]
+//   bunx bun@1.4.4 --env-file=../../.env.local script/publish-platform.ts [--dry-run]
 // The account is shared with a live project, so this only creates what is missing. It never modifies or deletes an
 // existing namespace, record, route or fallback origin; the one thing it replaces is the dispatcher Worker.
 import { Global } from "@opencode/util/global"
@@ -171,7 +171,7 @@ if (import.meta.main) {
   const args = parseArgs({ args: process.argv.slice(2), options: { "dry-run": { type: "boolean" } }, strict: true })
   const config = PublishConfig.read()
   if (!config) {
-    console.error("Set OMAI_CLOUDFLARE_ACCOUNT_ID and OMAI_CLOUDFLARE_API_TOKEN (see .env.sample).")
+    console.error("Set OMAI_CLOUDFLARE_ACCOUNT_ID and OMAI_CLOUDFLARE_API_TOKEN (see .env.sample; set them in .env.local or .env.prod).")
     process.exit(1)
   }
   const dryRun = args.values["dry-run"] === true

@@ -5,6 +5,10 @@ interface ImportMetaEnv {
   readonly VITE_OMAI_SERVER_HOST: string
   readonly VITE_OMAI_SERVER_PORT: string
   readonly VITE_OMAI_CHANNEL?: "local" | "dev" | "beta" | "prod"
+  /** The control plane's address. Setting it switches the app to multi-user mode. */
+  readonly VITE_OMAI_API_URL?: string
+  /** Browser inactivity before logout in multi-user mode. Default 900000 (15 minutes). */
+  readonly VITE_OMAI_SESSION_IDLE_MS?: string
 
   readonly VITE_SENTRY_DSN?: string
   readonly VITE_SENTRY_ENVIRONMENT?: string

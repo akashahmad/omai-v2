@@ -72,7 +72,8 @@ export const currentRoute = (pathname: string, search: string): LayoutRoute => {
 
   if (parts[0] === "settings") return { type: "settings" }
 
-  if (parts[0] === "connect") return { type: "connect" }
+  // Multi-user login and signup use no server, like the connect screen.
+  if (parts[0] === "connect" || parts[0] === "login" || parts[0] === "signup") return { type: "connect" }
 
   if (parts[0] === "components") return { type: "components" }
 

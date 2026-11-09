@@ -16,6 +16,7 @@ import { PersistentPty } from "@opencode/core/persistent-pty"
 import { Project } from "@opencode/core/project"
 import { Worktree } from "@opencode/core/worktree"
 import { Session } from "@opencode/core/session"
+import { SessionExecution } from "@opencode/core/session/execution"
 import { Instance } from "@opencode/core/instance/service"
 import { SessionTransfer } from "@opencode/core/session/transfer"
 import { InstructionEntry } from "@opencode/core/session/instruction-entry"
@@ -66,6 +67,8 @@ const applicationServiceNodes = [
   Project.sweepNode,
   Worktree.node,
   Session.node,
+  // Shared with Session.node; listed so the busy report can read running steps.
+  SessionExecution.node,
   Instance.node,
   SessionTransfer.node,
   InstructionEntry.node,
@@ -91,9 +94,10 @@ export function createRoutes(
   serviceURLs: () => ReadonlyArray<string> = () => [],
   overrides: LayerNode.Replacements = [],
 ) {
+  const vm = ServerAuth.vmFromEnv()
   return makeRoutes(
-    options.password
-      ? ServerAuth.Config.configLayer({ password: Option.some(options.password) })
+    options.password || vm
+      ? ServerAuth.Config.configLayer({ password: Option.fromNullishOr(options.password || undefined), vm })
       : ServerAuth.Config.layer,
     options,
     serviceURLs,

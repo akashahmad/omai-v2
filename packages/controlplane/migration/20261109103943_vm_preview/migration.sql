@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "vm_preview" text;

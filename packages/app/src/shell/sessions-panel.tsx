@@ -55,7 +55,11 @@ export function createOpenProject() {
     const value = current()
 
     if (!value) return
-    tabs.select(tabs.addSessionTab({ server: ServerConnection.key(value.conn), sessionId: sessionID }))
+    const server = ServerConnection.key(value.conn)
+    const tab = tabs.addSessionTab({ server, sessionId: sessionID })
+    // Another session of the same project opens with the panels as they are, e.g. the preview stays open.
+    tabs.inheritRegions({ type: "session", server, sessionId: value.sessionID }, tab)
+    tabs.select(tab)
   }
 
   const create = async () => {

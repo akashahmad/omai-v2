@@ -2,6 +2,8 @@ export * as PublishName from "./name.js"
 
 export const RESERVED: ReadonlySet<string> = new Set([
   "app",
+  "api",
+  "admin",
   "preview",
   "view",
   "www",

@@ -8,6 +8,7 @@ import { connect, type Socket } from "node:net"
 import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib"
 import type { Readable } from "node:stream"
 import path from "node:path"
+import { ProjectVmBusy } from "../project-vm/busy.js"
 import { startingPage } from "./starting-page.js"
 import { TYPES } from "./static.js"
 
@@ -40,6 +41,11 @@ export interface ProxyInput {
   uploads: (pathname: string) => string | undefined
   /** Server-sent events for pages in the preview, like `reload`. */
   events: { subscribe(listener: (event: string) => void): () => void }
+  /**
+   * The preview has its own public site (a VM's code.run address), so the app's frame is cross-site: its cookies must
+   * be `SameSite=None; Secure; Partitioned` or the browser drops them. Northflank serves it over HTTPS.
+   */
+  crossSite?: boolean
 }
 
 const AUTH_COOKIE = "omai_preview"
@@ -76,7 +82,7 @@ export async function openProxy(input: ProxyInput): Promise<Proxy> {
 function handle(input: ProxyInput, req: IncomingMessage, res: ServerResponse) {
   const url = new URL(req.url ?? "/", "http://preview")
 
-  if (url.pathname === "/__omai/enter") return enter(input, url, res)
+  if (url.pathname === "/__omai/enter") return enter(input, req, url, res)
 
   if (input.auth && !input.auth.verify(cookie(req.headers, AUTH_COOKIE)))
     return send(res, 401, "text/plain", "Open this preview from O M A I +.")
@@ -102,6 +108,8 @@ function handle(input: ProxyInput, req: IncomingMessage, res: ServerResponse) {
 
 function toUpstream(input: ProxyInput, req: IncomingMessage, res: ServerResponse) {
   const target = input.upstream()
+  // Someone is viewing the app: on a MicroVM this keeps it from pausing.
+  ProjectVmBusy.touch("preview")
 
   if (target.kind === "down") return starting(res)
   forward(req, res, target.port)
@@ -126,19 +134,22 @@ async function serveUpload(input: ProxyInput, req: IncomingMessage, res: ServerR
 
 // The entry point the panel loads first: remembers the app origin for the bridge, trades the ticket for the auth
 // cookie when the preview needs one, then goes to the page.
-function enter(input: ProxyInput, url: URL, res: ServerResponse) {
+function enter(input: ProxyInput, req: IncomingMessage, url: URL, res: ServerResponse) {
   const to = url.searchParams.get("to") ?? "/"
   const parent = url.searchParams.get("parent")
   const cookies: string[] = []
+  const attributes = input.crossSite ? "Path=/; HttpOnly; SameSite=None; Secure; Partitioned" : "Path=/; HttpOnly; SameSite=Lax"
 
-  if (input.auth) {
+  // A browser that already entered keeps its cookie: the frame reloads its first address, whose one-time ticket is
+  // spent by then, so only a browser without a valid cookie needs a fresh ticket.
+  if (input.auth && !input.auth.verify(cookie(req.headers, AUTH_COOKIE))) {
     const value = input.auth.exchange(url.searchParams.get("ticket") ?? "")
 
     if (!value) return send(res, 401, "text/plain", "This preview link has expired. Reopen it from O M A I +.")
-    cookies.push(`${AUTH_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax`)
+    cookies.push(`${AUTH_COOKIE}=${value}; ${attributes}`)
   }
 
-  if (parent) cookies.push(`${PARENT_COOKIE}=${encodeURIComponent(parent)}; Path=/; HttpOnly; SameSite=Lax`)
+  if (parent) cookies.push(`${PARENT_COOKIE}=${encodeURIComponent(parent)}; ${attributes}`)
   res.writeHead(302, { location: to.startsWith("/") && !to.startsWith("//") ? to : "/", "set-cookie": cookies })
   res.end()
 }

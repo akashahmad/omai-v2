@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@opencode/controlplane",
+  "version": "2.2.5",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "build": "bun run script/build-node.ts",
+    "typecheck": "bun check --no-script",
+    "typecheck:tsc": "tsc --noEmit",
+    "db": "bun drizzle-kit",
+    "user:create": "bun run --env-file=../../.env.local script/user-create.ts",
+    "dev": "bun run --env-file=../../.env.local src/main.ts",
+    "user:admin": "bun run --env-file=../../.env.local script/user-admin.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.3.15",
+    "@opencode/core": "workspace:*",
+    "@opencode/schema": "workspace:*",
+    "@opencode/util": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "8.15.6",
+    "@typescript/native": "catalog:",
+    "drizzle-kit": "catalog:"
+  }
+}

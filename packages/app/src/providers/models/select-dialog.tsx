@@ -306,7 +306,7 @@ function ModelDrawer(props: {
   provider?: string
   chatgptPlan?: boolean
   onClose: () => void
-  onManage: () => void
+  onManage?: () => void
   onConnect?: () => void
 }) {
   const language = useLanguage()
@@ -354,7 +354,7 @@ function ModelDrawer(props: {
               setStore("action", undefined)
 
               if (action === "manage") {
-                props.onManage()
+                props.onManage?.()
 
                 return
               }
@@ -384,14 +384,16 @@ function ModelDrawer(props: {
                 />
               </div>
               <div data-slot="model-selector-actions" class="flex flex-col gap-2">
-                <Button
-                  variant="ghost"
-                  class="w-full !h-10 !justify-start"
-                  icon="outline-sliders"
-                  onClick={() => setStore({ open: false, action: "manage", restoreTrigger: false })}
-                >
-                  {language.t("dialog.model.manage")}
-                </Button>
+                <Show when={props.onManage}>
+                  <Button
+                    variant="ghost"
+                    class="w-full !h-10 !justify-start"
+                    icon="outline-sliders"
+                    onClick={() => setStore({ open: false, action: "manage", restoreTrigger: false })}
+                  >
+                    {language.t("dialog.model.manage")}
+                  </Button>
+                </Show>
                 <Show when={props.onConnect}>
                   <Button
                     variant="ghost"

@@ -22,6 +22,7 @@ import {
 import { appendPrompt, promptLength } from "@/composer/prompt-parts"
 import { TabStorage } from "./schema"
 import { useCurrentRoute } from "@/shell/state/layout"
+import { inheritedRegions } from "./inherit-regions"
 
 export type SessionTab = typeof TabStorage.Session.Type
 
@@ -601,6 +602,14 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
         if (!tab) return fallback
 
         return regions[tabKey(tab)]?.[region] ?? fallback
+      },
+      /** Starts `to` with the panel layout of `from` when `to` has none of its own yet. */
+      inheritRegions(from: Tab, to: Tab) {
+        const inherited = inheritedRegions(regions, tabKey(from), tabKey(to))
+
+        // A tab added by addSessionTab lands in a transition; layouts of tabs not in the store yet are dropped, so this
+        // lands after it.
+        if (inherited) void startTransition(() => setRegions(tabKey(to), { ...inherited }))
       },
       setRegion(tab: Tab | undefined, region: TabRegion, opened: boolean) {
         if (!tab) return

@@ -13483,6 +13483,234 @@
         "summary": "Read preview thumbnail"
       }
     },
+    "/api/experimental/project-vm/init": {
+      "post": {
+        "tags": ["experimental"],
+        "operationId": "experimental.project-vm.init",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "ProjectVmInit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectVmInit"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Create this MicroVM's project folder and, unless it is already a git repository, initialise git with a first commit. Later calls change nothing. Experimental: may change without compatibility guarantees.",
+        "summary": "Initialise the project folder"
+      }
+    },
+    "/api/experimental/project-vm/upload": {
+      "post": {
+        "tags": ["experimental"],
+        "operationId": "experimental.project-vm.upload",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "ProjectVmUpload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectVmUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ConflictError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Unpack a zip (the raw request body, at most 500 MiB) into the project folder before it is initialised. Rejects zips with absolute, escaping or symlink entries without writing anything, and answers 409 once the project is initialised. Experimental: may change without compatibility guarantees.",
+        "summary": "Upload the project's starting files"
+      }
+    },
+    "/api/experimental/project-vm/busy": {
+      "get": {
+        "tags": ["experimental"],
+        "operationId": "experimental.project-vm.busy",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "ProjectVmBusy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectVmBusy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Whether this MicroVM is doing work or in use, so the control plane doesn't pause it: running session steps, installs, publishes, programs running in terminals, and a preview viewed in the last 2 minutes. Experimental: may change without compatibility guarantees.",
+        "summary": "Report whether the VM is busy"
+      }
+    },
+    "/api/experimental/platform/providers": {
+      "get": {
+        "tags": ["experimental"],
+        "operationId": "experimental.platform.providers",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlatformProvider"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FileNotFoundError | LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "The providers connected on this platform server with an API key, with their keys and API base URLs, for the control plane's model gateway. Experimental: may change without compatibility guarantees.",
+        "summary": "List the platform's providers and keys"
+      }
+    },
     "/api/shell": {
       "get": {
         "tags": ["shell"],
@@ -21090,6 +21318,45 @@
         },
         "additionalProperties": false
       },
+      "PlatformProvider": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "auth": {
+            "type": "string",
+            "enum": ["bearer", "x-api-key", "x-goog-api-key"]
+          },
+          "key": {
+            "type": "string"
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "api": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "api"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["id", "auth", "key", "bases", "models"],
+        "additionalProperties": false
+      },
       "Plugin.Features": {
         "type": "object",
         "properties": {
@@ -21396,6 +21663,53 @@
           }
         },
         "required": ["_tag", "projectID", "message"],
+        "additionalProperties": false
+      },
+      "ProjectVmBusy": {
+        "type": "object",
+        "properties": {
+          "busy": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["busy", "reasons"],
+        "additionalProperties": false
+      },
+      "ProjectVmInit": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "created": {
+            "type": "boolean"
+          }
+        },
+        "required": ["directory", "created"],
+        "additionalProperties": false
+      },
+      "ProjectVmUpload": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": ["Infinity", "-Infinity", "NaN"]
+              }
+            ]
+          }
+        },
+        "required": ["files"],
         "additionalProperties": false
       },
       "Prompt.AgentAttachment": {
@@ -30459,6 +30773,9 @@
     {
       "name": "persistentPty",
       "description": "Prototype persistent PTY routes."
+    },
+    {
+      "name": "server.platform"
     },
     {
       "name": "shell",

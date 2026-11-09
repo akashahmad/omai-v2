@@ -109,9 +109,7 @@ describe("settings search ranking", () => {
 
   test("qualifies project settings by project name on the selected server", () => {
     expect(rankSettings("opencode name", index()).map((item) => item.view.target)).toEqual(["settings-project-name"])
-    expect(rankSettings("opencode name", index({ selected: "remote" })).map((item) => item.server)).toEqual([
-      "remote",
-    ])
+    expect(rankSettings("opencode name", index({ selected: "remote" })).map((item) => item.server)).toEqual(["remote"])
     expect(rankSettings("opencode skills", index()).map((item) => item.view.subtab)).toEqual(["skills"])
   })
 

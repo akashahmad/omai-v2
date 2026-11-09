@@ -196,7 +196,9 @@ describe("buildPromptRequest", () => {
     )
     expect(result.displayText).toBe("Align these targets")
     expect(result.comments).toEqual(notes)
-    expect(readPromptPresentation({ displayText: result.displayText, comments: result.comments })?.comments).toEqual(notes)
+    expect(readPromptPresentation({ displayText: result.displayText, comments: result.comments })?.comments).toEqual(
+      notes,
+    )
     expect(result.files).toEqual([])
   })
 

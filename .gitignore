@@ -3,7 +3,8 @@ node_modules
 .worktrees
 .sst
 .env
-.env.local
+.env.*
+!.env.sample
 .idea
 .vscode
 .codex
@@ -12,6 +13,7 @@ playground
 tmp
 dist
 dist-node
+dist-vm
 ts-dist
 .turbo
 .typecheck-profiles
@@ -38,3 +40,6 @@ tsconfig.tsbuildinfo
 /artifacts/
 /graphify-out/**
 /docs/**
+
+# Multi-user control plane data (local VMs, PGlite)
+.omai-controlplane/

@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test"
 import { PublishName } from "../../src/publish/name"
 
 describe("publish names", () => {
+  test("api and admin are reserved", () => {
+    expect(PublishName.validName("api")).toContain("reserved")
+    expect(PublishName.validName("admin")).toContain("reserved")
+  })
+
   test("normalizeHostname strips scheme, path, case and trailing dot", () => {
     expect(PublishName.normalizeHostname("https://WWW.Example.com/")).toBe("www.example.com")
     expect(PublishName.normalizeHostname("example.com.")).toBe("example.com")

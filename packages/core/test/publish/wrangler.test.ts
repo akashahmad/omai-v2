@@ -17,6 +17,54 @@ async function temp() {
 }
 
 describe("publish wrangler", () => {
+  test("uploadConfig for a server kind uses the bundled entry and no bundling", () => {
+    expect(PublishWrangler.uploadConfig("nuxt", { name: "site", root: "/up", entry: "index.js" })).toEqual({
+      name: "site",
+      compatibility_date: "2026-10-01",
+      main: "/up/worker/index.js",
+      no_bundle: true,
+      find_additional_modules: true,
+      base_dir: "/up/worker",
+      rules: [{ type: "ESModule", globs: ["**/*.js", "**/*.mjs"] }],
+      assets: { directory: "/up/assets", binding: "ASSETS" },
+      compatibility_flags: ["nodejs_compat"],
+    })
+    expect(PublishWrangler.uploadConfig("next", { name: "site", root: "/up", entry: "worker.js" })).toMatchObject({
+      compatibility_flags: ["nodejs_compat", "global_fetch_strictly_public"],
+    })
+  })
+
+  test("uploadConfig for a static kind serves the uploaded assets", () => {
+    expect(PublishWrangler.uploadConfig("spa", { name: "site", root: "/up" })).toEqual({
+      name: "site",
+      compatibility_date: "2026-10-01",
+      assets: { directory: "/up/assets", not_found_handling: "single-page-application" },
+    })
+  })
+
+  test("uploadConfig has no bindings besides ASSETS", () => {
+    const kinds = ["static", "pages", "spa", "next", "astro-server", "nuxt", "solidstart", "sveltekit", "react-router"] as const
+    for (const kind of kinds) {
+      const config = PublishWrangler.uploadConfig(kind, { name: "site", root: "/up", entry: "index.js" })
+      const allowed = ["name", "compatibility_date", "main", "no_bundle", "find_additional_modules", "base_dir", "rules", "assets", "compatibility_flags"]
+      expect(Object.keys(config).filter((key) => !allowed.includes(key))).toEqual([])
+      expect(Object.keys(config.assets).filter((key) => !["directory", "binding", "not_found_handling"].includes(key))).toEqual([])
+    }
+  })
+
+  test("bundleArgs is a dry run into the outdir", () => {
+    expect(PublishWrangler.bundleArgs({ name: "site", config: "/h/w.json", outdir: "/h/out" })).toEqual([
+      "deploy",
+      "--dry-run",
+      "--outdir",
+      "/h/out",
+      "--name",
+      "site",
+      "--config",
+      "/h/w.json",
+    ])
+  })
+
   test("wranglerConfig uses SPA fallback for spa and 404 page for pages", () => {
     const spa = PublishWrangler.wranglerConfig("spa", { name: "app", stage: "/stage", output: "dist" })
     expect(spa).toEqual({

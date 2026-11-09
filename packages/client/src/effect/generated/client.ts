@@ -268,6 +268,10 @@ import type {
   ExperimentalArtifactsDeleteInput,
   ExperimentalArtifactsDeleteOutput,
   ExperimentalPreviewThumbnailsOutput,
+  ExperimentalProjectVmInitOutput,
+  ExperimentalProjectVmUploadOutput,
+  ExperimentalProjectVmBusyOutput,
+  ExperimentalPlatformProvidersOutput,
   ShellListInput,
   ShellListOutput,
   ShellCreateInput,
@@ -1705,6 +1709,15 @@ const EndpointExperimentalPreviewThumbnails = (raw: RawClient["server.experiment
     ),
   )
 
+const EndpointExperimentalProjectVmInit = (raw: RawClient["server.experimental"]) => () =>
+  preserveEffect<ExperimentalProjectVmInitOutput>()(raw["projectVm.init"]({}).pipe(Effect.mapError(mapClientError)))
+
+const EndpointExperimentalProjectVmUpload = (raw: RawClient["server.experimental"]) => () =>
+  preserveEffect<ExperimentalProjectVmUploadOutput>()(raw["projectVm.upload"]({}).pipe(Effect.mapError(mapClientError)))
+
+const EndpointExperimentalProjectVmBusy = (raw: RawClient["server.experimental"]) => () =>
+  preserveEffect<ExperimentalProjectVmBusyOutput>()(raw["projectVm.busy"]({}).pipe(Effect.mapError(mapClientError)))
+
 const adaptGroupExperimental = (raw: RawClient["server.experimental"]) => ({
   persistentPty: {
     read: EndpointExperimentalPersistentPtyRead(raw),
@@ -1735,6 +1748,20 @@ const adaptGroupExperimental = (raw: RawClient["server.experimental"]) => ({
     delete: EndpointExperimentalArtifactsDelete(raw),
   },
   preview: { thumbnails: EndpointExperimentalPreviewThumbnails(raw) },
+  "project-vm": {
+    init: EndpointExperimentalProjectVmInit(raw),
+    upload: EndpointExperimentalProjectVmUpload(raw),
+    busy: EndpointExperimentalProjectVmBusy(raw),
+  },
+})
+
+const EndpointExperimentalPlatformProviders = (raw: RawClient["server.platform"]) => () =>
+  preserveEffect<ExperimentalPlatformProvidersOutput>()(
+    raw["platform.providers"]({}).pipe(Effect.mapError(mapClientError)),
+  )
+
+const adaptGroupExperimentalPlatform = (raw: RawClient["server.platform"]) => ({
+  providers: EndpointExperimentalPlatformProviders(raw),
 })
 
 const EndpointShellList = (raw: RawClient["server.shell"]) => (input?: ShellListInput) =>
@@ -1957,6 +1984,7 @@ const adaptClient = (raw: RawClient) => {
       integration: adaptGroupExperimentalIntegration(raw["server.integration"]),
       mcp: adaptGroupExperimentalMcp(raw["server.mcp"]),
       file: adaptGroupExperimentalFile(raw["server.fs"]),
+      platform: adaptGroupExperimentalPlatform(raw["server.platform"]),
       migration: adaptGroupExperimentalMigration(raw["server.migration"]),
       config: adaptGroupExperimentalConfig(raw["server.config"]),
     },
@@ -2058,6 +2086,11 @@ const adaptClient = (raw: RawClient) => {
       watch: client.experimental.file.watch,
       /** @deprecated Use `client.experimental.file.unwatch`. Removed in the next minor. */
       unwatch: client.experimental.file.unwatch,
+    },
+    /** @deprecated Use `client.experimental.platform`. Removed in the next minor. */
+    platform: {
+      /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
+      providers: client.experimental.platform.providers,
     },
     /** @deprecated Use `client.experimental.migration`. Removed in the next minor. */
     migration: {

@@ -1,12 +1,17 @@
 import { createResource, createSignal, onCleanup } from "solid-js"
 import { createHomeController } from "@/home/model"
+import { multiUser } from "@/controlplane/client"
+import { createControlPlaneProjectsController } from "@/controlplane/projects-controller"
 import { createHomeProjectsController } from "@/home/projects/controller"
+import { hasProjectFiles } from "@/home/projects/has-files"
 import { useLanguage } from "@/runtime/i18n/language"
 import { errorMessage } from "@/shell/layout/helpers"
 import { showToast } from "@/shell/notifications/toast"
 import type { LocalProject } from "@/shell/state/layout"
 
 export function createProjectsController() {
+  // Multi-user mode lists the user's projects from the control plane; the pages stay the same.
+  if (multiUser()) return createControlPlaneProjectsController()
   const home = createHomeController()
   const actions = createHomeProjectsController(home)
   const language = useLanguage()
@@ -69,6 +74,9 @@ export function createProjectsController() {
     const ctx = home.server.context(conn)
 
     try {
+      // Checked alongside the session lookup, so it adds no wait: a project with files opens with its preview.
+      const preview = hasProjectFiles(ctx, project.worktree)
+
       const page = await ctx.sdk.api.session.list({
         ...(project.id ? { project: project.id } : { directory: project.worktree }),
         parentID: null,
@@ -81,7 +89,7 @@ export function createProjectsController() {
         page.data[0] ??
         (await ctx.data.session.create({ location: { directory: project.worktree }, projectID: project.id }).request)
 
-      home.project.openProjectSession(conn, project.worktree, session)
+      home.project.openProjectSession(conn, project.worktree, session, { preview: await preview })
     } catch (cause) {
       showToast({
         title: language.t("common.requestFailed"),
@@ -114,6 +122,8 @@ export function createProjectsController() {
 
       if (conn) actions.project.hide(conn, project)
     },
+    // Local projects need nothing started before they open.
+    prepare: (_project: LocalProject) => {},
     ready: () => home.server.focusedContext()?.sync.project.ready() ?? false,
   }
 }

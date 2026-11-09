@@ -13,6 +13,7 @@ import { detect, packageManager, type Tree } from "./detect.js"
 import { fingerprint, install, installCommand, needsInstall } from "./install.js"
 import { CRASH_WINDOW, IDLE_STOP } from "./limits.js"
 import { freePort } from "./ports.js"
+import { ProjectVmBusy } from "../project-vm/busy.js"
 import { LogBuffer, spawnGroup, waitReady, type Running } from "./process.js"
 import { openProxy, type Proxy, type Upstream } from "./proxy.js"
 import { staticSite, type StaticSite } from "./static.js"
@@ -53,6 +54,10 @@ export interface ControllerInput {
   fix?: Fix
   /** Whether the preview listener asks for a ticket. */
   auth?: boolean
+  /** A port the preview listener always uses (a VM's published port), instead of a saved or free one. */
+  port?: number
+  /** The preview's public origin, once known (a VM's); the status carries it so the app loads the preview there. */
+  origin?: () => string | undefined
   /** The environment dev servers start from; the process's own by default. */
   env?: Record<string, string>
   /** `captureDelay` and `captureInterval` time the thumbnail captures, in milliseconds. */
@@ -85,7 +90,8 @@ export interface Controller {
   close(): Promise<void>
 }
 
-const TICKET_TTL = 60_000
+// A ticket is single-use; this only bounds how long an unused one stays valid, as for a frame that loads late.
+const TICKET_TTL = 10 * 60_000
 
 // A thumbnail waits for the page to settle after a change, and is retaken at most this often.
 const CAPTURE_DELAY = 4_000
@@ -113,7 +119,9 @@ export function createController(input: ControllerInput): Controller {
   })
   // Images the visual editor uploaded, by the path the page loads them from; the proxy serves them itself.
   const uploads = new Map<string, string>()
-  const secret = randomBytes(24).toString("hex")
+  // The preview cookie's value. Kept with the project, so a browser that entered the preview stays in after the
+  // server restarts (as a VM does on resume); a fresh one is made only the first time.
+  const secret = { value: "" }
 
   const state: {
     status: Status
@@ -142,6 +150,7 @@ export function createController(input: ControllerInput): Controller {
       framework: next.framework ?? state.framework,
       port: state.proxy?.port,
       auth: input.auth || undefined,
+      origin: input.origin?.(),
     }
     input.emit.changed(state.status)
 
@@ -155,7 +164,8 @@ export function createController(input: ControllerInput): Controller {
 
   const proxy = async () => {
     if (state.proxy) return state.proxy
-    const saved = await input.store.get("port")
+    secret.value = await loadSecret(input.store)
+    const saved = input.port ?? (await input.store.get("port"))
     const open = (port: number) =>
       openProxy({
         hostname: input.hostname,
@@ -163,18 +173,19 @@ export function createController(input: ControllerInput): Controller {
         upstream: () => state.upstream,
         auth: input.auth
           ? {
-              verify: (value) => value === secret,
+              verify: (value) => !!value && value === secret.value,
               exchange: (ticket) => {
                 const expires = tickets.get(ticket)
                 tickets.delete(ticket)
 
-                return expires !== undefined && expires > Date.now() ? secret : undefined
+                return expires !== undefined && expires > Date.now() ? secret.value : undefined
               },
             }
           : undefined,
         bridge: bridgeScript,
         visual: visualScript,
         uploads: (pathname) => uploads.get(pathname),
+        crossSite: input.origin !== undefined,
         events: {
           subscribe: (listener) => {
             reloads.add(listener)
@@ -182,9 +193,15 @@ export function createController(input: ControllerInput): Controller {
           },
         },
       })
-    const opened = typeof saved === "number" ? await open(saved).catch(() => open(0)) : await open(0)
+    // A fixed port has no fallback: anything else would not be the port the VM publishes.
+    const opened =
+      input.port !== undefined
+        ? await open(input.port)
+        : typeof saved === "number"
+          ? await open(saved).catch(() => open(0))
+          : await open(0)
 
-    if (opened.port !== saved) await input.store.set("port", opened.port)
+    if (input.port === undefined && opened.port !== saved) await input.store.set("port", opened.port)
     state.proxy = opened
 
     return opened
@@ -434,7 +451,13 @@ export function createController(input: ControllerInput): Controller {
 
   // A single flight: a second start while one is running joins it.
   const start = (choice: { candidate?: number; sessionID?: string; retry?: boolean } = {}) => {
-    state.run ??= run(choice).finally(() => (state.run = undefined))
+    if (state.run) return state.run
+    // Detecting, installing and starting keep a MicroVM from pausing.
+    const release = ProjectVmBusy.hold("install")
+    state.run = run(choice).finally(() => {
+      release()
+      state.run = undefined
+    })
 
     return state.run
   }
@@ -453,7 +476,7 @@ export function createController(input: ControllerInput): Controller {
   )
 
   return {
-    status: () => state.status,
+    status: () => ({ ...state.status, origin: input.origin?.() }),
     start,
     stop,
     restart: async () => {
@@ -640,6 +663,16 @@ const relative = (directory: string, target: string) => path.relative(directory,
 
 // Whether a saved recipe still has something to run: its folder with files of its own, and for a static site its
 // page. A dev server in a folder whose app was removed answers every page with an empty 404, a blank preview.
+async function loadSecret(store: Store) {
+  const saved = await store.get("secret")
+
+  if (typeof saved === "string" && /^[0-9a-f]{48}$/.test(saved)) return saved
+  const fresh = randomBytes(24).toString("hex")
+  await store.set("secret", fresh)
+
+  return fresh
+}
+
 async function usable(directory: string, recipe: Recipe) {
   const root = path.resolve(directory, recipe.root)
   const folder = await stat(root).catch(() => undefined)

@@ -66,7 +66,8 @@ export function createComposerAttachments(
     const mime = await attachmentMime(file)
     const destination = input.destination()
 
-    if (native(mime, destination.input) && file.size <= MAX_INLINE_BYTES) return addInline(file, mime, target, clipboard)
+    if (native(mime, destination.input) && file.size <= MAX_INLINE_BYTES)
+      return addInline(file, mime, target, clipboard)
     const sourcePath = input.getPathForFile?.(file) || undefined
 
     if (destination.local && sourcePath) return addPath(target, { filename: file.name, mime, path: sourcePath })
@@ -75,7 +76,12 @@ export function createComposerAttachments(
     return true
   }
 
-  const addInline = async (file: File, mime: string, target: NonNullable<ReturnType<typeof capture>>, clipboard: boolean) => {
+  const addInline = async (
+    file: File,
+    mime: string,
+    target: NonNullable<ReturnType<typeof capture>>,
+    clipboard: boolean,
+  ) => {
     const blob = input.store ? await input.store(file) : await createBlobReference(file)
     const sourcePath = input.getPathForFile?.(file) || undefined
 
@@ -253,7 +259,10 @@ export function createComposerAttachments(
     /** Uploads still in flight for this composer; sending waits for them. */
     pending: () => uploads.items().filter((item) => pending.ids.includes(item.id)),
     cancel(id: string) {
-      uploads.items().find((item) => item.id === id)?.cancel()
+      uploads
+        .items()
+        .find((item) => item.id === id)
+        ?.cancel()
     },
     pick(fallback: () => void, done: () => void) {
       if (!input.picker) {

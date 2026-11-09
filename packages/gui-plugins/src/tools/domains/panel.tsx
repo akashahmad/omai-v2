@@ -268,7 +268,10 @@ function DomainCard(props: { view: DomainsView; domain: Publish.Domain }) {
                   {ctx.t("domains.apex.hint")}
                 </Note>
               </Show>
-              <Show when={props.domain.verification}>{(record) => <Moving record={record()} />}</Show>
+              {/* A root domain already lists the TXT record as required; the tip is for domains where it's optional. */}
+              <Show when={!props.domain.records.some((record) => record.type === "TXT") && props.domain.verification}>
+                {(record) => <Moving record={record()} />}
+              </Show>
               <div>
                 <button
                   type="button"

@@ -11,6 +11,8 @@ import { createAuditor } from "../audit/service.js"
 import { capturePage } from "../preview/capture.js"
 import { createController, type Store } from "../preview/controller.js"
 import { createFixer } from "../preview/fix.js"
+import { PreviewOrigin } from "../preview/origin.js"
+import { PublishRemote } from "../publish/remote.js"
 import { AI_STEPS } from "../preview/limits.js"
 import { PreviewThumbnail } from "../preview/thumbnail.js"
 import SETUP from "./preview/setup.txt"
@@ -150,11 +152,23 @@ export const Plugin = define({
 
     // The events need the registration, which needs the handlers; the controller reads it once it publishes.
     const publish: { current?: (name: "changed" | "log", value: unknown) => void } = {}
+    // On a project's VM: the preview listens on the port the VM publishes, under the address the control plane knows.
+    const remote = PublishRemote.target(process.env)
+    // The panel only hears status changes, so the status goes out again once the address is known.
+    const origin = remote
+      ? PreviewOrigin.poll(remote, {
+          onKnown: () => publish.current?.("changed", { ...controller.status(), directory: ctx.location.directory }),
+        })
+      : undefined
+    if (origin) yield* Effect.addFinalizer(() => Effect.sync(() => origin.close()))
+    const fixedPort = Number(process.env.OMAI_PREVIEW_PORT)
     const controller = createController({
       directory: ctx.location.directory,
       // The server publishes where it listens and whether it has a password when it starts (see ServerProcess).
       hostname: process.env.OMAI_PREVIEW_HOSTNAME || "127.0.0.1",
       auth: process.env.OMAI_PREVIEW_AUTH === "1",
+      port: Number.isInteger(fixedPort) && fixedPort > 0 ? fixedPort : undefined,
+      origin: origin?.get,
       store,
       config: () => undefined,
       fix: fixer.fix,

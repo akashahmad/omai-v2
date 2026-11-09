@@ -110,6 +110,7 @@ import { PublishPlugin } from "./publish.js"
 import { GitToolPlugin } from "./git-tool.js"
 import { PreviewPlugin } from "./preview.js"
 import { ModelsDevPlugin } from "./models-dev.js"
+import { PlatformKeys } from "./provider/platform-keys.js"
 import { McpCodeModeDefaultsPlugin } from "./mcp-codemode-defaults.js"
 import { ProviderPlugins } from "./provider.js"
 import { DynamicProviderPlugin } from "./provider/dynamic.js"
@@ -265,6 +266,8 @@ const pre = [
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,
+  // After the catalog plugins: on a project VM it turns on the admin's shared providers.
+  PlatformKeys.Plugin,
   ...WebSearchPlugins,
   PatchTool.Plugin,
   // Render model prompts after the patch plugin selects the available editing tools.

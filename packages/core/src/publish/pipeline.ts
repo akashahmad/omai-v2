@@ -7,11 +7,13 @@ import path from "node:path"
 import { directoryTree } from "../preview/controller.js"
 import { packageManager } from "../preview/detect.js"
 import { fingerprint, install, installCommand } from "../preview/install.js"
-import { LogBuffer, spawnGroup } from "../preview/process.js"
+import { LogBuffer, runGroup } from "../preview/process.js"
 import { adapt, buildEnv, finish, Unsupported } from "./adapt.js"
+import { PublishBundle } from "./bundle.js"
 import type { Config } from "./config.js"
 import { detectKind } from "./detect.js"
 import { clean, staticAssets, sync } from "./stage.js"
+import { PublishRemote } from "./remote.js"
 import { deployArgs, ensureWrangler, wranglerConfig } from "./wrangler.js"
 
 export const BUILD_TIMEOUT = 900_000
@@ -54,7 +56,11 @@ export async function run(input: {
   /** The global data directory. */
   dataDir: string
   name: string
-  config: Config
+  /**
+   * Where the upload goes: Cloudflare with these credentials (single-user), or the control plane, which uploads the
+   * packed bundle with credentials this machine never sees (a project's MicroVM).
+   */
+  upload: { config: Config } | { remote: PublishRemote.Client }
   /** No version of the site is live yet, so a failed upload leaves nothing serving. */
   first?: boolean
   signal: AbortSignal
@@ -97,7 +103,7 @@ export async function run(input: {
   if (detected.kind !== "static" && build) {
     input.onStage("build")
     onLog(`$ ${build}\n`)
-    const code = await exec({
+    const code = await runGroup({
       command: build,
       cwd: stage,
       env: buildEnv(process.env, adapted.env),
@@ -125,15 +131,45 @@ export async function run(input: {
   await finish(detected.kind, main)
   // The static kind's directory is already filtered; build output is uploaded as written, so secrets are ignored.
   if (detected.kind !== "static") await ignoreAssets(generated.assets.directory, main)
+  // Static kinds upload only files; a server kind needs wrangler, here to deploy or on a VM only to bundle.
+  const wrangler =
+    "config" in input.upload || main
+      ? await ensureWrangler(path.join(input.dataDir, "publish", "tools")).catch((error: unknown) =>
+          fail("cloudflare", error instanceof Error ? error.message : String(error)),
+        )
+      : ""
+  checkpoint()
+  if ("remote" in input.upload) {
+    const remote = input.upload.remote
+    const packed = await PublishBundle.pack({
+      kind: detected.kind,
+      name: input.name,
+      home,
+      generated,
+      wrangler,
+      signal: input.signal,
+      onLog,
+    }).catch((error: unknown) => fail("other", error instanceof Error ? error.message : String(error)))
+    checkpoint()
+    onLog("Uploading to O M A I +.\n")
+    const uploaded = await remote.deploy(packed.zip, { kind: detected.kind, entry: packed.entry }, input.signal).catch(
+      (error: unknown) => {
+        if (error instanceof PublishRemote.RemoteError) {
+          if (error.log) onLog(error.log)
+          return fail(error.kind === "other" ? "other" : "cloudflare", error.message)
+        }
+        return fail("other", error instanceof Error ? error.message : String(error))
+      },
+    )
+    onLog(uploaded.log)
+    return { kind: detected.kind }
+  }
+  const credentials = input.upload.config
   const config = path.join(home, "wrangler.json")
   await writeFile(config, JSON.stringify(generated, null, 2) + "\n")
-  const wrangler = await ensureWrangler(path.join(input.dataDir, "publish", "tools")).catch((error: unknown) =>
-    fail("cloudflare", error instanceof Error ? error.message : String(error)),
-  )
-  checkpoint()
-  const args = deployArgs({ name: input.name, namespace: input.config.namespace, config })
+  const args = deployArgs({ name: input.name, namespace: credentials.namespace, config })
   onLog(`$ wrangler ${args.join(" ")}\n`)
-  const code = await exec({
+  const code = await runGroup({
     command: [wrangler, ...args].map(quote).join(" "),
     // Not the stage: it holds the project's own files, such as `.env`, which wrangler would read from its working
     // directory. The home holds the generated config, whose paths are all absolute.
@@ -141,8 +177,8 @@ export async function run(input: {
     // Wrangler's own variable names; only this step gets the credentials.
     env: {
       ...buildEnv(),
-      CLOUDFLARE_API_TOKEN: input.config.token,
-      CLOUDFLARE_ACCOUNT_ID: input.config.accountID,
+      CLOUDFLARE_API_TOKEN: credentials.token,
+      CLOUDFLARE_ACCOUNT_ID: credentials.accountID,
       WRANGLER_SEND_METRICS: "false",
     },
     timeout: UPLOAD_TIMEOUT,
@@ -220,30 +256,6 @@ async function installStage(input: { home: string; stage: string; signal: AbortS
   })
   if (installed.ok) await writeFile(record, current)
   return installed
-}
-
-/** Runs `command` in its own process group; the group is killed on abort or after `timeout`. */
-async function exec(input: {
-  command: string
-  cwd: string
-  env: Record<string, string>
-  timeout: number
-  signal: AbortSignal
-  onLog: (chunk: string) => void
-}) {
-  if (input.signal.aborted) return null
-  const running = spawnGroup({ command: input.command, cwd: input.cwd, env: input.env, onLog: input.onLog })
-  const stop = () => void running.stop()
-  input.signal.addEventListener("abort", stop, { once: true })
-  const state = { timedOut: false }
-  const timer = setTimeout(() => {
-    state.timedOut = true
-    stop()
-  }, input.timeout)
-  const code = await running.exited
-  clearTimeout(timer)
-  input.signal.removeEventListener("abort", stop)
-  return state.timedOut ? ("timeout" as const) : code
 }
 
 function available(bin: string, searchPath: string | undefined) {
