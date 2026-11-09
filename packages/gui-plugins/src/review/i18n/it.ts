@@ -15,4 +15,8 @@ export default {
   "settings.wrapLines.title": "A capo automatico",
   "settings.wrapLines.description":
     "Manda a capo le righe lunghe nei diff per dispositivi mobili invece di scorrere orizzontalmente",
+  "menu.count.one": "{{count}} file modificato",
+  "menu.count.other": "{{count}} file modificati",
+  "folder.more": "{{count}} · altri non mostrati",
+  "command.open": "Apri revisione",
 }

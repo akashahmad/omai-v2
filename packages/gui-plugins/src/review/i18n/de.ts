@@ -12,4 +12,8 @@ export default {
   noChanges: "Keine Änderungen",
   "settings.wrapLines.title": "Zeilen umbrechen",
   "settings.wrapLines.description": "Lange Zeilen in mobilen Diffs umbrechen, statt horizontal zu scrollen",
+  "menu.count.one": "{{count}} Datei geändert",
+  "menu.count.other": "{{count}} Dateien geändert",
+  "folder.more": "{{count}} · weitere nicht angezeigt",
+  "command.open": "Überprüfung öffnen",
 }

@@ -29,4 +29,32 @@ export default {
   "workspace.existing": "Arbre de travail",
   "workspace.new": "Nouvel espace de travail",
   "mcp.interactiveAuth": "Serveur MCP {{name}} nécessite un formulaire d'authentification interactif",
+  "mcp.manage": "Gérer les serveurs MCP",
+  "setup.mcp": "Ajouter un serveur avec O M A I +",
+  "setup.mcp.prompt":
+    "Aide-moi à ajouter un serveur MCP à ma configuration globale de O M A I +. Demande-moi quel service je veux connecter, puis configure-le et vérifie qu’il se connecte.",
+  "setup.plugins": "Ajouter un plugin avec O M A I +",
+  "setup.plugins.prompt":
+    "Aide-moi à ajouter un plugin à ma configuration globale de O M A I +. Demande-moi ce que je veux qu’il fasse, propose un plugin, puis ajoute-le.",
+  "setup.skills": "Nouvelle compétence avec O M A I +",
+  "setup.skills.prompt":
+    "Aide-moi à écrire une nouvelle compétence O M A I + dans ma configuration globale. Demande-moi ce qu’elle doit t’apprendre, puis écris son SKILL.md.",
+  "setup.lsp": "Configurer avec O M A I +",
+  "setup.lsp.prompt":
+    "Aide-moi à configurer un serveur de langage dans ma configuration globale de O M A I +. Demande-moi dans quel langage je travaille, puis configure-le.",
+  "mcp.signIn": "Se connecter",
+  "mcp.signingIn": "Connexion en cours…",
+  "mcp.connected": "Connecté",
+  "mcp.disabled": "Désactivé",
+  "mcp.error.action": "Détails",
+  "mcp.error.status": "Échec de la connexion",
+  "mcp.error.actionLabel": "Détails de {{name}}",
+  "mcp.signIn.open": "Se connecter à {{name}}",
+  "mcp.error.open": "{{name}} a échoué, afficher l’erreur",
+  "mcp.error.title": "Serveur MCP : {{name}}",
+  "mcp.error.copy": "Copier les détails",
+  "mcp.error.copyFailed": "Impossible de copier les détails de l’erreur",
+  "mcp.error.disable": "Désactiver",
+  "mcp.error.details":
+    "Serveur MCP : {{name}}\nStatut : échec\nConfiguration : mcp.servers.{{name}}\nErreur : {{error}}",
 }

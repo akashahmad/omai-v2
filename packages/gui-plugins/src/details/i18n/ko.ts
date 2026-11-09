@@ -29,4 +29,31 @@ export default {
   "workspace.existing": "워크트리",
   "workspace.new": "새 작업 공간",
   "mcp.interactiveAuth": "MCP 서버 {{name}}에는 대화형 인증 양식이 필요합니다",
+  "mcp.manage": "MCP 서버 관리",
+  "setup.mcp": "O M A I +로 서버 추가",
+  "setup.mcp.prompt":
+    "전역 O M A I + 구성에 MCP 서버를 추가하도록 도와줘. 어떤 서비스를 연결하고 싶은지 먼저 물어본 다음, 설정하고 연결되는지 확인해 줘.",
+  "setup.plugins": "O M A I +로 플러그인 추가",
+  "setup.plugins.prompt":
+    "전역 O M A I + 구성에 플러그인을 추가하도록 도와줘. 어떤 기능을 원하는지 물어보고, 플러그인을 추천한 다음 추가해 줘.",
+  "setup.skills": "O M A I +로 새 스킬 만들기",
+  "setup.skills.prompt":
+    "전역 구성에 새 O M A I + 스킬을 작성하도록 도와줘. 스킬이 무엇을 가르쳐야 하는지 물어본 다음 SKILL.md를 작성해 줘.",
+  "setup.lsp": "O M A I +로 설정",
+  "setup.lsp.prompt":
+    "전역 O M A I + 구성에 언어 서버를 설정하도록 도와줘. 어떤 언어로 작업하는지 물어본 다음 설정해 줘.",
+  "mcp.signIn": "로그인",
+  "mcp.signingIn": "로그인 중…",
+  "mcp.connected": "연결됨",
+  "mcp.disabled": "사용 안 함",
+  "mcp.error.action": "세부 정보",
+  "mcp.error.status": "연결 실패",
+  "mcp.error.actionLabel": "{{name}} 세부 정보",
+  "mcp.signIn.open": "{{name}}에 로그인",
+  "mcp.error.open": "{{name}} 실패, 오류 보기",
+  "mcp.error.title": "MCP 서버: {{name}}",
+  "mcp.error.copy": "세부 정보 복사",
+  "mcp.error.copyFailed": "오류 세부 정보를 복사하지 못했습니다",
+  "mcp.error.disable": "사용 안 함",
+  "mcp.error.details": "MCP 서버: {{name}}\n상태: 실패\n구성: mcp.servers.{{name}}\n오류: {{error}}",
 }

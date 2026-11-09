@@ -15,4 +15,8 @@ export default {
   "settings.wrapLines.title": "Renvoyer les lignes à la ligne",
   "settings.wrapLines.description":
     "Renvoyer à la ligne les longues lignes des diffs mobiles au lieu de les faire défiler horizontalement",
+  "menu.count.one": "{{count}} fichier modifié",
+  "menu.count.other": "{{count}} fichiers modifiés",
+  "folder.more": "{{count}} · le reste n’est pas affiché",
+  "command.open": "Ouvrir la revue",
 }

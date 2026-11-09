@@ -12,4 +12,8 @@ export default {
   noChanges: "Geen wijzigingen",
   "settings.wrapLines.title": "Regels laten teruglopen",
   "settings.wrapLines.description": "Lange regels in mobiele diffs laten teruglopen in plaats van horizontaal scrollen",
+  "menu.count.one": "{{count}} bestand gewijzigd",
+  "menu.count.other": "{{count}} bestanden gewijzigd",
+  "folder.more": "{{count}} · meer niet getoond",
+  "command.open": "Review openen",
 }

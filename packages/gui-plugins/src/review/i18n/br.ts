@@ -15,4 +15,8 @@ export default {
   "settings.wrapLines.title": "Quebrar linhas",
   "settings.wrapLines.description":
     "Quebrar linhas longas nos diffs para dispositivos móveis em vez de rolar horizontalmente",
+  "menu.count.one": "{{count}} arquivo alterado",
+  "menu.count.other": "{{count}} arquivos alterados",
+  "folder.more": "{{count}} · mais não exibidos",
+  "command.open": "Abrir revisão",
 }

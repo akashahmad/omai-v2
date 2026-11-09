@@ -12,4 +12,8 @@ export default {
   noChanges: "変更なし",
   "settings.wrapLines.title": "折り返しライン",
   "settings.wrapLines.description": "横にスクロールするのではなく、モバイル差分で長い行を折り返す",
+  "menu.count.one": "{{count}} 個のファイルを変更",
+  "menu.count.other": "{{count}} 個のファイルを変更",
+  "folder.more": "{{count}} · 残りは表示されていません",
+  "command.open": "レビューを開く",
 }

@@ -29,4 +29,32 @@ export default {
   "workspace.existing": "Worktree",
   "workspace.new": "Neuer Arbeitsbereich",
   "mcp.interactiveAuth": "Der MCP-Server {{name}} erfordert ein interaktives Authentifizierungsformular",
+  "mcp.manage": "MCP-Server verwalten",
+  "setup.mcp": "Server mit O M A I + hinzufügen",
+  "setup.mcp.prompt":
+    "Hilf mir, einen MCP-Server zu meiner globalen O M A I +-Konfiguration hinzuzufügen. Frag mich, welchen Dienst ich verbinden möchte, richte ihn dann ein und prüfe, ob die Verbindung funktioniert.",
+  "setup.plugins": "Plugin mit O M A I + hinzufügen",
+  "setup.plugins.prompt":
+    "Hilf mir, ein Plugin zu meiner globalen O M A I +-Konfiguration hinzuzufügen. Frag mich, was es tun soll, schlage ein Plugin vor und füge es dann hinzu.",
+  "setup.skills": "Neuer Skill mit O M A I +",
+  "setup.skills.prompt":
+    "Hilf mir, einen neuen O M A I +-Skill in meiner globalen Konfiguration zu schreiben. Frag mich, was er dir beibringen soll, und schreibe dann seine SKILL.md.",
+  "setup.lsp": "Mit O M A I + einrichten",
+  "setup.lsp.prompt":
+    "Hilf mir, einen Language Server in meiner globalen O M A I +-Konfiguration einzurichten. Frag mich, in welcher Sprache ich arbeite, und richte ihn dann ein.",
+  "mcp.signIn": "Anmelden",
+  "mcp.signingIn": "Anmeldung läuft…",
+  "mcp.connected": "Verbunden",
+  "mcp.disabled": "Deaktiviert",
+  "mcp.error.action": "Details",
+  "mcp.error.status": "Verbindung fehlgeschlagen",
+  "mcp.error.actionLabel": "Details für {{name}}",
+  "mcp.signIn.open": "Bei {{name}} anmelden",
+  "mcp.error.open": "{{name}} ist fehlgeschlagen, Fehler anzeigen",
+  "mcp.error.title": "MCP-Server: {{name}}",
+  "mcp.error.copy": "Details kopieren",
+  "mcp.error.copyFailed": "Fehlerdetails konnten nicht kopiert werden",
+  "mcp.error.disable": "Deaktivieren",
+  "mcp.error.details":
+    "MCP-Server: {{name}}\nStatus: fehlgeschlagen\nKonfiguration: mcp.servers.{{name}}\nFehler: {{error}}",
 }

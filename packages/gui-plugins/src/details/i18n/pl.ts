@@ -29,4 +29,32 @@ export default {
   "workspace.existing": "Drzewo robocze",
   "workspace.new": "Nowa przestrzeń robocza",
   "mcp.interactiveAuth": "Serwer MCP {{name}} wymaga interaktywnego formularza uwierzytelniania",
+  "mcp.manage": "Zarządzaj serwerami MCP",
+  "setup.mcp": "Dodaj serwer z O M A I +",
+  "setup.mcp.prompt":
+    "Pomóż mi dodać serwer MCP do mojej globalnej konfiguracji O M A I +. Zapytaj, z jaką usługą chcę się połączyć, następnie ją skonfiguruj i sprawdź, czy połączenie działa.",
+  "setup.plugins": "Dodaj wtyczkę z O M A I +",
+  "setup.plugins.prompt":
+    "Pomóż mi dodać wtyczkę do mojej globalnej konfiguracji O M A I +. Zapytaj, co ma robić, zaproponuj wtyczkę, a potem ją dodaj.",
+  "setup.skills": "Nowa umiejętność z O M A I +",
+  "setup.skills.prompt":
+    "Pomóż mi napisać nową umiejętność O M A I + w mojej globalnej konfiguracji. Zapytaj, czego ma Cię nauczyć, a potem napisz jej plik SKILL.md.",
+  "setup.lsp": "Skonfiguruj z O M A I +",
+  "setup.lsp.prompt":
+    "Pomóż mi skonfigurować serwer języka w mojej globalnej konfiguracji O M A I +. Zapytaj, w jakim języku pracuję, a potem go skonfiguruj.",
+  "mcp.signIn": "Zaloguj się",
+  "mcp.signingIn": "Logowanie…",
+  "mcp.connected": "Połączono",
+  "mcp.disabled": "Wyłączono",
+  "mcp.error.action": "Szczegóły",
+  "mcp.error.status": "Połączenie nie powiodło się",
+  "mcp.error.actionLabel": "Szczegóły: {{name}}",
+  "mcp.signIn.open": "Zaloguj się do {{name}}",
+  "mcp.error.open": "Błąd {{name}}, zobacz szczegóły",
+  "mcp.error.title": "Serwer MCP: {{name}}",
+  "mcp.error.copy": "Kopiuj szczegóły",
+  "mcp.error.copyFailed": "Nie udało się skopiować szczegółów błędu",
+  "mcp.error.disable": "Wyłącz",
+  "mcp.error.details":
+    "Serwer MCP: {{name}}\nStatus: niepowodzenie\nKonfiguracja: mcp.servers.{{name}}\nBłąd: {{error}}",
 }

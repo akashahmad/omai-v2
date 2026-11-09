@@ -15,4 +15,8 @@ export default {
   "settings.wrapLines.title": "Ajustar líneas",
   "settings.wrapLines.description":
     "Ajustar las líneas largas en los diffs móviles en vez de desplazarse horizontalmente",
+  "menu.count.one": "{{count}} archivo modificado",
+  "menu.count.other": "{{count}} archivos modificados",
+  "folder.more": "{{count}} · hay más sin mostrar",
+  "command.open": "Abrir revisión",
 }

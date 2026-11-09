@@ -29,4 +29,31 @@ export default {
   "workspace.existing": "Worktree",
   "workspace.new": "Nieuwe werkruimte",
   "mcp.interactiveAuth": "MCP-server {{name}} vereist een interactief authenticatieformulier",
+  "mcp.manage": "MCP-servers beheren",
+  "setup.mcp": "Een server toevoegen met O M A I +",
+  "setup.mcp.prompt":
+    "Help me een MCP-server toe te voegen aan mijn globale O M A I +-configuratie. Vraag me welke service ik wil verbinden, stel die vervolgens in en controleer of de verbinding werkt.",
+  "setup.plugins": "Een plug-in toevoegen met O M A I +",
+  "setup.plugins.prompt":
+    "Help me een plug-in toe te voegen aan mijn globale O M A I +-configuratie. Vraag me wat die moet doen, stel een plug-in voor en voeg die toe.",
+  "setup.skills": "Nieuwe skill met O M A I +",
+  "setup.skills.prompt":
+    "Help me een nieuwe O M A I +-skill te schrijven in mijn globale configuratie. Vraag me wat die je moet leren en schrijf dan de SKILL.md.",
+  "setup.lsp": "Instellen met O M A I +",
+  "setup.lsp.prompt":
+    "Help me een language server te configureren in mijn globale O M A I +-configuratie. Vraag me in welke taal ik werk en stel die vervolgens in.",
+  "mcp.signIn": "Aanmelden",
+  "mcp.signingIn": "Aanmelden…",
+  "mcp.connected": "Verbonden",
+  "mcp.disabled": "Uitgeschakeld",
+  "mcp.error.action": "Details",
+  "mcp.error.status": "Verbinding mislukt",
+  "mcp.error.actionLabel": "Details voor {{name}}",
+  "mcp.signIn.open": "Aanmelden bij {{name}}",
+  "mcp.error.open": "{{name}} is mislukt, fout bekijken",
+  "mcp.error.title": "MCP-server: {{name}}",
+  "mcp.error.copy": "Details kopiëren",
+  "mcp.error.copyFailed": "Kan foutdetails niet kopiëren",
+  "mcp.error.disable": "Uitschakelen",
+  "mcp.error.details": "MCP-server: {{name}}\nStatus: mislukt\nConfiguratie: mcp.servers.{{name}}\nFout: {{error}}",
 }

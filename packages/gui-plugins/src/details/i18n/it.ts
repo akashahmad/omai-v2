@@ -29,4 +29,32 @@ export default {
   "workspace.existing": "Worktree",
   "workspace.new": "Nuova area di lavoro",
   "mcp.interactiveAuth": "Il server MCP {{name}} richiede un modulo di autenticazione interattivo",
+  "mcp.manage": "Gestisci server MCP",
+  "setup.mcp": "Aggiungi un server con O M A I +",
+  "setup.mcp.prompt":
+    "Aiutami ad aggiungere un server MCP alla mia configurazione globale di O M A I +. Chiedimi quale servizio voglio collegare, poi configuralo e verifica che si connetta.",
+  "setup.plugins": "Aggiungi un plugin con O M A I +",
+  "setup.plugins.prompt":
+    "Aiutami ad aggiungere un plugin alla mia configurazione globale di O M A I +. Chiedimi cosa voglio che faccia, suggeriscimi un plugin, poi aggiungilo.",
+  "setup.skills": "Nuova skill con O M A I +",
+  "setup.skills.prompt":
+    "Aiutami a scrivere una nuova skill di O M A I + nella mia configurazione globale. Chiedimi cosa dovrebbe insegnarti, poi scrivi il suo SKILL.md.",
+  "setup.lsp": "Configura con O M A I +",
+  "setup.lsp.prompt":
+    "Aiutami a configurare un language server nella mia configurazione globale di O M A I +. Chiedimi in quale linguaggio lavoro, poi configuralo.",
+  "mcp.signIn": "Accedi",
+  "mcp.signingIn": "Accesso in corso…",
+  "mcp.connected": "Connesso",
+  "mcp.disabled": "Disattivato",
+  "mcp.error.action": "Dettagli",
+  "mcp.error.status": "Connessione non riuscita",
+  "mcp.error.actionLabel": "Dettagli di {{name}}",
+  "mcp.signIn.open": "Accedi a {{name}}",
+  "mcp.error.open": "{{name}} non è riuscito, vedi l’errore",
+  "mcp.error.title": "Server MCP: {{name}}",
+  "mcp.error.copy": "Copia dettagli",
+  "mcp.error.copyFailed": "Impossibile copiare i dettagli dell’errore",
+  "mcp.error.disable": "Disattiva",
+  "mcp.error.details":
+    "Server MCP: {{name}}\nStato: non riuscito\nConfigurazione: mcp.servers.{{name}}\nErrore: {{error}}",
 }

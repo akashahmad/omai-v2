@@ -16,4 +16,8 @@ export default {
   noChanges: "Brak zmian",
   "settings.wrapLines.title": "Zawijaj wiersze",
   "settings.wrapLines.description": "Zawijaj długie linie w różnicach mobilnych, zamiast przewijać w poziomie",
+  "menu.count.one": "{{count}} zmieniony plik",
+  "menu.count.other": "{{count}} zmienionych plików",
+  "folder.more": "{{count}} · pozostałe nie są pokazane",
+  "command.open": "Otwórz przegląd",
 }

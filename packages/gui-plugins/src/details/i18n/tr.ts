@@ -29,4 +29,31 @@ export default {
   "workspace.existing": "Çalışma ağacı",
   "workspace.new": "Yeni çalışma alanı",
   "mcp.interactiveAuth": "MCP sunucusu {{name}} etkileşimli bir kimlik doğrulama formu gerektirir",
+  "mcp.manage": "MCP sunucularını yönet",
+  "setup.mcp": "O M A I + ile sunucu ekle",
+  "setup.mcp.prompt":
+    "Genel O M A I + yapılandırmama bir MCP sunucusu eklememe yardım et. Hangi hizmeti bağlamak istediğimi sor, sonra kur ve bağlandığını kontrol et.",
+  "setup.plugins": "O M A I + ile eklenti ekle",
+  "setup.plugins.prompt":
+    "Genel O M A I + yapılandırmama bir eklenti eklememe yardım et. Ne yapmasını istediğimi sor, bir eklenti öner, sonra ekle.",
+  "setup.skills": "O M A I + ile yeni beceri",
+  "setup.skills.prompt":
+    "Genel yapılandırmamda yeni bir O M A I + becerisi yazmama yardım et. Sana ne öğretmesi gerektiğini sor, sonra SKILL.md dosyasını yaz.",
+  "setup.lsp": "O M A I + ile kur",
+  "setup.lsp.prompt":
+    "Genel O M A I + yapılandırmamda bir dil sunucusu yapılandırmama yardım et. Hangi dilde çalıştığımı sor, sonra kur.",
+  "mcp.signIn": "Oturum aç",
+  "mcp.signingIn": "Oturum açılıyor…",
+  "mcp.connected": "Bağlı",
+  "mcp.disabled": "Devre dışı",
+  "mcp.error.action": "Ayrıntılar",
+  "mcp.error.status": "Bağlantı başarısız",
+  "mcp.error.actionLabel": "{{name}} ayrıntıları",
+  "mcp.signIn.open": "{{name}} hesabında oturum aç",
+  "mcp.error.open": "{{name}} başarısız oldu, hatayı görüntüle",
+  "mcp.error.title": "MCP sunucusu: {{name}}",
+  "mcp.error.copy": "Ayrıntıları kopyala",
+  "mcp.error.copyFailed": "Hata ayrıntıları kopyalanamadı",
+  "mcp.error.disable": "Devre dışı bırak",
+  "mcp.error.details": "MCP sunucusu: {{name}}\nDurum: başarısız\nYapılandırma: mcp.servers.{{name}}\nHata: {{error}}",
 }

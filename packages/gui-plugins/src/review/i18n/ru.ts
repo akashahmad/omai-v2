@@ -16,4 +16,8 @@ export default {
   noChanges: "Нет изменений",
   "settings.wrapLines.title": "Переносить строки",
   "settings.wrapLines.description": "Перенос длинных строк в мобильных различиях вместо горизонтальной прокрутки",
+  "menu.count.one": "Изменён {{count}} файл",
+  "menu.count.other": "Изменено файлов: {{count}}",
+  "folder.more": "{{count}} · остальные не показаны",
+  "command.open": "Открыть проверку",
 }

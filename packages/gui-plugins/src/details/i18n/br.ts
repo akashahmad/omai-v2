@@ -29,4 +29,31 @@ export default {
   "workspace.existing": "Worktree",
   "workspace.new": "Novo espaço de trabalho",
   "mcp.interactiveAuth": "Servidor MCP {{name}} requer um formulário de autenticação interativo",
+  "mcp.manage": "Gerenciar servidores MCP",
+  "setup.mcp": "Adicionar um servidor com o O M A I +",
+  "setup.mcp.prompt":
+    "Ajude-me a adicionar um servidor MCP à minha configuração global do O M A I +. Pergunte qual serviço quero conectar, depois configure-o e verifique se ele se conecta.",
+  "setup.plugins": "Adicionar um plugin com o O M A I +",
+  "setup.plugins.prompt":
+    "Ajude-me a adicionar um plugin à minha configuração global do O M A I +. Pergunte o que quero que ele faça, sugira um plugin e depois adicione-o.",
+  "setup.skills": "Nova skill com o O M A I +",
+  "setup.skills.prompt":
+    "Ajude-me a escrever uma nova skill do O M A I + na minha configuração global. Pergunte o que ela deve ensinar a você e depois escreva o SKILL.md dela.",
+  "setup.lsp": "Configurar com o O M A I +",
+  "setup.lsp.prompt":
+    "Ajude-me a configurar um servidor de linguagem na minha configuração global do O M A I +. Pergunte em qual linguagem trabalho e depois configure-o.",
+  "mcp.signIn": "Entrar",
+  "mcp.signingIn": "Entrando…",
+  "mcp.connected": "Conectado",
+  "mcp.disabled": "Desativado",
+  "mcp.error.action": "Detalhes",
+  "mcp.error.status": "Falha na conexão",
+  "mcp.error.actionLabel": "Detalhes de {{name}}",
+  "mcp.signIn.open": "Entrar em {{name}}",
+  "mcp.error.open": "{{name}} falhou, ver erro",
+  "mcp.error.title": "Servidor MCP: {{name}}",
+  "mcp.error.copy": "Copiar detalhes",
+  "mcp.error.copyFailed": "Não foi possível copiar os detalhes do erro",
+  "mcp.error.disable": "Desativar",
+  "mcp.error.details": "Servidor MCP: {{name}}\nStatus: falhou\nConfiguração: mcp.servers.{{name}}\nErro: {{error}}",
 }

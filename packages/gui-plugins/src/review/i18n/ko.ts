@@ -12,4 +12,8 @@ export default {
   noChanges: "변경 없음",
   "settings.wrapLines.title": "줄 바꿈",
   "settings.wrapLines.description": "가로로 스크롤하는 대신 모바일 diff에 긴 줄을 넣습니다.",
+  "menu.count.one": "파일 {{count}}개 변경됨",
+  "menu.count.other": "파일 {{count}}개 변경됨",
+  "folder.more": "{{count}} · 나머지는 표시되지 않음",
+  "command.open": "검토 열기",
 }

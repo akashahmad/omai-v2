@@ -12,4 +12,8 @@ export default {
   noChanges: "Değişiklik yok",
   "settings.wrapLines.title": "Satırları kaydır",
   "settings.wrapLines.description": "Yatay olarak kaydırmak yerine mobil farklara uzun çizgiler sarın",
+  "menu.count.one": "{{count}} dosya değişti",
+  "menu.count.other": "{{count}} dosya değişti",
+  "folder.more": "{{count}} · daha fazlası gösterilmiyor",
+  "command.open": "İncelemeyi aç",
 }

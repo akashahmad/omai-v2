@@ -431,7 +431,6 @@ export const dict = {
   "dialog.project.edit.worktree.startup": "Worktree startup script",
   "dialog.project.edit.worktree.startup.placeholder": "e.g. bun install",
 
-
   "toast.permissions.autoaccept.on.title": "Auto-accepting permissions",
   "toast.permissions.autoaccept.on.description": "Permission requests will be automatically approved",
   "toast.permissions.autoaccept.project.title": "Auto-accepting permissions for this project",
@@ -566,6 +565,7 @@ export const dict = {
   "auth.signup.loginLink": "Sign in",
   "auth.error.generic": "Something went wrong. Please try again.",
   "auth.footer": "Secure workspace for your team.",
+  "auth.language": "Language",
   "auth.hero.eyebrow": "O M A I +",
   "auth.hero.before": "Create, develop and publish your ",
   "auth.hero.highlight": "websites, software and apps",
@@ -853,7 +853,8 @@ export const dict = {
   "settings.experimental.row.newIcons.title": "New icons",
   "settings.experimental.row.newIcons.description": "Preview the updated icon set",
   "settings.experimental.row.foldUserMessages.title": "Fold long messages",
-  "settings.experimental.row.foldUserMessages.description": "Fold your messages past 12 lines behind a Read more button",
+  "settings.experimental.row.foldUserMessages.description":
+    "Fold your messages past 12 lines behind a Read more button",
   "settings.experimental.row.newQuestionUI.title": "New question UI",
   "settings.experimental.row.newQuestionUI.description": "Preview the keyboard-first question dock",
   "settings.plugins.reload": "Reload",
@@ -927,7 +928,8 @@ export const dict = {
     "{{server}} isn't responding. Its settings will appear here once it reconnects.",
   "settings.server.unreachable.retry": "Retry",
   "settings.server.none.title": "Open a project first",
-  "settings.server.none.description": "Providers, models and extensions belong to a project. Open one, then come back here.",
+  "settings.server.none.description":
+    "Providers, models and extensions belong to a project. Open one, then come back here.",
   "settings.server.unreachable.edit": "Edit server",
   "settings.server.preferences.websearch.title": "Third-party search",
   "settings.server.preferences.websearch.description": "Select the search provider agents use to search the web",
@@ -1288,7 +1290,6 @@ export const dict = {
   "lab.pick": "Pick a component to preview its states",
   "lab.noControls": "This story has no controls",
   "lab.grid": "Grid",
-
 }
 
 export default dict

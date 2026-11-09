@@ -29,4 +29,31 @@ export default {
   "workspace.existing": "ワークツリー",
   "workspace.new": "新しいワークスペース",
   "mcp.interactiveAuth": "MCPサーバー {{name}} はインタラクティブな認証フォームを必要とします",
+  "mcp.manage": "MCP サーバーを管理",
+  "setup.mcp": "O M A I + でサーバーを追加",
+  "setup.mcp.prompt":
+    "グローバルな O M A I + 設定に MCP サーバーを追加するのを手伝ってください。どのサービスに接続したいかを私に尋ね、設定して接続できるか確認してください。",
+  "setup.plugins": "O M A I + でプラグインを追加",
+  "setup.plugins.prompt":
+    "グローバルな O M A I + 設定にプラグインを追加するのを手伝ってください。何をさせたいかを私に尋ね、プラグインを提案してから追加してください。",
+  "setup.skills": "O M A I + で新しいスキルを作成",
+  "setup.skills.prompt":
+    "グローバル設定に新しい O M A I + スキルを書くのを手伝ってください。何を教えるスキルにしたいかを私に尋ね、SKILL.md を書いてください。",
+  "setup.lsp": "O M A I + でセットアップ",
+  "setup.lsp.prompt":
+    "グローバルな O M A I + 設定で言語サーバーを設定するのを手伝ってください。どの言語で作業しているかを私に尋ね、設定してください。",
+  "mcp.signIn": "サインイン",
+  "mcp.signingIn": "サインイン中…",
+  "mcp.connected": "接続済み",
+  "mcp.disabled": "無効",
+  "mcp.error.action": "詳細",
+  "mcp.error.status": "接続に失敗しました",
+  "mcp.error.actionLabel": "{{name}} の詳細",
+  "mcp.signIn.open": "{{name}} にサインイン",
+  "mcp.error.open": "{{name}} が失敗しました。エラーを表示",
+  "mcp.error.title": "MCP サーバー: {{name}}",
+  "mcp.error.copy": "詳細をコピー",
+  "mcp.error.copyFailed": "エラーの詳細をコピーできませんでした",
+  "mcp.error.disable": "無効にする",
+  "mcp.error.details": "MCP サーバー: {{name}}\nステータス: 失敗\n設定: mcp.servers.{{name}}\nエラー: {{error}}",
 }
