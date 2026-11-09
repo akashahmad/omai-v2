@@ -11,6 +11,33 @@ import { SettingsList } from "@/settings/list"
 import type { SettingsServer } from "./inventory"
 import "@/settings/settings.css"
 
+/** A per-server page when there is no server to show it for, such as before any project is open. */
+export function SettingsServerNone(props: { title: string; description: string }) {
+  const language = useLanguage()
+
+  return (
+    <>
+      <div class="settings-tab-header">
+        <div class="settings-tab-header-row">
+          <div class="flex min-w-0 flex-col gap-1">
+            <h2 class="settings-tab-title">{props.title}</h2>
+            <span class="text-11-regular text-v2-text-text-muted">{props.description}</span>
+          </div>
+        </div>
+      </div>
+      <div class="settings-tab-body">
+        <SettingsList>
+          <div class="settings-server-unavailable" role="status">
+            <Icon name="outline-hexagonal-warning" class="settings-server-unavailable-icon" />
+            <div class="settings-server-unavailable-title">{language.t("settings.server.none.title")}</div>
+            <div class="settings-server-unavailable-description">{language.t("settings.server.none.description")}</div>
+          </div>
+        </SettingsList>
+      </div>
+    </>
+  )
+}
+
 /** A per-server page while its server is unreachable. */
 export function SettingsServerUnavailable(props: {
   entry: SettingsServer

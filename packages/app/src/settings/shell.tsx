@@ -33,7 +33,7 @@ import { SettingsProviders } from "./providers/providers"
 import { SettingsModels } from "./models/models"
 import { SettingsServerGeneral, SettingsServerList } from "./servers/servers"
 import { SettingsServerSwitcher } from "./servers/switcher"
-import { SettingsServerUnavailable } from "./servers/unavailable"
+import { SettingsServerNone, SettingsServerUnavailable } from "./servers/unavailable"
 import { settingsServerReachable, useSettingsServers, useSettingsServersLoaded } from "./servers/inventory"
 import { SettingsExtensions } from "./providers/extensions"
 import { SettingsAbout } from "./about/about"
@@ -307,7 +307,21 @@ function RootSettings() {
         when={reachable()}
         keyed
         fallback={
-          <Show when={surface.server()}>
+          <Show
+            when={surface.server()}
+            fallback={
+              <For each={serverTabs}>
+                {(item) => (
+                  <Tabs.Content value={item.value} class="settings-panel">
+                    <SettingsServerNone
+                      title={language.t(serverPages[item.value].title)}
+                      description={language.t(serverPages[item.value].description)}
+                    />
+                  </Tabs.Content>
+                )}
+              </For>
+            }
+          >
             {(entry) => (
               <For each={serverTabs}>
                 {(item) => (

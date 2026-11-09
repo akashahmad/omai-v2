@@ -210,6 +210,8 @@ function CreateProjectDialog(props: {
     busy: undefined as "starting" | "uploading" | undefined,
     percent: 0,
     error: undefined as string | undefined,
+    // Kept after a failed start, so trying again starts the same project instead of clashing with its name.
+    project: undefined as ProjectView | undefined,
   })
   let picker: HTMLInputElement | undefined
 
@@ -227,16 +229,19 @@ function CreateProjectDialog(props: {
 
     if (state.busy || !state.name.trim()) return
     setState({ error: undefined, busy: "starting" })
-    const created = await props.client.projects
-      .create(state.name)
-      .catch((cause: unknown) => new Error(errorMessage(cause, language.t("common.requestFailed"))))
+    const created =
+      state.project ??
+      (await props.client.projects
+        .create(state.name)
+        .catch((cause: unknown) => new Error(errorMessage(cause, language.t("common.requestFailed")))))
 
     if (created === "exists") return setState({ busy: undefined, error: language.t("cp.create.exists") })
 
     if (created === "invalid") return setState({ busy: undefined, error: language.t("cp.create.invalid") })
 
     if (created instanceof Error) return setState({ busy: undefined, error: created.message })
-    props.onCreated()
+    if (!state.project) props.onCreated()
+    setState("project", created)
     const ready = await untilRunning(props.client, created).catch(
       (cause: unknown) => new Error(errorMessage(cause, language.t("common.requestFailed"))),
     )
@@ -275,7 +280,7 @@ function CreateProjectDialog(props: {
                 class="h-9 min-w-0 flex-1 bg-transparent px-3 text-[13px] text-v2-text-text-base outline-none placeholder:text-v2-text-text-faint"
                 placeholder={language.t("cp.create.namePlaceholder")}
                 value={state.name}
-                disabled={!!state.busy}
+                disabled={!!state.busy || !!state.project}
                 onInput={(event) => setState("name", event.currentTarget.value)}
               />
             </span>

@@ -61,7 +61,7 @@ function appPages() {
       <Route path="/" component={ProjectsLanding} />
       <Route path="/projects" component={AllProjects} />
       <Route path="/sessions" component={Home} />
-      <Route path="/settings" component={SettingsScreen} />
+      <Route path="/settings" component={SettingsRoute} />
       <Route path="/server/:serverKey/session/:id" component={SessionRoute} />
       <Route path="/new-session" component={DraftRoute} />
     </>
@@ -81,6 +81,15 @@ function MultiUserRoutes() {
         <Route component={AppLayout}>{appPages()}</Route>
       </Route>
     </Route>
+  )
+}
+
+// A new boundary, so the loader shows at once instead of the old page staying up while Settings downloads.
+function SettingsRoute() {
+  return (
+    <Suspense fallback={<BrandLoader />}>
+      <SettingsScreen />
+    </Suspense>
   )
 }
 

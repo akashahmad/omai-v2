@@ -926,6 +926,8 @@ export const dict = {
   "settings.server.unreachable.description":
     "{{server}} isn't responding. Its settings will appear here once it reconnects.",
   "settings.server.unreachable.retry": "Retry",
+  "settings.server.none.title": "Open a project first",
+  "settings.server.none.description": "Providers, models and extensions belong to a project. Open one, then come back here.",
   "settings.server.unreachable.edit": "Edit server",
   "settings.server.preferences.websearch.title": "Third-party search",
   "settings.server.preferences.websearch.description": "Select the search provider agents use to search the web",
