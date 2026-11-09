@@ -126,6 +126,19 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     },
   )
 
+  // A VM learns its preview's public address a few seconds after the preview runs. The change arrives as an event, but
+  // an event stream can drop it, so the status is also asked for until the address is there.
+  createKeyed(
+    () =>
+      state.status.state === "running" && !origin() && session().server.connected
+        ? `${session().server.id}\u0000${session().directory}`
+        : undefined,
+    () => {
+      const timer = setInterval(() => void call(rpc().status({}, scope())).then(apply), 3_000)
+      onCleanup(() => clearInterval(timer))
+    },
+  )
+
   // The frame enters the preview once per preview origin; restarts reload it from inside.
   createKeyed(
     () => (state.status.state === "running" ? origin() : undefined),

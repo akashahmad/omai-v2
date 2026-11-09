@@ -140,6 +140,14 @@ export function createController(input: ControllerInput): Controller {
     framework?: string
   } = { status: { state: "idle" }, upstream: { kind: "down" }, watchers: [], lastWatch: Date.now(), closed: false }
 
+  // What the app sees. On a VM the preview is reached only at its public origin: until that is known there is no port
+  // either, or the app would load the preview on the server's own host.
+  const published = (): Status => {
+    const origin = input.origin?.()
+    if (input.origin && !origin) return { ...state.status, port: undefined }
+    return { ...state.status, origin }
+  }
+
   const set = (next: Partial<Status> & Pick<Status, "state">) => {
     // The idle clock starts when the preview comes up, not when a long install began.
     if (next.state === "running") state.lastWatch = Date.now()
@@ -150,11 +158,10 @@ export function createController(input: ControllerInput): Controller {
       framework: next.framework ?? state.framework,
       port: state.proxy?.port,
       auth: input.auth || undefined,
-      origin: input.origin?.(),
     }
-    input.emit.changed(state.status)
+    input.emit.changed(published())
 
-    return state.status
+    return published()
   }
 
   const onLog = (chunk: string) => {
@@ -476,7 +483,7 @@ export function createController(input: ControllerInput): Controller {
   )
 
   return {
-    status: () => ({ ...state.status, origin: input.origin?.() }),
+    status: () => published(),
     start,
     stop,
     restart: async () => {

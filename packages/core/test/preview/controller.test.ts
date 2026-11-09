@@ -260,8 +260,14 @@ describe("controller", () => {
     const origin: { value?: string } = {}
     const { controller } = start({ ...dir, origin: () => origin.value })
     expect(controller.status().origin).toBeUndefined()
+    // Running, but the public address isn't known yet: no port either, or the app would load the server's own host.
+    const early = await controller.start()
+    expect(early.state).toBe("running")
+    expect(early.port).toBeUndefined()
+    expect(controller.status().port).toBeUndefined()
     origin.value = "https://p--preview.code.run"
     expect(controller.status().origin).toBe("https://p--preview.code.run")
+    expect(controller.status().port).toBeNumber()
     expect((await controller.start()).origin).toBe("https://p--preview.code.run")
   }, 30_000)
 
