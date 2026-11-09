@@ -21,8 +21,11 @@ const SHELLS = new Set(["bash", "zsh", "sh", "dash", "fish", "ash", "ksh", "logi
 const holds = new Map<string, number>()
 const touches = new Map<string, number>()
 
-/** Marks work in progress (an install, a publish) until the returned release runs; releasing twice is harmless. */
-export function hold(reason: "install" | "publish") {
+/**
+ * Marks work in progress (an install, a publish, a zip still uploading) until the returned release runs; releasing twice
+ * is harmless.
+ */
+export function hold(reason: "install" | "publish" | "upload") {
   holds.set(reason, (holds.get(reason) ?? 0) + 1)
   const state = { released: false }
   return () => {
@@ -38,7 +41,7 @@ export function touch(reason: "preview", at = Date.now()) {
 }
 
 /**
- * What keeps this VM from pausing: running session steps, installs or publishes, a program running in a terminal (a
+ * What keeps this VM from pausing: running session steps, installs, publishes or uploads, a program running in a terminal (a
  * shell waiting for input doesn't count) and a preview someone viewed in the last 2 minutes.
  */
 export function report(input: {

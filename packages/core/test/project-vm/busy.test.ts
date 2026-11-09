@@ -44,6 +44,13 @@ describe("ProjectVmBusy.report", () => {
     publish()
   })
 
+  test("a zip still uploading keeps the VM busy", () => {
+    const upload = ProjectVmBusy.hold("upload")
+    expect(ProjectVmBusy.report(idle).reasons).toEqual(["upload"])
+    upload()
+    expect(ProjectVmBusy.report(idle).busy).toBe(false)
+  })
+
   test("preview counts for 2 minutes", () => {
     ProjectVmBusy.touch("preview", 1_000_000)
     expect(ProjectVmBusy.report({ ...idle, now: 1_000_000 + 119_000 }).reasons).toEqual(["preview"])

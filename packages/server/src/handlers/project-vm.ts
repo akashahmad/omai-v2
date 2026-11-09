@@ -44,6 +44,8 @@ export const makeProjectVm = Effect.gen(function* () {
         const temp = yield* Effect.promise(() => mkdtemp(path.join(tmpdir(), "omai-upload-")))
         const zip = path.join(temp, "upload.zip")
         // Streamed to a temporary file, never held in memory, then unpacked.
+        // A big zip over a slow line takes minutes; the VM must not pause under it.
+        const release = ProjectVmBusy.hold("upload")
         const result = yield* Effect.gen(function* () {
           const file = yield* Effect.promise(() => open(zip, "w"))
           const bytes = yield* request.stream.pipe(
@@ -65,7 +67,10 @@ export const makeProjectVm = Effect.gen(function* () {
               throw error
             }),
           )
-        }).pipe(Effect.ensuring(Effect.promise(() => rm(temp, { recursive: true, force: true }))))
+        }).pipe(
+          Effect.ensuring(Effect.sync(release)),
+          Effect.ensuring(Effect.promise(() => rm(temp, { recursive: true, force: true }))),
+        )
         if (result instanceof Error) return yield* new InvalidRequestError({ message: result.message, kind: "zip" })
         return HttpServerResponse.jsonUnsafe(result)
       }),
