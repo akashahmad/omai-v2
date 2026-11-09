@@ -25,7 +25,9 @@ export const PROJECT_ID = "platform"
 export async function make(deps: { db: Db; config: Config; now?: () => number }) {
   const config = deps.config
   const secret = await loadSecret(config.dataDir)
-  const provider = LocalVmProvider.make({ ...config, localProjectsRoot: path.join(config.dataDir, "platform") })
+  const provider = LocalVmProvider.make({ ...config, localProjectsRoot: path.join(config.dataDir, "platform"),
+    fixedUrl: config.platformUrl,
+  })
   const spec = {
     projectID: PROJECT_ID,
     slug: PROJECT_ID,

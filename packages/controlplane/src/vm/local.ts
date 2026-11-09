@@ -26,7 +26,13 @@ const decodeSpec = Schema.decodeUnknownOption(
  * gets `<localProjectsRoot>/<projectID>/home` as its home. The spec is kept beside it so the
  * process can start again after the control plane restarts, on the same port: VM tokens carry the address.
  */
-export function make(config: Pick<Config, "localProjectsRoot" | "localServeCommand" | "appOrigin">) {
+export function make(
+  config: Pick<Config, "localProjectsRoot" | "localServeCommand" | "appOrigin"> & {
+    /** Serve every VM at this address, listening on all interfaces at its port (for a provider of one VM). */
+    fixedUrl?: string
+  },
+) {
+  const fixedPort = config.fixedUrl ? Number(new URL(config.fixedUrl).port) : undefined
   const running = new Map<string, { child: ChildProcess; address: VmAddress }>()
   const dir = (projectID: string) => path.join(config.localProjectsRoot, projectID)
 
@@ -54,7 +60,7 @@ export function make(config: Pick<Config, "localProjectsRoot" | "localServeComma
     const command = config.localServeCommand
     const child = spawn(
       command[0]!,
-      [...command.slice(1), "--hostname", "127.0.0.1", "--port", String(port), "--cors", config.appOrigin],
+      [...command.slice(1), "--hostname", config.fixedUrl ? "0.0.0.0" : "127.0.0.1", "--port", String(port), "--cors", config.appOrigin],
       {
         cwd: home,
         // Allowlisted: nothing from the control plane's own environment reaches the VM.
@@ -65,7 +71,7 @@ export function make(config: Pick<Config, "localProjectsRoot" | "localServeComma
     child.stdout?.pipe(log)
     child.stderr?.pipe(log)
     if (child.pid !== undefined) await writeFile(path.join(dir(spec.projectID), "vm.pid"), String(child.pid))
-    const address = { vmID: spec.projectID, host: `http://127.0.0.1:${port}`, home }
+    const address = { vmID: spec.projectID, host: config.fixedUrl ?? `http://127.0.0.1:${port}`, home }
     running.set(spec.projectID, { child, address })
     child.on("exit", () => {
       if (running.get(spec.projectID)?.child === child) running.delete(spec.projectID)
@@ -78,7 +84,7 @@ export function make(config: Pick<Config, "localProjectsRoot" | "localServeComma
       await mkdir(dir(spec.projectID), { recursive: true })
       // A retried create keeps the port it was given the first time.
       const saved = await readSpec(spec.projectID)
-      const full = { ...spec, port: saved?.port ?? (await freePort()) }
+      const full = { ...spec, port: fixedPort ?? saved?.port ?? (await freePort()) }
       await writeFile(path.join(dir(spec.projectID), "spec.json"), JSON.stringify(full), { mode: 0o600 })
       return start(full)
     },
@@ -88,6 +94,7 @@ export function make(config: Pick<Config, "localProjectsRoot" | "localServeComma
       if (existing) return existing.address
       const spec = await readSpec(vmID)
       if (!spec) throw new Error(`No saved spec for VM ${vmID}`)
+      if (fixedPort !== undefined) return start({ ...spec, port: fixedPort })
       if (spec.port !== undefined) return start({ ...spec, port: spec.port })
       const full = { ...spec, port: await freePort() }
       await writeFile(path.join(dir(vmID), "spec.json"), JSON.stringify(full), { mode: 0o600 })

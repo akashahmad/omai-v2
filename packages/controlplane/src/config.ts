@@ -22,6 +22,8 @@ export function fromEnv(env: Record<string, string | undefined>) {
   if (provider !== "local" && provider !== "northflank")
     throw new Error(`OMAI_VM_PROVIDER must be "local" or "northflank", got "${provider}"`)
   const appOrigin = read("OMAI_APP_ORIGIN")!
+  const platformUrl = read("OMAI_PLATFORM_URL")
+  if (platformUrl && !URL.parse(platformUrl)?.port) throw new Error("OMAI_PLATFORM_URL must name a port, e.g. http://controlplane:4102")
   return {
     databaseUrl: read("OMAI_DATABASE_URL"),
     dataDir,
@@ -35,6 +37,11 @@ export function fromEnv(env: Record<string, string | undefined>) {
     routerUrl: read("OMAI_ROUTER_URL")!.replace(/\/+$/, ""),
     /** How a VM reaches the internal routes; loopback (the local provider's VMs share the machine) when unset. */
     controlPlaneVmUrl: read("OMAI_CONTROL_PLANE_VM_URL")?.replace(/\/+$/, ""),
+    /**
+     * Where the router reaches the platform server, e.g. the control plane's private address on another port. When set,
+     * the platform server listens on all interfaces at that port; otherwise on loopback, for a router on the same machine.
+     */
+    platformUrl: platformUrl?.replace(/\/+$/, ""),
     signupEnabled: read("OMAI_SIGNUP_ENABLED") === "true",
     vmProvider: provider as "local" | "northflank",
     northflank: provider === "northflank" ? northflank(read, appOrigin) : undefined,

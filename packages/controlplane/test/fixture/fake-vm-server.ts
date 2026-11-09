@@ -24,4 +24,4 @@ createServer((req, res) => {
   if (req.url === "/env") return res.end(JSON.stringify(Object.keys(process.env)))
   res.statusCode = 404
   res.end()
-}).listen(port, "127.0.0.1")
+}).listen(port, process.argv.includes("--hostname") ? process.argv[process.argv.indexOf("--hostname") + 1] : "127.0.0.1")

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { mkdtemp, readFile, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
+import { createServer } from "node:net"
 import path from "node:path"
 import { SignedToken } from "@opencode/util/signed-token"
 import { Database } from "../src/db/database.js"
@@ -12,9 +13,9 @@ afterEach(async () => {
   await Promise.all(cleanup.splice(0).map((fn) => fn()))
 })
 
-async function setup(dataDir?: string) {
+async function setup(dataDir?: string, env: Record<string, string> = {}) {
   const dir = dataDir ?? (await mkdtemp(path.join(tmpdir(), "omai-platform-")))
-  const config = testConfig({ OMAI_CONTROLPLANE_DATA_DIR: dir, OMAI_LOCAL_SERVE_COMMAND: fakeVmCommand })
+  const config = testConfig({ OMAI_CONTROLPLANE_DATA_DIR: dir, OMAI_LOCAL_SERVE_COMMAND: fakeVmCommand, ...env })
   const db = await Database.memory()
   const platform = await Platform.make({ db, config })
   cleanup.push(() => platform.close())
@@ -44,6 +45,22 @@ describe("Platform", () => {
     expect(env).not.toContain("OMAI_CONTROL_PLANE_URL")
   })
 
+  test("OMAI_PLATFORM_URL puts the server at that address, so a router elsewhere reaches it", async () => {
+    const port = await freePort()
+    const s = await setup(undefined, { OMAI_PLATFORM_URL: `http://localhost:${port}/` })
+    const opened = await s.platform.open("u1", "sid")
+    const claims = SignedToken.verify(opened.token, s.config.publicKey) as SignedToken.VmClaims
+    expect(claims.host).toBe(`http://localhost:${port}`)
+    await until(
+      () =>
+        fetch(`http://localhost:${port}/api/info`).then(
+          (r) => r.ok,
+          () => false,
+        ),
+      Boolean,
+    )
+  })
+
   test("the secret is kept across restarts, readable only by its owner", async () => {
     const first = await setup()
     const secret = first.platform.secret
@@ -66,3 +83,12 @@ describe("Platform", () => {
     expect(await s.platform.models()).toEqual([{ providerID: "openai", modelID: "gpt-5" }])
   })
 })
+
+function freePort() {
+  return new Promise<number>((resolve) => {
+    const server = createServer().listen(0, "127.0.0.1", () => {
+      const address = server.address()
+      server.close(() => resolve(typeof address === "object" && address ? address.port : 0))
+    })
+  })
+}
