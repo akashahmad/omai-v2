@@ -1,3 +1,4 @@
+import { restrictions } from "@/controlplane/restrictions"
 import { Show, type JSX } from "solid-js"
 import { useLocation, useNavigate } from "@solidjs/router"
 import { Mark } from "@opencode/ui/logo"
@@ -108,22 +109,25 @@ export function Rail(props: { project: OpenProject }) {
           </Glyph>
         </button>
       </RailItem>
-      <RailItem label={language.t("rail.terminal")} command="terminal.toggle">
-        <button
-          type="button"
-          data-action="rail-terminal"
-          aria-label={language.t("rail.terminal")}
-          class={BUTTON}
-          disabled={!inSession()}
-          onClick={() => command.trigger("terminal.toggle")}
-        >
-          <Glyph>
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="m7 11 2-2-2-2" />
-            <path d="M11 13h4" />
-          </Glyph>
-        </button>
-      </RailItem>
+      {/* Hidden with the panel an admin hid from this user. */}
+      <Show when={!restrictions.hidden("terminal")}>
+        <RailItem label={language.t("rail.terminal")} command="terminal.toggle">
+          <button
+            type="button"
+            data-action="rail-terminal"
+            aria-label={language.t("rail.terminal")}
+            class={BUTTON}
+            disabled={!inSession()}
+            onClick={() => command.trigger("terminal.toggle")}
+          >
+            <Glyph>
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="m7 11 2-2-2-2" />
+              <path d="M11 13h4" />
+            </Glyph>
+          </button>
+        </RailItem>
+      </Show>
       <RailItem label={language.t("rail.panel")} command="review.toggle">
         <button
           type="button"
@@ -137,23 +141,25 @@ export function Rail(props: { project: OpenProject }) {
           <PanelGlyph />
         </button>
       </RailItem>
-      <RailItem label={language.t("rail.files")}>
-        <button
-          type="button"
-          data-action="rail-files"
-          aria-label={language.t("rail.files")}
-          class={BUTTON}
-          aria-controls="session-files-panel"
-          aria-pressed={inSession() && settings.appearance.fileTreeOpen()}
-          disabled={!inSession()}
-          onClick={() => settings.appearance.setFileTreeOpen(!settings.appearance.fileTreeOpen())}
-        >
-          <Glyph>
-            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-            <path d="M2 10h20" />
-          </Glyph>
-        </button>
-      </RailItem>
+      <Show when={!restrictions.hidden("file")}>
+        <RailItem label={language.t("rail.files")}>
+          <button
+            type="button"
+            data-action="rail-files"
+            aria-label={language.t("rail.files")}
+            class={BUTTON}
+            aria-controls="session-files-panel"
+            aria-pressed={inSession() && settings.appearance.fileTreeOpen()}
+            disabled={!inSession()}
+            onClick={() => settings.appearance.setFileTreeOpen(!settings.appearance.fileTreeOpen())}
+          >
+            <Glyph>
+              <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+              <path d="M2 10h20" />
+            </Glyph>
+          </button>
+        </RailItem>
+      </Show>
       <RailItem label={language.t("rail.previous")}>
         <button
           type="button"

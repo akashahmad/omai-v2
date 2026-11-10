@@ -1,3 +1,4 @@
+import { restrictions } from "@/controlplane/restrictions"
 import { createSimpleContext } from "@opencode/ui/context"
 import { base64Encode } from "@opencode/util/encode"
 import { useParams } from "@solidjs/router"
@@ -276,6 +277,11 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
 
     // The chosen model, kept even when the catalog no longer offers it.
     const key = createMemo<ModelKey | undefined>(() => {
+      // A user an admin locked to one model always sends with it.
+      const locked = restrictions.model()
+
+      if (locked) return { providerID: locked.providerID, modelID: locked.modelID }
+
       if (!configuredModel.ready()) return
 
       const session = durable()

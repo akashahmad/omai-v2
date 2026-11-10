@@ -1,3 +1,4 @@
+import { SessionShareButton } from "@/session/share/share"
 import { createEffect, createMemo, createSignal, on, onCleanup, Show, type Accessor, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Predicate } from "effect"
@@ -570,6 +571,9 @@ function MessageTimelineView(
                           },
                         }}
                       />
+                      <Show when={!parentID()}>
+                        <SessionShareButton sessionID={sessionID()!} />
+                      </Show>
                       <SessionHeaderSpacer visible={props.reserveReviewToggle} />
                     </>
                   )}

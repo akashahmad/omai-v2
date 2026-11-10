@@ -33,6 +33,7 @@ import { createTabStripScroll } from "./tab-strip-scroll"
 import { closedTabsModifier, type ClosedSideTab } from "./closed-tabs"
 import { ClosedTabsSection, NewTabButton } from "./closed-tabs-view"
 import type { PaneDrag } from "./pane-drag"
+import { PreviewQuestion, usePreviewQuestionHost } from "@/session/requests/preview-question"
 
 const PANE_HEIGHT_MIN = 120
 
@@ -84,6 +85,25 @@ export function SideRegion(props: {
   )
 
   const lowerHeight = createMemo(() => Math.round(column.height * (1 - view().split.ratio())))
+
+  // The agent's questions show in the preview panel: it opens, shows the preview and widens while one waits.
+  usePreviewQuestionHost({
+    preview: () =>
+      isDesktop() && params.id
+        ? [...props.region.pane("side").keys(), ...props.region.pane("split").keys()].find(
+            (key) => props.region.entry(key)?.tab.section === "preview",
+          )
+        : undefined,
+    opened: () => view().side.opened(),
+    open: () => view().side.toggle(),
+    select: (key) => props.region.select(key),
+    row: () => root()?.closest<HTMLElement>("[data-pane-row]") ?? undefined,
+    session: {
+      width: () => view().session.width(),
+      resized: () => view().session.resized(),
+      resize: (width) => view().session.resize(width),
+    },
+  })
 
   guardClosingFocus({
     root,
@@ -525,6 +545,15 @@ export function PaneTabs(props: {
           <BrandIcon class="size-14 rounded-[10px] opacity-40" />
           <div class="text-14-regular text-text-weak max-w-56">{language.t("session.files.selectToOpen")}</div>
         </div>
+      </Show>
+      {/* The agent's questions take the preview's place until they are answered, as they did in the old app. */}
+      <Show when={pill()}>
+        <PreviewQuestion
+          active={() => props.shown() && props.pane.keys().some((key) => sectionOf(key) === "preview")}
+          reveal={() => {
+            if (props.pane.keys().some((key) => sectionOf(key) === "preview")) choose("preview")
+          }}
+        />
       </Show>
       {/* Kept mounted under the new tab view, so terminals and editors keep their state. */}
       <div class="contents" classList={{ hidden: !!current() }} inert={!!current() || undefined}>

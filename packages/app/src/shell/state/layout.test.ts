@@ -10,6 +10,10 @@ test.each(["settings", "connect"] as const)("%s has its own layout route", (type
   expect(currentRoute(`/${type}`, "")).toEqual({ type })
 })
 
+test.each(["/login", "/signup", "/share/abc"])("%s needs no server", (pathname) => {
+  expect(currentRoute(pathname, "")).toEqual({ type: "connect" })
+})
+
 test.each(["/", "/projects", "/sessions"])("%s is a Home route", (pathname) => {
   expect(currentRoute(pathname, "")).toEqual({ type: "home" })
 })

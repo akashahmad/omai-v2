@@ -4,17 +4,22 @@ import type { IncomingMessage, ServerResponse } from "node:http"
 import { Schema } from "effect"
 import type { Auth, Issued } from "../auth.js"
 import type { Config } from "../config.js"
+import type { Db } from "../db/database.js"
 import type { Platform } from "../platform.js"
 import type { Projects } from "../projects.js"
+import type { Shares } from "../shares.js"
 import type { UserModels } from "../user-models.js"
-import { bearer, body, cookies, jsonDecoder, send } from "./http.js"
+import { Users } from "../users.js"
+import { bearer, body, bytes, cookies, jsonDecoder, send } from "./http.js"
 
 type Deps = {
   config: Config
+  db: Db
   auth: Auth
   projects: ReturnType<typeof Projects.make>
   platform: Platform
   models: ReturnType<typeof UserModels.make>
+  shares: Shares
 }
 type Context = {
   req: IncomingMessage
@@ -45,6 +50,44 @@ const Models = jsonDecoder(
     ),
   }),
 )
+
+const ModelKey = Schema.Struct({
+  providerID: Schema.String.check(Schema.isMaxLength(200)),
+  modelID: Schema.String.check(Schema.isMaxLength(200)),
+})
+// The parts of the app hidden from a user: plugin and settings page ids, which the app defines.
+const Hidden = Schema.Array(Schema.String.check(Schema.isMaxLength(64))).check(Schema.isMaxLength(64))
+const CreateUser = jsonDecoder(
+  Schema.Struct({
+    username: Schema.String,
+    email: Schema.String,
+    password: Schema.String,
+    admin: Schema.optional(Schema.Boolean),
+    hidden: Schema.optional(Hidden),
+    model: Schema.optional(Schema.NullOr(ModelKey)),
+  }),
+)
+const UpdateUser = jsonDecoder(
+  Schema.Struct({
+    admin: Schema.optional(Schema.Boolean),
+    hidden: Schema.optional(Hidden),
+    model: Schema.optional(Schema.NullOr(ModelKey)),
+    password: Schema.optional(Schema.String),
+  }),
+)
+const Share = jsonDecoder(
+  Schema.Struct({
+    title: Schema.String.check(Schema.isMaxLength(500)),
+    data: Schema.Struct({ session: Schema.Unknown, messages: Schema.Array(Schema.Unknown) }),
+  }),
+)
+
+// The same rules the admin's Add user form shows.
+const USERNAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]{2,29}$/
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PASSWORD_MIN = 12
+// A shared conversation carries its pasted images inline, so its copy may be large.
+const SHARE_LIMIT = 25 * 1024 * 1024
 
 /** The browser-facing API on `config.port`. Only the web app's origin may call it with credentials. */
 export function make(deps: Deps) {
@@ -278,6 +321,131 @@ export function make(deps: Deps) {
         send(ctx.res, 204, undefined, ctx.headers)
       },
     },
+    // Sharing a conversation by a public link: its owner sends a copy; anyone with the link reads it.
+    {
+      method: "GET",
+      path: /^\/projects\/([^/]+)\/shares\/([^/]+)$/,
+      auth: true,
+      run: async (ctx, session) => {
+        const found = await deps.shares.find(session.userID, ctx.params[0]!, ctx.params[1]!)
+        if (!found) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 200, found, ctx.headers)
+      },
+    },
+    {
+      method: "PUT",
+      path: /^\/projects\/([^/]+)\/shares\/([^/]+)$/,
+      auth: true,
+      run: async (ctx, session) => {
+        const raw = await bytes(ctx.req, SHARE_LIMIT)
+        if (!raw) return send(ctx.res, 413, { error: "too-large" }, ctx.headers)
+        const input = Share(new TextDecoder().decode(raw))
+        if (!input) return send(ctx.res, 400, { error: "invalid" }, ctx.headers)
+        const shared = await deps.shares.put(session.userID, ctx.params[0]!, ctx.params[1]!, input)
+        if (!shared) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 200, shared, ctx.headers)
+      },
+    },
+    {
+      method: "DELETE",
+      path: /^\/projects\/([^/]+)\/shares\/([^/]+)$/,
+      auth: true,
+      run: async (ctx, session) => {
+        if (!(await deps.shares.remove(session.userID, ctx.params[0]!, ctx.params[1]!)))
+          return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 204, undefined, ctx.headers)
+      },
+    },
+    {
+      // The public page behind a share link; no sign-in.
+      method: "GET",
+      path: /^\/shares\/([^/]+)$/,
+      auth: false,
+      run: async (ctx) => {
+        const shared = await deps.shares.read(ctx.params[0]!)
+        if (!shared) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 200, shared, ctx.headers)
+      },
+    },
+    // Users & Roles: admins only. To everyone else these routes don't exist.
+    {
+      method: "GET",
+      path: /^\/admin\/users$/,
+      auth: true,
+      run: async (ctx, session) => {
+        if (!session.admin) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 200, await Users.list(deps.db), ctx.headers)
+      },
+    },
+    {
+      method: "POST",
+      path: /^\/admin\/users$/,
+      auth: true,
+      run: async (ctx, session) => {
+        if (!session.admin) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        const input = await body(ctx.req, CreateUser)
+        if (!input) return send(ctx.res, 400, { error: "invalid-request" }, ctx.headers)
+        const invalid = !USERNAME.test(input.username.trim())
+          ? "invalid-username"
+          : !EMAIL.test(input.email.trim()) || input.email.length > 254
+            ? "invalid-email"
+            : input.password.length < PASSWORD_MIN
+              ? "weak-password"
+              : !(await sharedModel(input.model))
+                ? "invalid-model"
+                : undefined
+        if (invalid) return send(ctx.res, 400, { error: invalid }, ctx.headers)
+        const created = await Users.create(deps.db, { ...input, hidden: input.hidden ? [...input.hidden] : undefined })
+          .then((user) => user.id)
+          .catch((error: unknown) => {
+            if (error instanceof Users.UserExists) return undefined
+            throw error
+          })
+        if (!created) return send(ctx.res, 409, { error: "exists" }, ctx.headers)
+        const users = await Users.list(deps.db)
+        send(
+          ctx.res,
+          201,
+          users.find((user) => user.id === created),
+          ctx.headers,
+        )
+      },
+    },
+    {
+      method: "PATCH",
+      path: /^\/admin\/users\/([^/]+)$/,
+      auth: true,
+      run: async (ctx, session) => {
+        if (!session.admin) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        const input = await body(ctx.req, UpdateUser)
+        if (!input) return send(ctx.res, 400, { error: "invalid-request" }, ctx.headers)
+        const id = ctx.params[0]!
+        // An admin can't lock themselves out of this page.
+        if (id === session.userID && input.admin === false)
+          return send(ctx.res, 400, { error: "self-demote" }, ctx.headers)
+        if (input.password !== undefined && input.password.length < PASSWORD_MIN)
+          return send(ctx.res, 400, { error: "weak-password" }, ctx.headers)
+        if (!(await sharedModel(input.model))) return send(ctx.res, 400, { error: "invalid-model" }, ctx.headers)
+        const updated = await Users.update(deps.db, id, {
+          ...input,
+          hidden: input.hidden ? [...input.hidden] : undefined,
+        })
+        if (!updated) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 200, updated, ctx.headers)
+      },
+    },
+    {
+      method: "DELETE",
+      path: /^\/admin\/users\/([^/]+)$/,
+      auth: true,
+      run: async (ctx, session) => {
+        if (!session.admin) return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        if (ctx.params[0] === session.userID) return send(ctx.res, 400, { error: "self-delete" }, ctx.headers)
+        if (!(await Users.remove(deps.db, ctx.params[0]!)))
+          return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
+        send(ctx.res, 204, undefined, ctx.headers)
+      },
+    },
     // Platform settings: admins only. To everyone else these routes don't exist.
     {
       method: "POST",
@@ -315,6 +483,13 @@ export function make(deps: Deps) {
       },
     },
   ]
+
+  // A user can only be locked to a model the admin shares with everyone.
+  async function sharedModel(model: { providerID: string; modelID: string } | null | undefined) {
+    if (!model) return true
+    const shared = await deps.platform.models()
+    return shared.some((item) => item.providerID === model.providerID && item.modelID === model.modelID)
+  }
 
   return async function handle(req: IncomingMessage, res: ServerResponse) {
     const origin = req.headers.origin

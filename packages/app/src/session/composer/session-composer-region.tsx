@@ -2,6 +2,7 @@ import { createMemo, Show, type JSX } from "solid-js"
 import { SessionElicitationDock } from "@/session/requests/session-elicitation-dock"
 import { SessionPermissionDock } from "@/session/requests/session-permission-dock"
 import { SessionQuestionDock } from "@/session/requests/session-question-dock"
+import { questionsInPreview } from "@/session/requests/preview-question"
 import { questionMotion } from "@/session/requests/question-motion"
 import { useSettings } from "@/settings/model"
 import { SessionWebSearchDock } from "@/session/requests/session-websearch-dock"
@@ -35,7 +36,8 @@ export function SessionComposerRegion(props: {
 
   const face = createMemo(() => {
     const websearch = controller.state.websearch.request()
-    const question = controller.state.questionRequest()
+    // Where the preview panel can show the agent's questions, they are answered there, never in a dock.
+    const question = questionsInPreview() ? undefined : controller.state.questionRequest()
     const elicitation = controller.state.elicitationRequest()
     const permission = controller.state.permissionRequest()
     const composer = controller.showComposer() && !controller.child() && !controller.state.blocked()

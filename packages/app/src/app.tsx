@@ -2,6 +2,8 @@ import "@/index.css"
 import { VoiceProvider } from "@/voice/context"
 import { VoiceOverlay } from "@/voice/composer"
 import { DialogProvider } from "@opencode/ui/context/dialog"
+import { ImageEditProvider } from "@opencode/ui/context/image-edit"
+import { attachToComposer, composerOpen } from "@/composer/attachments/external"
 import { FileComponentProvider } from "@opencode/ui/context/file"
 import { Font } from "@opencode/ui/font"
 import { ThemeProvider } from "@opencode/ui/theme/context"
@@ -76,7 +78,12 @@ export function AppBaseProviders(
               <QueryProvider>
                 <DialogProvider>
                   <PluginRoot>
-                    <FileComponentProvider component={File}>{props.children}</FileComponentProvider>
+                    {/* An image edited in the image preview is attached to the open composer. */}
+                    <ImageEditProvider
+                      value={{ available: composerOpen, attach: (file) => void attachToComposer(file) }}
+                    >
+                      <FileComponentProvider component={File}>{props.children}</FileComponentProvider>
+                    </ImageEditProvider>
                   </PluginRoot>
                 </DialogProvider>
               </QueryProvider>

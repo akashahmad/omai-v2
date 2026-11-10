@@ -7,6 +7,7 @@ import type { ComposerPrompt } from "../types"
 import type { ImageAttachmentPart, PathAttachmentPart } from "../state"
 import type { AttachmentDestination } from "./destination"
 import { uploads } from "./uploads"
+import { receiveAttachments } from "./external"
 
 type PromptTarget = {
   current: () => ComposerPrompt
@@ -238,6 +239,12 @@ export function createComposerAttachments(
     const cancel = input.onDragCancel?.(clearDrag)
 
     if (cancel) onCleanup(cancel)
+    onCleanup(
+      receiveAttachments((file) => {
+        void addAttachments([file])
+        input.focusEditor()
+      }),
+    )
     makeEventListener(document, "dragover", (event) => {
       if (input.isDialogActive()) return
       event.preventDefault()

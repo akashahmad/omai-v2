@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store"
 import type { VisibilitySource } from "@/providers/models/models"
+import { restrictions } from "./restrictions"
 
 type ModelKey = { providerID: string; modelID: string }
 type Switch = ModelKey & { visible: boolean }
@@ -35,7 +36,14 @@ export function createSharedVisibility(input: {
   )
 
   return {
-    visible: (model) => (store.shared.includes(keyOf(model)) ? true : store.mine[keyOf(model)]),
+    visible: (model) => {
+      // A user an admin locked to one model sees only that one.
+      const locked = restrictions.model()
+
+      if (locked) return keyOf(model) === keyOf(locked)
+
+      return store.shared.includes(keyOf(model)) ? true : store.mine[keyOf(model)]
+    },
     set: (model, visible) => {
       setStore("mine", keyOf(model), visible)
       const item = { providerID: model.providerID, modelID: model.modelID, visible }

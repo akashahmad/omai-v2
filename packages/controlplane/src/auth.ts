@@ -12,7 +12,7 @@ export * as Auth from "./auth.js"
 export type Issued = {
   accessToken: string
   refreshToken: string
-  user: { id: string; username: string; email: string; admin: boolean }
+  user: { id: string; username: string; email: string } & Users.Permissions
 }
 
 export type Auth = ReturnType<typeof make>
@@ -145,6 +145,7 @@ export function make(db: Db, config: Config, now = () => Date.now()) {
 
 type UserRow = { id: string; username: string; email: string; permissions: unknown }
 
+// The signed-in user with what an admin set for them, so the app hides what they may not use.
 function view(user: UserRow) {
-  return { id: user.id, username: user.username, email: user.email, admin: Users.isAdmin(user.permissions) }
+  return { id: user.id, username: user.username, email: user.email, ...Users.read(user.permissions) }
 }

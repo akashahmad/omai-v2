@@ -1,5 +1,6 @@
 import { batch, createMemo, createSignal, lazy, onCleanup, Show, Suspense, type ParentProps } from "solid-js"
 import { pluginEnabled, runsOn, type Bridge, type Entry } from "@opencode/plugin/gui/host"
+import { restrictions } from "@/controlplane/restrictions"
 import { builtins } from "./builtins"
 import { createInstalled } from "./installed"
 import { PluginGuiLoader, type PluginGui } from "./plugins"
@@ -69,19 +70,20 @@ export function PluginRoot(props: ParentProps) {
     },
   )
 
-  // Only enable preferences cross this boundary.
+  // Only enable preferences cross this boundary, with the panels an admin hid from the signed-in user.
   const disabled = createMemo(() => {
     const state = installed.enableState()
 
     if (!state) return undefined
 
-    return new Set(
-      definitions().flatMap((definition) =>
+    return new Set([
+      ...definitions().flatMap((definition) =>
         pluginEnabled({ id: definition.id, builtin: builtins.some((builtin) => builtin.id === definition.id) }, state)
           ? []
           : [definition.id],
       ),
-    )
+      ...restrictions.plugins(),
+    ])
   })
 
   const failed = (id: string) => installed.list().some((item) => item.id === id && item.error !== undefined)

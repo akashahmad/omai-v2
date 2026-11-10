@@ -2,12 +2,37 @@ export * as ControlPlaneClient from "./client"
 
 import { Option, Schema } from "effect"
 
+const ModelKeySchema = Schema.Struct({ providerID: Schema.String, modelID: Schema.String })
+
 const UserSchema = Schema.Struct({
   id: Schema.String,
   username: Schema.String,
   email: Schema.String,
-  /** Admins set up the platform's providers and models. */
+  /** Admins set up the platform's providers and models, and manage users. */
   admin: Schema.Boolean,
+  /** The parts of the app an admin hid from this user: plugin and settings page ids. */
+  hidden: Schema.optional(Schema.Array(Schema.String)),
+  /** The one shared model an admin locked this user to. */
+  model: Schema.optional(Schema.NullOr(ModelKeySchema)),
+})
+
+const AdminUserSchema = Schema.Struct({
+  id: Schema.String,
+  username: Schema.String,
+  email: Schema.String,
+  admin: Schema.Boolean,
+  hidden: Schema.Array(Schema.String),
+  model: Schema.NullOr(ModelKeySchema),
+  createdAt: Schema.Number,
+})
+
+const ShareSchema = Schema.Struct({ id: Schema.String, sharedAt: Schema.Number })
+
+const SharedSchema = Schema.Struct({
+  id: Schema.String,
+  title: Schema.String,
+  data: Schema.Struct({ session: Schema.Unknown, messages: Schema.Array(Schema.Unknown) }),
+  sharedAt: Schema.Number,
 })
 
 const IssuedSchema = Schema.Struct({ accessToken: Schema.String, user: UserSchema })
@@ -32,10 +57,15 @@ const ErrorSchema = Schema.Struct({ error: Schema.String })
 
 const ClaimsSchema = Schema.Struct({ exp: Schema.Number })
 
-const ModelKeySchema = Schema.Struct({ providerID: Schema.String, modelID: Schema.String })
 const ModelSwitchSchema = Schema.Struct({ providerID: Schema.String, modelID: Schema.String, visible: Schema.Boolean })
 
 export type User = typeof UserSchema.Type
+
+export type AdminUser = typeof AdminUserSchema.Type
+
+export type ModelKey = typeof ModelKeySchema.Type
+
+export type Shared = typeof SharedSchema.Type
 
 export type ProjectView = typeof ProjectSchema.Type
 
@@ -76,6 +106,8 @@ export function make(
   const base = apiUrl.replace(/\/+$/, "")
   const state: { token?: string; refreshing?: Promise<User | undefined> } = {}
   const listeners = new Set<() => void>()
+  // Each sign-in and refresh carries the user as the control plane has them now, with any change an admin made.
+  const users = new Set<(user: User) => void>()
 
   const raw = (path: string, init: RequestInit = {}, token?: string) =>
     fetchImpl(`${base}${path}`, {
@@ -90,6 +122,7 @@ export function make(
   const accept = async (res: Response) => {
     const body = await decode(res, IssuedSchema)
     state.token = body.accessToken
+    users.forEach((fn) => fn(body.user))
 
     return body.user
   }
@@ -163,6 +196,11 @@ export function make(
 
       return () => listeners.delete(fn)
     },
+    onUser(fn: (user: User) => void) {
+      users.add(fn)
+
+      return () => users.delete(fn)
+    },
     async config() {
       const res = await raw("/config")
 
@@ -217,6 +255,50 @@ export function make(
       models: () => json("/platform/models", {}, Schema.Array(ModelKeySchema)),
       setModels: (models: readonly { providerID: string; modelID: string }[]) =>
         empty("/platform/models", { method: "PUT", body: body({ models }) }),
+    },
+    /** Users & Roles, for admins. */
+    admin: {
+      users: () => json("/admin/users", {}, Schema.Array(AdminUserSchema)),
+      create: (input: {
+        username: string
+        email: string
+        password: string
+        admin: boolean
+        hidden: readonly string[]
+        model: ModelKey | null
+      }) => json("/admin/users", { method: "POST", body: body(input) }, AdminUserSchema),
+      update: (
+        id: string,
+        input: { admin?: boolean; hidden?: readonly string[]; model?: ModelKey | null; password?: string },
+      ) => json(`/admin/users/${encodeURIComponent(id)}`, { method: "PATCH", body: body(input) }, AdminUserSchema),
+      remove: (id: string) => empty(`/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    },
+    /** Conversations shared by a public link. */
+    shares: {
+      get: (projectID: string, sessionID: string) =>
+        json(`/projects/${encodeURIComponent(projectID)}/shares/${encodeURIComponent(sessionID)}`, {}, ShareSchema, {
+          404: "none",
+        }),
+      put: (projectID: string, sessionID: string, input: { title: string; data: unknown }) =>
+        json(
+          `/projects/${encodeURIComponent(projectID)}/shares/${encodeURIComponent(sessionID)}`,
+          { method: "PUT", body: body(input) },
+          ShareSchema,
+        ),
+      remove: (projectID: string, sessionID: string) =>
+        empty(`/projects/${encodeURIComponent(projectID)}/shares/${encodeURIComponent(sessionID)}`, {
+          method: "DELETE",
+        }),
+      /** A shared conversation, for anyone with its link. */
+      async read(id: string) {
+        const res = await raw(`/shares/${encodeURIComponent(id)}`)
+
+        if (res.status === 404) return undefined
+
+        if (!res.ok) throw new RequestError(res.status, await errorCode(res))
+
+        return decode(res, SharedSchema)
+      },
     },
     projects: {
       list: () => json("/projects", {}, Schema.Array(ProjectSchema)),

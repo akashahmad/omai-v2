@@ -1,3 +1,4 @@
+import { restrictions } from "@/controlplane/restrictions"
 import { useCommand, type CommandOption } from "@/shell/commands/command"
 import { useLanguage } from "@/runtime/i18n/language"
 import { DialogSelectModel } from "@/providers/models/select-dialog"
@@ -63,6 +64,8 @@ export const useComposerCommands = (input: { model?: ModelSelection } = {}) => {
   }
 
   const chooseModel = () => {
+    // Nothing to choose for a user an admin locked to one model.
+    if (restrictions.model()) return
     sessionOwnership.capture().run(() => {
       void dialog.show(() => <DialogSelectModel model={model} />)
     })

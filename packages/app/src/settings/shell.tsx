@@ -37,6 +37,8 @@ import { SettingsServerNone, SettingsServerUnavailable } from "./servers/unavail
 import { settingsServerReachable, useSettingsServers, useSettingsServersLoaded } from "./servers/inventory"
 import { SettingsExtensions } from "./providers/extensions"
 import { SettingsAbout } from "./about/about"
+import { SettingsUsers } from "./users/users"
+import { restrictions } from "@/controlplane/restrictions"
 import { SettingsServerDataScope } from "./server-scope"
 import { SettingsNavigation, type SettingsNavGroup } from "./navigation"
 import { SettingsProjectGeneral } from "./workspaces/project"
@@ -225,6 +227,11 @@ function RootSettings() {
     if (view.type !== "root") return
 
     if (view.tab === "experimental" && !experimentalSettingsAvailable) surface.open("general")
+
+    // A page an admin hid, or Users & Roles for anyone but an admin, opens Preferences instead.
+    if (restrictions.hidden(`settings:${view.tab}`)) surface.open("general")
+
+    if (view.tab === "users" && !platform.tabs().some((tab) => tab === "users")) surface.open("general")
   })
 
   const selectServer = (server: ServerConnection.Any) => surface.selectServer(ServerConnection.key(server))
@@ -237,10 +244,13 @@ function RootSettings() {
       .filter((item) => item.value.group === group)
       .map((item) => ({ value: item.value.id, icon: item.value.icon ?? pageIcons.extensions, label: item.value.title }))
 
+  // Pages an admin hid from this user leave the navigation.
+  const shown = (value: string) => !restrictions.hidden(`settings:${value}`)
+
   const groups = createMemo<SettingsNavGroup[]>(() => [
     {
       label: language.t("settings.group.workspace"),
-      items: serverTabs.map((item) => ({ ...item, label: language.t(item.label) })),
+      items: serverTabs.flatMap((item) => (shown(item.value) ? [{ ...item, label: language.t(item.label) }] : [])),
     },
     // Multi-user admins: the providers and models O M A I + offers everyone.
     ...(platform.tabs().length > 0
@@ -255,16 +265,23 @@ function RootSettings() {
       : []),
     {
       label: language.t("settings.group.personal"),
-      items: [...rootClientTabs.map((item) => ({ ...item, label: language.t(item.label) })), ...pluginTabs()],
+      items: [
+        ...rootClientTabs.flatMap((item) => (shown(item.value) ? [{ ...item, label: language.t(item.label) }] : [])),
+        ...pluginTabs(),
+      ],
     },
     {
       label: language.t("settings.group.system"),
       items: [
-        {
-          value: "servers",
-          icon: pageIcons.servers,
-          label: language.t(multiple() ? "settings.tab.servers" : pageLabels.servers),
-        },
+        ...(shown("servers")
+          ? [
+              {
+                value: "servers",
+                icon: pageIcons.servers,
+                label: language.t(multiple() ? "settings.tab.servers" : pageLabels.servers),
+              },
+            ]
+          : []),
         ...(experimentalSettingsAvailable
           ? experimentalTab.map((item) => ({ ...item, label: language.t(item.label) }))
           : []),
@@ -394,6 +411,11 @@ function RootSettings() {
             </Tabs.Content>
           </SettingsServerDataScope>
         )}
+      </Show>
+      <Show when={platform.tabs().some((tab) => tab === "users")}>
+        <Tabs.Content value="users" class="settings-panel">
+          <SettingsUsers />
+        </Tabs.Content>
       </Show>
       <Tabs.Content value="servers" class="settings-panel">
         <Show

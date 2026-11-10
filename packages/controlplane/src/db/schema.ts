@@ -169,8 +169,12 @@ export const PublishedSiteTable = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("published_site_live_name_idx").on(table.name).where(sql`${table.deleted_at} is null`),
-    uniqueIndex("published_site_live_project_idx").on(table.project_id).where(sql`${table.deleted_at} is null`),
+    uniqueIndex("published_site_live_name_idx")
+      .on(table.name)
+      .where(sql`${table.deleted_at} is null`),
+    uniqueIndex("published_site_live_project_idx")
+      .on(table.project_id)
+      .where(sql`${table.deleted_at} is null`),
   ],
 )
 
@@ -197,7 +201,32 @@ export const PublishedDomainTable = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("published_domain_live_hostname_idx").on(table.hostname).where(sql`${table.deleted_at} is null`),
+    uniqueIndex("published_domain_live_hostname_idx")
+      .on(table.hostname)
+      .where(sql`${table.deleted_at} is null`),
     index("published_domain_project_idx").on(table.project_id),
   ],
+)
+
+/**
+ * A conversation shared by a public link: a copy of the session as it was when its owner last shared or updated it.
+ * Anyone with the link reads it; deleting the row ends the link.
+ */
+export const SharedSessionTable = pgTable(
+  "shared_session",
+  {
+    id: text().primaryKey(),
+    user_id: text()
+      .notNull()
+      .references(() => UserTable.id),
+    project_id: text()
+      .notNull()
+      .references(() => ProjectTable.id),
+    session_id: text().notNull(),
+    title: text().notNull(),
+    data: jsonb().notNull(),
+    ...timestamps,
+    updated_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("shared_session_project_session_idx").on(table.project_id, table.session_id)],
 )

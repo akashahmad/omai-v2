@@ -7,6 +7,7 @@ import { ControlPlaneClient, multiUser, type User } from "./client"
 import { requireServerKey } from "@/shell/routes/session"
 import { createIdleLogout } from "./idle"
 import { createPresence, projectOfConnection } from "./presence"
+import { applyRestrictions } from "./restrictions"
 
 const IDLE_MS = Number(import.meta.env.VITE_OMAI_SESSION_IDLE_MS) || 900_000
 
@@ -30,13 +31,21 @@ function createSession(apiUrl: string) {
 
   const signedOut = () => {
     forgetProjects()
+    applyRestrictions(undefined)
     setState({ status: "out", user: undefined })
 
-    if (location.pathname === "/login" || location.pathname === "/signup") return
+    if (location.pathname === "/login" || location.pathname === "/signup" || location.pathname.startsWith("/share/"))
+      return
     navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`, { replace: true })
   }
 
   client.onSignedOut(signedOut)
+  // An admin's change to this user arrives with the next token refresh, within minutes, without signing in again.
+  client.onUser((user) => {
+    applyRestrictions(user)
+
+    if (state.status === "in") setState("user", user)
+  })
   channel.addEventListener("message", (event: MessageEvent) => {
     if (event.data?.type === "logout") signedOut()
   })

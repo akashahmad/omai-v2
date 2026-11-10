@@ -1,11 +1,12 @@
-// Until the user drags the divider, the chat panel takes 40% of the pane row and the side panel (the preview first)
-// the other 60%, on every screen size. A drag keeps its width, leaving the side pane at least its hard minimum. The
+// Until the user drags the divider, the chat panel takes 30% of the pane row and the side panel (the preview first)
+// the other 70%, on every screen size. A drag keeps its width, leaving the side pane at least its hard minimum. The
 // chat minimum leaves the session header room for its title beside its controls, macOS traffic lights included.
 export const SESSION_PANEL_WIDTH_MIN = 400
 
 const SIDE_PANE_WIDTH_MIN = 320
 
-const DEFAULT_SHARE = 0.4
+/** The chat panel's share of the pane row until the user drags the divider. */
+export const DEFAULT_SHARE = 0.3
 
 // The row's 4px gap between the panels.
 const GAP = 4

@@ -4,6 +4,8 @@ import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { createEffect, createMemo, createSignal, on, onCleanup, Show } from "solid-js"
 import { useDialogLayer } from "../context/dialog"
 import { useI18n } from "../context/i18n"
+import { useImageEdit } from "../context/image-edit"
+import { ImageEditor, pngBlob, type ImageEditorMode } from "./image-editor"
 import { Button } from "@opencode/ui/button"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
@@ -59,6 +61,10 @@ const CENTER = { x: 0, y: 0 }
 export function ImagePreview(props: ImagePreviewProps) {
   const i18n = useI18n()
   const dialog = useDialogContext()
+  // Editing is offered where an edited image has somewhere to go: the chat's composer.
+  const edit = useImageEdit()
+  const [editing, setEditing] = createSignal<ImageEditorMode>()
+  const [copied, setCopied] = createSignal(false)
   let root!: HTMLDivElement
   let scrim!: HTMLDivElement
   let content!: HTMLDivElement
@@ -103,6 +109,28 @@ export function ImagePreview(props: ImagePreviewProps) {
   let gliding: (() => void) | undefined
 
   const percent = createMemo(() => new Intl.NumberFormat(i18n.locale(), { style: "percent", maximumFractionDigits: 0 }))
+
+  const copy = () =>
+    void pngBlob(props.src)
+      .then((blob) => navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]))
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      })
+      .catch(() => undefined)
+
+  const download = () =>
+    void fetch(props.src, { credentials: "include" })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = props.alt && /\.[a-z0-9]+$/i.test(props.alt) ? props.alt : "image.png"
+        link.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+      })
+      .catch(() => window.open(props.src, "_blank", "noopener"))
 
   const natural = () =>
     image instanceof HTMLImageElement
@@ -507,6 +535,8 @@ export function ImagePreview(props: ImagePreviewProps) {
     window,
     "wheel",
     (event: WheelEvent) => {
+      if (editing()) return
+
       const inside =
         event.target instanceof Node && (viewport.contains(event.target) || (!!holder && event.target === props.video))
 
@@ -545,6 +575,7 @@ export function ImagePreview(props: ImagePreviewProps) {
     window,
     "keydown",
     (event: KeyboardEvent) => {
+      if (editing()) return
       const bare = !event.metaKey && !event.ctrlKey && !event.altKey
 
       if (bare && event.key === " " && props.video && holder) {
@@ -587,6 +618,13 @@ export function ImagePreview(props: ImagePreviewProps) {
           close?.focus()
         }}
         onEscapeKeyDown={(event) => {
+          if (editing()) {
+            event.preventDefault()
+            setEditing(undefined)
+
+            return
+          }
+
           if (goal().scale <= 1) return
           event.preventDefault()
           ease(FIT_VIEW)
@@ -667,6 +705,35 @@ export function ImagePreview(props: ImagePreviewProps) {
             aria-label={i18n.t("ui.imagePreview.zoomIn")}
             onClick={() => step(STEP)}
           />
+          <Show when={!props.video}>
+            <div data-slot="image-preview-divider" />
+            <Show when={edit?.available()}>
+              <IconButton
+                data-slot="image-preview-edit"
+                icon={<Icon name="pencil-line" />}
+                variant="ghost"
+                aria-label={i18n.t("ui.imagePreview.edit")}
+                title={i18n.t("ui.imagePreview.edit")}
+                onClick={() => setEditing("draw")}
+              />
+            </Show>
+            <IconButton
+              data-slot="image-preview-copy"
+              icon={<Icon name={copied() ? "check" : "copy"} />}
+              variant="ghost"
+              aria-label={copied() ? i18n.t("ui.imagePreview.copied") : i18n.t("ui.imagePreview.copy")}
+              title={copied() ? i18n.t("ui.imagePreview.copied") : i18n.t("ui.imagePreview.copy")}
+              onClick={copy}
+            />
+            <IconButton
+              data-slot="image-preview-download"
+              icon={<Icon name="download" />}
+              variant="ghost"
+              aria-label={i18n.t("ui.imagePreview.download")}
+              title={i18n.t("ui.imagePreview.download")}
+              onClick={download}
+            />
+          </Show>
           <div data-slot="image-preview-divider" />
           <Kobalte.CloseButton
             ref={close}
@@ -677,6 +744,20 @@ export function ImagePreview(props: ImagePreviewProps) {
             aria-label={i18n.t("ui.common.close")}
           />
         </div>
+        <Show when={edit && editing()}>
+          {(mode) => (
+            <ImageEditor
+              src={props.src}
+              name={props.alt}
+              mode={mode()}
+              onCancel={() => setEditing(undefined)}
+              onDone={(file) => {
+                edit?.attach(file)
+                dialog.close()
+              }}
+            />
+          )}
+        </Show>
       </Kobalte.Content>
       <div data-slot="image-preview-surface" ref={surface} />
       <Show when={!props.video}>

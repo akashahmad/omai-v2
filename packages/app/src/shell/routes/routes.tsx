@@ -28,6 +28,8 @@ const LoginPage = lazy(() => import("@/controlplane/login").then((module) => ({ 
 
 const SignupPage = lazy(() => import("@/controlplane/signup").then((module) => ({ default: module.SignupPage })))
 
+const SharePage = lazy(() => import("@/session/share/page").then((module) => ({ default: module.SharePage })))
+
 const ConnectServerScreen = lazy(() =>
   import("@/servers/connect/screen").then((module) => ({ default: module.ConnectServerScreen })),
 )
@@ -77,6 +79,8 @@ function MultiUserRoutes() {
     <Route component={ControlPlaneRoot}>
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+      {/* A shared conversation is public: anyone with the link reads it, signed in or not. */}
+      <Route path="/share/:id" component={SharePage} />
       <Route component={RequireSignedIn}>
         <Route component={AppLayout}>{appPages()}</Route>
       </Route>

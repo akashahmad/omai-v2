@@ -346,7 +346,10 @@ describe("control plane http", () => {
       headers: { authorization: `Bearer ${pa.projectToken}` },
     })
     expect(await own.json()).toEqual({ configured: false })
-    const claim = await s.post(`/internal/projects/${pa.id}/publish/claim`, { token: pa.projectToken, body: { name: "x" } })
+    const claim = await s.post(`/internal/projects/${pa.id}/publish/claim`, {
+      token: pa.projectToken,
+      body: { name: "x" },
+    })
     expect(claim.status).toBe(503)
     expect(await claim.json()).toEqual({ kind: "not-configured", message: "Publishing isn't set up on this server." })
   })
@@ -487,7 +490,12 @@ describe("control plane http", () => {
       fetch(`${s.internal}/internal/projects/${project.id}/credentials/${credentialID}`, {
         method: "PUT",
         headers: { authorization: `Bearer ${project.projectToken}`, "content-type": "application/json" },
-        body: JSON.stringify({ integrationID: "openai", label: "Mine", value: { type: "key", key: "sk-a" }, updatedAt }),
+        body: JSON.stringify({
+          integrationID: "openai",
+          label: "Mine",
+          value: { type: "key", key: "sk-a" },
+          updatedAt,
+        }),
       }).then((r) => r.status)
     const keys = (project: { id: string; projectToken: string }) =>
       fetch(`${s.internal}/internal/projects/${project.id}/keys`, {
@@ -508,7 +516,9 @@ describe("control plane http", () => {
     const usage = await fetch(`${s.internal}/internal/projects/${pa.id}/usage`, {
       method: "POST",
       headers: { authorization: `Bearer ${pa.projectToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ steps: [{ providerID: "openai", modelID: "gpt-5", inputTokens: 1, outputTokens: 2, at: 1 }] }),
+      body: JSON.stringify({
+        steps: [{ providerID: "openai", modelID: "gpt-5", inputTokens: 1, outputTokens: 2, at: 1 }],
+      }),
     })
     expect(usage.status).toBe(204)
   })
@@ -517,7 +527,10 @@ describe("control plane http", () => {
     const s = await setup()
     const a = await s.login("a")
     const b = await s.login("b")
-    await s.call("PUT", "/platform/models", { token: a.token, body: { models: [{ providerID: "openai", modelID: "gpt-5" }] } })
+    await s.call("PUT", "/platform/models", {
+      token: a.token,
+      body: { models: [{ providerID: "openai", modelID: "gpt-5" }] },
+    })
     const shared = await s.call("GET", "/models/shared", { token: b.token })
     expect(shared.status).toBe(200)
     expect(shared.body).toEqual([{ providerID: "openai", modelID: "gpt-5" }])
@@ -531,8 +544,12 @@ describe("control plane http", () => {
     const gpt = { providerID: "openai", modelID: "gpt-5" }
     expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: true } })).status).toBe(204)
     expect(
-      (await s.call("PUT", "/models/mine", { token: a.token, body: { providerID: "anthropic", modelID: "x", visible: false } }))
-        .status,
+      (
+        await s.call("PUT", "/models/mine", {
+          token: a.token,
+          body: { providerID: "anthropic", modelID: "x", visible: false },
+        })
+      ).status,
     ).toBe(204)
     expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: false } })).status).toBe(204)
     expect((await s.call("GET", "/models/mine", { token: a.token })).body).toEqual([
@@ -542,5 +559,130 @@ describe("control plane http", () => {
     expect((await s.call("GET", "/models/mine", { token: b.token })).body).toEqual([])
     expect((await s.call("PUT", "/models/mine", { token: a.token, body: { ...gpt, visible: "yes" } })).status).toBe(400)
     expect((await s.call("GET", "/models/mine")).status).toBe(401)
+  })
+})
+
+describe("users and roles", () => {
+  test("only admins manage users; restrictions reach the user's sign-in", async () => {
+    const s = await setup()
+    const a = await s.login("a")
+    const b = await s.login("b")
+    expect((await s.call("GET", "/admin/users", { token: b.token })).status).toBe(404)
+    const listed = await s.call("GET", "/admin/users", { token: a.token })
+    expect(listed.body.map((user: { username: string; admin: boolean }) => [user.username, user.admin])).toEqual([
+      ["a", true],
+      ["b", false],
+    ])
+    await s.call("PUT", "/platform/models", { token: a.token, body: { models: [{ providerID: "p", modelID: "m" }] } })
+
+    const invalid = await s.call("POST", "/admin/users", {
+      token: a.token,
+      body: { username: "c", email: "c@x.y", password: "long-enough-pw" },
+    })
+    expect(invalid.body).toEqual({ error: "invalid-username" })
+    expect(
+      (
+        await s.call("POST", "/admin/users", {
+          token: a.token,
+          body: { username: "carol", email: "c@x.y", password: "short" },
+        })
+      ).body,
+    ).toEqual({ error: "weak-password" })
+    expect(
+      (
+        await s.call("POST", "/admin/users", {
+          token: a.token,
+          body: {
+            username: "carol",
+            email: "c@x.y",
+            password: "long-enough-pw",
+            model: { providerID: "p", modelID: "x" },
+          },
+        })
+      ).body,
+    ).toEqual({ error: "invalid-model" })
+
+    const created = await s.call("POST", "/admin/users", {
+      token: a.token,
+      body: {
+        username: "carol",
+        email: "c@x.y",
+        password: "long-enough-pw",
+        hidden: ["terminal"],
+        model: { providerID: "p", modelID: "m" },
+      },
+    })
+    expect(created.status).toBe(201)
+    expect(created.body).toMatchObject({ username: "carol", admin: false, hidden: ["terminal"] })
+    expect(
+      (
+        await s.call("POST", "/admin/users", {
+          token: a.token,
+          body: { username: "carol", email: "other@x.y", password: "long-enough-pw" },
+        })
+      ).status,
+    ).toBe(409)
+
+    const login = await s.call("POST", "/auth/login", { body: { login: "carol", password: "long-enough-pw" } })
+    expect(login.body.user).toMatchObject({ hidden: ["terminal"], model: { providerID: "p", modelID: "m" } })
+
+    const updated = await s.call("PATCH", `/admin/users/${created.body.id}`, {
+      token: a.token,
+      body: { hidden: [], model: null },
+    })
+    expect(updated.body).toMatchObject({ hidden: [], model: null })
+    const promoted = await s.call("PATCH", `/admin/users/${created.body.id}`, { token: a.token, body: { admin: true } })
+    expect(promoted.body.admin).toBe(true)
+
+    const self = listed.body.find((user: { username: string }) => user.username === "a").id
+    expect((await s.call("PATCH", `/admin/users/${self}`, { token: a.token, body: { admin: false } })).body).toEqual({
+      error: "self-demote",
+    })
+    expect((await s.call("DELETE", `/admin/users/${self}`, { token: a.token })).body).toEqual({ error: "self-delete" })
+
+    expect((await s.call("DELETE", `/admin/users/${created.body.id}`, { token: a.token })).status).toBe(204)
+    expect((await s.call("POST", "/auth/login", { body: { login: "carol", password: "long-enough-pw" } })).status).toBe(
+      401,
+    )
+    // The deleted user's name is free again.
+    expect(
+      (
+        await s.call("POST", "/admin/users", {
+          token: a.token,
+          body: { username: "carol", email: "c@x.y", password: "long-enough-pw" },
+        })
+      ).status,
+    ).toBe(201)
+  })
+})
+
+describe("shared conversations", () => {
+  test("the owner shares, updates and ends a link anyone can read", async () => {
+    const s = await setup()
+    const a = await s.login("a")
+    const b = await s.login("b")
+    const project = (await s.call("POST", "/projects", { token: a.token, body: { name: "Shop" } })).body.id as string
+    const route = `/projects/${project}/shares/ses_1`
+    const copy = { title: "Hello", data: { session: { id: "ses_1" }, messages: [{ id: "msg_1" }] } }
+
+    expect((await s.call("GET", route, { token: a.token })).status).toBe(404)
+    expect((await s.call("PUT", route, { token: b.token, body: copy })).status).toBe(404)
+    const shared = await s.call("PUT", route, { token: a.token, body: copy })
+    expect(shared.status).toBe(200)
+    const id = shared.body.id as string
+    expect((await s.call("GET", route, { token: a.token })).body.id).toBe(id)
+
+    const read = await s.call("GET", `/shares/${id}`)
+    expect(read.status).toBe(200)
+    expect(read.body).toMatchObject({ id, title: "Hello", data: copy.data })
+
+    // Updating keeps the link.
+    const again = await s.call("PUT", route, { token: a.token, body: { ...copy, title: "Renamed" } })
+    expect(again.body.id).toBe(id)
+    expect((await s.call("GET", `/shares/${id}`)).body.title).toBe("Renamed")
+
+    expect((await s.call("DELETE", route, { token: b.token })).status).toBe(404)
+    expect((await s.call("DELETE", route, { token: a.token })).status).toBe(204)
+    expect((await s.call("GET", `/shares/${id}`)).status).toBe(404)
   })
 })

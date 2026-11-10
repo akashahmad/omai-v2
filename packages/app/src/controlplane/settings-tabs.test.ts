@@ -5,6 +5,6 @@ describe("sharedSettingsTabs", () => {
   test("only admins in multi-user mode get the shared pages", () => {
     expect(sharedSettingsTabs({ multiUser: false, admin: false })).toEqual([])
     expect(sharedSettingsTabs({ multiUser: true, admin: false })).toEqual([])
-    expect(sharedSettingsTabs({ multiUser: true, admin: true })).toEqual(["shared-providers", "shared-models"])
+    expect(sharedSettingsTabs({ multiUser: true, admin: true })).toEqual(["shared-providers", "shared-models", "users"])
   })
 })

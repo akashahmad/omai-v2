@@ -1,3 +1,4 @@
+import { LOCKED_MODEL_LABEL, restrictions } from "@/controlplane/restrictions"
 import { Show, createEffect, createMemo, createSignal } from "solid-js"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Button } from "@opencode/ui/button"
@@ -41,6 +42,8 @@ export function Composer(props: {
   }
 
   const modelLabel = () => {
+    // A user an admin locked to one model sees it by the product's name.
+    if (restrictions.model()) return { model: LOCKED_MODEL_LABEL }
     const preview = props.model.model.preview
     const label = preview ? preview.label : props.model.model.label
 
@@ -97,6 +100,9 @@ function ComposerModelControl(props: {
   const dialog = useDialog()
 
   const open = (detail: number) => {
+    // Nothing to choose for a user locked to one model.
+    if (restrictions.model()) return
+
     if (!props.paid) return props.onUnpaidClick()
     // A pointer open keeps focus in the composer, so the dialog returns it to the caret. A keyboard open
     // (a click with no pointer presses) returns focus to this trigger instead of moving it to the editor.

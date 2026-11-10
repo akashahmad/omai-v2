@@ -12,6 +12,7 @@ import { Keys } from "./keys.js"
 import { Locks } from "./locks.js"
 import { Projects } from "./projects.js"
 import { Secrets } from "./secrets.js"
+import { Shares } from "./shares.js"
 import { LocalVmProvider } from "./vm/local.js"
 import { NorthflankVmProvider } from "./vm/northflank.js"
 import { Sweeper } from "./vm/sweeper.js"
@@ -35,7 +36,17 @@ export async function start(config: Config, db: Db) {
   const domains = Domains.make({ db, config: settings, locks })
   internal.serve(InternalHttp.make({ auth, projects, keys, publishing, domains }))
   const pub = await listen(config.port, "0.0.0.0")
-  pub.serve(PublicHttp.make({ config: settings, auth, projects, platform, models: UserModels.make(db) }))
+  pub.serve(
+    PublicHttp.make({
+      config: settings,
+      db,
+      auth,
+      projects,
+      platform,
+      models: UserModels.make(db),
+      shares: Shares.make(db),
+    }),
+  )
   const stopSweeper = Sweeper.make({ db, config: settings, lifecycle: projects.lifecycle, provider }).start()
   return {
     port: pub.port,
