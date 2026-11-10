@@ -1,0 +1,24 @@
+diff --git a/dist/NodeHttpServer.js b/dist/NodeHttpServer.js
+index 1d5aa0b8d5ac7e264d1b60ed980f02c0029bb53d..5b9432f3f9eb8f1faa6964bec9d6bb1d0ef50f97 100644
+--- a/dist/NodeHttpServer.js
++++ b/dist/NodeHttpServer.js
+@@ -72,7 +72,9 @@ import * as NodeHttpPlatform from "./NodeHttpPlatform.js";
+ import * as NodeMultipart from "./NodeMultipart.js";
+ import * as NodeServices from "./NodeServices.js";
+ import * as NodeStream from "./NodeStream.js";
+-import * as NodeWS from "./NodeWS.js";
++// omai patch: a direct default import of `ws`. Bun's compiled, code-split build drops the `NodeWS` re-export of
++// the CommonJS package, so every WebSocket upgrade failed with "exports_NodeWS is not defined".
++import WS from "ws";
+ /**
+  * Creates a scoped `HttpServer` from a Node `http.Server` or `node:http2`
+  * server, starts listening with the supplied options, registers request and
+@@ -163,7 +165,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (evaluate, options)
+     cause
+   })));
+   const boundAddress = yield* effectAddress;
+-  const wss = yield* Effect.acquireRelease(Effect.sync(() => new NodeWS.WebSocketServer({
++  const wss = yield* Effect.acquireRelease(Effect.sync(() => new WS.WebSocketServer({
+     ...options.websocket,
+     noServer: true
+   })), wss => Effect.callback(resume => {

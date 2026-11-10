@@ -27,7 +27,8 @@ export function createDownloads(input: { failed(name: string, error: string): vo
   const id = (session: MountedSession, target: DownloadTarget) =>
     `${session.key}\n${target.kind === "project" ? "" : `${target.kind}:${target.path}`}`
 
-  const set = (key: string, next: DownloadState | undefined) => setState(key, next === undefined ? undefined : reconcile(next))
+  const set = (key: string, next: DownloadState | undefined) =>
+    setState(key, next === undefined ? undefined : reconcile(next))
 
   const start = (session: MountedSession, target: DownloadTarget, name: string) => {
     const key = id(session, target)
@@ -89,7 +90,15 @@ async function run(
   const options = { location: { directory: session.directory }, signal }
 
   if (target.kind === "file") {
-    save(await fetchChunks((offset) => rpc.read({ path: target.path, offset }, options), name, report, signal), name)
+    save(
+      await fetchChunks(
+        (offset, attempt) => rpc.read({ path: target.path, offset }, { ...options, signal: attempt }),
+        name,
+        report,
+        signal,
+      ),
+      name,
+    )
 
     return
   }
@@ -135,14 +144,27 @@ async function run(
     fresh.value = false
 
     if (next) archive.current = next
-    else if (await rpc.read({ id: started.id, offset: 0 }, options).then(() => true, () => false))
+    else if (
+      await rpc.read({ id: started.id, offset: 0 }, options).then(
+        () => true,
+        () => false,
+      )
+    )
       archive.current = { ...archive.current, state: "ready" }
   }
 
   if (archive.current.state === "failed") throw new Error(archive.current.error ?? "The zip couldn't be made")
 
   if (archive.current.state === "cancelled") throw new Error("The zip was cancelled")
-  save(await fetchChunks((offset) => rpc.read({ id: started.id, offset }, options), name, report, signal), name)
+  save(
+    await fetchChunks(
+      (offset, attempt) => rpc.read({ id: started.id, offset }, { ...options, signal: attempt }),
+      name,
+      report,
+      signal,
+    ),
+    name,
+  )
 }
 
 function progress(name: string, archive: Files.Archive): DownloadState {
@@ -151,14 +173,26 @@ function progress(name: string, archive: Files.Archive): DownloadState {
   return {
     name,
     phase: "zipping",
-    progress: archive.totalBytes > 0 ? archive.bytes / archive.totalBytes : archive.total > 0 ? archive.files / archive.total : 1,
+    progress:
+      archive.totalBytes > 0
+        ? archive.bytes / archive.totalBytes
+        : archive.total > 0
+          ? archive.files / archive.total
+          : 1,
     files: archive.files,
     total: archive.total,
   }
 }
 
-async function fetchChunks(
-  read: (offset: number) => Promise<{ readonly data: string; readonly size: number }>,
+// A piece that stops arriving is given up after this long and fetched again; 4 MB in two minutes is a slow line.
+const CHUNK_TIMEOUT_MS = 120_000
+
+// Each piece is read again after a dropped connection (a network change, a proxy timeout, a VM that blinked) before
+// the download fails: one lost request shouldn't throw away a zip that is ready.
+const CHUNK_RETRIES = 4
+
+export async function fetchChunks(
+  read: (offset: number, signal: AbortSignal) => Promise<{ readonly data: string; readonly size: number }>,
   name: string,
   report: (state: DownloadState) => void,
   signal: AbortSignal,
@@ -166,9 +200,19 @@ async function fetchChunks(
   const parts: Uint8Array<ArrayBuffer>[] = []
   const position = { received: 0, size: Number.POSITIVE_INFINITY }
 
+  // Reading at an offset is idempotent, so a retried piece never duplicates bytes.
+  const piece = (offset: number, attempt = 0): ReturnType<typeof read> =>
+    read(offset, AbortSignal.any([signal, AbortSignal.timeout(CHUNK_TIMEOUT_MS)])).catch(async (error) => {
+      if (signal.aborted || attempt >= CHUNK_RETRIES || !(error instanceof Error) || !droppedConnection(error))
+        throw error
+      await pause(1000 * 2 ** attempt, signal)
+
+      return piece(offset, attempt + 1)
+    })
+
   while (position.received < position.size) {
     signal.throwIfAborted()
-    const chunk = await read(position.received)
+    const chunk = await piece(position.received)
     const bytes = new Uint8Array(base64ToBytes(chunk.data))
     position.size = chunk.size
 
@@ -179,6 +223,28 @@ async function fetchChunks(
   }
 
   return new Blob(parts, { type: name.endsWith(".zip") ? "application/zip" : "application/octet-stream" })
+}
+
+// The request never got an answer, rather than the server answering with an error worth showing as it is.
+function droppedConnection(error: Error) {
+  if (error.name === "TimeoutError" || error.name === "AbortError") return true
+
+  return error.name === "ClientError" && "reason" in error && error.reason === "Transport"
+}
+
+function pause(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms)
+
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer)
+        reject(signal.reason)
+      },
+      { once: true },
+    )
+  })
 }
 
 function save(blob: Blob, name: string) {

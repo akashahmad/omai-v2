@@ -1,7 +1,8 @@
 import "@pierre/trees/web-components"
 import { FileTree, type FileTreeDirectoryHandle, type FileTreeItemHandle } from "@pierre/trees"
 import { getIcon } from "@opencode/ui/icons/catalog"
-import { createMemo, createRoot, createSignal, getOwner, onCleanup, onMount, type JSX } from "solid-js"
+import { Spinner } from "@opencode/ui/spinner"
+import { createMemo, createRoot, createSignal, getOwner, onCleanup, onMount, Show, type JSX } from "solid-js"
 import type { ChangeKind } from "@opencode/plugin/gui/review"
 import { createKeyed, usePlugin, type FileNode, type MountedSession, type SessionScreen } from "@opencode/plugin/gui"
 import { startFileDrag } from "./drag"
@@ -326,7 +327,9 @@ export default function PierreFileTree(props: {
         // Desktop keeps right-click for "Open in"; the web opens this menu on right-click too.
         triggerMode: openIn?.canOpen() ? ("button" as const) : ("both" as const),
         buttonVisibility: "when-needed" as const,
-        render: (item: { kind: "file" | "directory"; path: string; name: string }, context: {
+        render: (
+          item: { kind: "file" | "directory"; path: string; name: string },
+          context: {
             anchorElement: HTMLElement
             anchorRect: { top: number; left: number }
             close(options?: { restoreFocus?: boolean }): void
@@ -426,10 +429,7 @@ export default function PierreFileTree(props: {
         ? (a, b) => {
             const map = liveModel()?.orderByPath
 
-            return (
-              (map?.get(normalizeFileTreeV2Path(a.path)) ?? 0) -
-              (map?.get(normalizeFileTreeV2Path(b.path)) ?? 0)
-            )
+            return (map?.get(normalizeFileTreeV2Path(a.path)) ?? 0) - (map?.get(normalizeFileTreeV2Path(b.path)) ?? 0)
           }
         : "default",
       icons: {
@@ -495,16 +495,35 @@ export default function PierreFileTree(props: {
     })
   })
 
-  // The live tree lists the root whenever it is not loaded, e.g. again after the workspace's tree resets.
+  // The live tree lists the root whenever it is not loaded, e.g. again after the workspace's tree resets. A listing
+  // that failed, as it can while a project's VM is still waking, is tried again with growing pauses instead of
+  // waiting for a file event to reload it.
+  const failures = { count: 0 }
+
   createKeyed(
     () => {
       if (!live()) return
       const root = file.tree.state("")
 
-      return root?.loaded ? undefined : { root }
+      if (root?.loaded) failures.count = 0
+
+      if (root?.loaded || root?.loading) return
+
+      return { root, failed: root?.error !== undefined }
     },
-    () => void file.tree.sync(""),
+    (current) => {
+      if (!current.failed) return void file.tree.sync("")
+      const timer = setTimeout(() => void file.tree.sync(""), Math.min(1000 * 2 ** failures.count, 8000))
+
+      failures.count += 1
+      onCleanup(() => clearTimeout(timer))
+    },
+    { equals: (previous, next) => previous?.root === next?.root && previous?.failed === next?.failed },
   )
+
+  // Until the root is listed the tree has no rows; say it is loading rather than look empty. An empty project lists
+  // no files once loaded, and shows nothing, as before.
+  const rootPending = () => live() && !file.tree.state("")?.loaded
 
   // Replaces the tree paths when `allowed` changes after mount.
   createKeyed(
@@ -528,7 +547,10 @@ export default function PierreFileTree(props: {
       renderedLabels = current.labels
       tree.render({ containerWrapper: wrapper })
     },
-    { equals: (previous, next) => previous !== undefined && next !== undefined && sameStringMap(previous.labels, next.labels) },
+    {
+      equals: (previous, next) =>
+        previous !== undefined && next !== undefined && sameStringMap(previous.labels, next.labels),
+    },
   )
 
   // Incrementally batches newly loaded or unlinked directory entries into the live tree.
@@ -658,6 +680,19 @@ export default function PierreFileTree(props: {
 
   return (
     <OpenInAppContextMenuV2 state={openIn} resolvePath={resolveContextPath} fit>
+      <Show when={rootPending()}>
+        <div
+          role="status"
+          data-slot="file-tree-loading"
+          class="flex items-center gap-2 px-2 py-2 text-12-regular text-text-weak"
+        >
+          <Spinner class="size-3.5 shrink-0" />
+          <span>
+            {ctx.t("common.loading")}
+            {ctx.t("common.loading.ellipsis")}
+          </span>
+        </div>
+      </Show>
       <div
         ref={wrapper}
         data-component="file-tree-v2"
