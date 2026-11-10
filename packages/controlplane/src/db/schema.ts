@@ -63,6 +63,11 @@ export const ProjectTable = pgTable(
     /** The last genuine activity (presence, router traffic, busy work); written at most every 15 s. */
     last_activity_at: timestamp({ withTimezone: true }),
     project_token_hash: text().notNull(),
+    /**
+     * Set while the row is a reserve: a VM booted ahead for its user that is not a project yet. Creating a project
+     * claims one by clearing this, so the user never sees a reserve and never waits for a boot.
+     */
+    reserved_at: timestamp({ withTimezone: true }),
     last_session_title: text(),
     last_session_at: timestamp({ withTimezone: true }),
     deleted_at: timestamp({ withTimezone: true }),

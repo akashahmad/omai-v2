@@ -9,6 +9,7 @@ import { createIdleLogout } from "./idle"
 import { createPresence, projectOfConnection } from "./presence"
 import { applyRestrictions } from "./restrictions"
 import { setProjectTokenRefresh } from "./project-token"
+import { PLATFORM_PROJECT } from "./platform"
 
 const IDLE_MS = Number(import.meta.env.VITE_OMAI_SESSION_IDLE_MS) || 900_000
 
@@ -84,7 +85,10 @@ function createSession(apiUrl: string) {
         const projectID = projectOfConnection(url)
 
         if (!projectID) return undefined
-        const opened = await client.projects.open(projectID)
+
+        // The platform server behind an admin's Shared providers and Shared models is opened on its own route.
+        const opened =
+          projectID === PLATFORM_PROJECT ? await client.platform.open() : await client.projects.open(projectID)
 
         if (opened === "not-ready") return undefined
         const stored = servers.list.find((conn) => conn.type === "http" && conn.http.url === url)

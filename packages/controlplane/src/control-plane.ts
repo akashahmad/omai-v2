@@ -45,15 +45,18 @@ export async function start(config: Config, db: Db) {
       platform,
       models: UserModels.make(db),
       shares: Shares.make(db),
+      shared: () => keys.shared(),
     }),
   )
   const stopSweeper = Sweeper.make({ db, config: settings, lifecycle: projects.lifecycle, provider }).start()
+  const stopReserves = projects.reserves.start()
   return {
     port: pub.port,
     internalPort: internal.port,
     lifecycle: projects.lifecycle,
     async close() {
       stopSweeper()
+      stopReserves()
       await Promise.all([pub.close(), internal.close(), provider.close(), platform.close()])
     },
   }

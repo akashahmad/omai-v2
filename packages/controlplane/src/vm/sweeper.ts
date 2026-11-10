@@ -1,4 +1,4 @@
-import { eq, isNotNull } from "drizzle-orm"
+import { and, eq, isNotNull, isNull } from "drizzle-orm"
 import { Schema } from "effect"
 import type { Config } from "../config.js"
 import type { Db } from "../db/database.js"
@@ -67,7 +67,11 @@ export function make(deps: { db: Db; config: Config; lifecycle: Lifecycle; provi
   }
 
   async function sweep() {
-    const running = await deps.db.select().from(ProjectTable).where(eq(ProjectTable.vm_state, "running"))
+    // A reserve waits for its user unused on purpose; the reserve pool decides when it goes.
+    const running = await deps.db
+      .select()
+      .from(ProjectTable)
+      .where(and(eq(ProjectTable.vm_state, "running"), isNull(ProjectTable.reserved_at)))
     await Promise.all(
       running.map((project) =>
         check(project).catch((error: unknown) => console.error(`sweeping ${project.id} failed`, error)),

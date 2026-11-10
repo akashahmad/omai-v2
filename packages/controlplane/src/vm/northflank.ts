@@ -23,8 +23,8 @@ const LIST_TTL_MS = 15_000
 
 /**
  * Project VMs as Northflank services in one project, each with its own volume at `/home/omai`. It only ever acts on
- * services and volumes named with its prefix (`<prefix>-vm-…`, `<prefix>-vol-…`) and never deletes anything: a paused
- * VM keeps its volume, and a person deletes by hand.
+ * services and volumes named with its prefix (`<prefix>-vm-…`, `<prefix>-vol-…`). A paused VM keeps its volume; the
+ * only deletes are `destroy`, for unclaimed reserves.
  */
 export function make(
   config: Pick<Config, "appOrigin" | "previewPort"> & { northflank?: Config["northflank"] },
@@ -164,6 +164,24 @@ export function make(
       await api.pauseService(vmID).catch(already)
     },
 
+    async destroy(projectID: string) {
+      const service = serviceName(projectID)
+      const volume = volumeName(projectID)
+      // Belt and braces: the names come from the project ID alone, and must carry this control plane's prefixes.
+      if (!service.startsWith(servicePrefix) || !volume.startsWith(`${nf.prefix}-vol-`))
+        throw new Error(`Refusing to delete outside this control plane: ${projectID}`)
+      const found = (await api.listServices()).find((item) => item.name === service)
+      if (found) {
+        ours(found.id)
+        running.delete(found.id)
+        listed.at = 0
+        await api.deleteService(found.id).catch(gone)
+      }
+      // Northflank refuses to delete a volume still attached to a service being torn down; the caller tries again.
+      const disk = (await api.listVolumes()).find((item) => item.name === volume)
+      if (disk) await api.deleteVolume(disk.id).catch(gone)
+    },
+
     async list() {
       if (!listed.ids || Date.now() - listed.at >= LIST_TTL_MS) {
         listed.at = Date.now()
@@ -192,6 +210,11 @@ export function make(
 
 function already(error: unknown) {
   if (error instanceof NorthflankError && (error.status === 400 || error.status === 409)) return
+  throw error
+}
+
+function gone(error: unknown) {
+  if (error instanceof NorthflankError && error.status === 404) return
   throw error
 }
 

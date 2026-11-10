@@ -17,12 +17,13 @@ const UNPACKED_LIMIT = 2 * 1024 * 1024 * 1024
 export const makeProjectVm = Effect.gen(function* () {
   const execution = yield* SessionExecution.Service
   const pty = yield* PersistentPty.Service
-  const vm = Effect.suspend(() => {
-    const slug = process.env.OMAI_PROJECT_SLUG
+  // A reserve VM learns its folder name only once a project claims it; until then these endpoints answer 404.
+  const vm = Effect.gen(function* () {
     const home = process.env.OMAI_PROJECTS_HOME
+    const slug = home ? yield* Effect.promise(() => ProjectVm.slug()) : undefined
     if (!slug || !home)
-      return Effect.fail(new FileNotFoundError({ path: "/api/experimental/project-vm", message: "Not a project VM" }))
-    return Effect.succeed({ slug, home })
+      return yield* new FileNotFoundError({ path: "/api/experimental/project-vm", message: "Not a project VM" })
+    return { slug, home }
   })
 
   return {

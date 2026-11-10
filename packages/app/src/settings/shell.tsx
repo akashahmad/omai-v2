@@ -14,6 +14,8 @@ import {
   type Accessor,
 } from "solid-js"
 import { createStore } from "solid-js/store"
+import { Spinner } from "@opencode/ui/spinner"
+import { showToast } from "@/shell/notifications/toast"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useTabs } from "@/shell/tabs/tabs"
 import { useGlobal, useServerCtx } from "@/runtime/server/runtime"
@@ -412,6 +414,29 @@ function RootSettings() {
           </SettingsServerDataScope>
         )}
       </Show>
+      {/* While the platform server opens, or when it can't, the shared tabs say so rather than stay blank. */}
+      <Show when={platform.tabs().length > 0 && platform.status() !== "ready" ? platform.status() : undefined}>
+        {(status) => (
+          <For each={["shared-providers", "shared-models"] as const}>
+            {(value) => (
+              <Tabs.Content value={value} class="settings-panel">
+                <div class="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
+                  <Show when={status() === "failed"} fallback={<Spinner class="size-5" />}>
+                    <p class="text-[13px] text-v2-text-text-muted">{language.t("settings.shared.unavailable")}</p>
+                    <button
+                      type="button"
+                      class="cursor-pointer rounded-[6px] px-3 py-1.5 text-[13px] font-[500] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))] hover:bg-[#1a64d6]/15"
+                      onClick={() => platform.retry()}
+                    >
+                      {language.t("settings.shared.retry")}
+                    </button>
+                  </Show>
+                </div>
+              </Tabs.Content>
+            )}
+          </For>
+        )}
+      </Show>
       <Show when={platform.tabs().some((tab) => tab === "users")}>
         <Tabs.Content value="users" class="settings-panel">
           <SettingsUsers />
@@ -497,11 +522,12 @@ function useSettingsDirectory(server: Accessor<ServerConnection.Any | undefined>
  * user's projects get), and the Shared models switches are saved on the control plane. Nobody else sees either page.
  */
 function usePlatformSettings() {
+  const language = useLanguage()
   const session = useControlPlaneOptional()
   const servers = useServers()
   const admin = () => session?.state.user?.admin === true
 
-  const [connection] = createResource(
+  const [connection, { refetch }] = createResource(
     () => (admin() ? session : undefined),
     async (current) => {
       const opened = await current.client.platform.open()
@@ -514,14 +540,32 @@ function usePlatformSettings() {
     },
   )
 
+  // Made once the user is known to be an admin: made earlier, it would load an empty list, and the admin's next switch
+  // would save just that one model over every other shared one.
+  const visibility = createMemo(() =>
+    session && admin()
+      ? createPlatformVisibility({
+          load: () => session.client.platform.models(),
+          save: (models) => session.client.platform.setModels(models),
+          failed: (kind) =>
+            showToast({
+              variant: "error",
+              title: language.t(
+                kind === "load" ? "settings.shared.models.loadFailed" : "settings.shared.models.saveFailed",
+              ),
+            }),
+        })
+      : undefined,
+  )
+
   return {
     tabs: () => sharedSettingsTabs({ multiUser: session !== undefined, admin: admin() }),
     connection: () => (connection.state === "ready" ? connection() : undefined),
-    visibility: session
-      ? createPlatformVisibility({
-          load: () => (admin() ? session.client.platform.models() : Promise.resolve([])),
-          save: (models) => session.client.platform.setModels(models),
-        })
-      : undefined,
+    /** The shared tabs' platform connection is opening (`loading`) or could not be opened (`failed`). */
+    status: () => (connection.loading ? "loading" : connection.error ? "failed" : connection() ? "ready" : "idle"),
+    retry: () => void refetch(),
+    get visibility() {
+      return visibility()
+    },
   }
 }

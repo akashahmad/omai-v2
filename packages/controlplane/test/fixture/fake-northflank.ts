@@ -148,6 +148,14 @@ export async function fakeNorthflank() {
         return json(res, 200, { data: {} })
       }
       if (req.method === "GET" && rest === "/ports") return json(res, 200, { data: { ports: service.ports } })
+      if (req.method === "DELETE" && rest === "") {
+        state.services.delete(service.id)
+        for (const id of service.volumes) {
+          const volume = state.volumes.get(id)
+          if (volume) volume.attachedTo = undefined
+        }
+        return json(res, 200, { data: {} })
+      }
     }
     if (key === "GET /volumes") return page(res, url, volumes, (items) => items.map((item) => ({ id: item.id, name: item.name })))
     if (key === "POST /volumes") {
@@ -161,6 +169,14 @@ export async function fakeNorthflank() {
       }
       state.volumes.set(volume.id, volume)
       return json(res, 200, { data: { id: volume.id } })
+    }
+    const volumeRoute = /^\/volumes\/([^/]+)$/.exec(route)
+    if (volumeRoute && req.method === "DELETE") {
+      const volume = state.volumes.get(volumeRoute[1]!)
+      if (!volume || volume.project !== project) return fail(res, 404, "Could not find volume")
+      if (volume.attachedTo) return fail(res, 409, "Volume is attached")
+      state.volumes.delete(volume.id)
+      return json(res, 200, { data: {} })
     }
     const attach = /^\/volumes\/([^/]+)\/attach$/.exec(route)
     if (attach && req.method === "POST") {

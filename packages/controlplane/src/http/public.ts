@@ -20,6 +20,8 @@ type Deps = {
   platform: Platform
   models: ReturnType<typeof UserModels.make>
   shares: Shares
+  /** The providers the platform server shares, each with its switched-on models; undefined when it can't say. */
+  shared: () => Promise<readonly { id: string; models: readonly string[] }[] | undefined>
 }
 type Context = {
   req: IncomingMessage
@@ -134,6 +136,8 @@ export function make(deps: Deps) {
         if (!input) return send(ctx.res, 400, { error: "invalid-request" }, ctx.headers)
         const result = await deps.auth.login(input)
         if (result === "invalid") return send(ctx.res, 401, { error: "invalid" }, ctx.headers)
+        // A user becoming active gets their reserve VMs booting now, before they create a project.
+        void deps.projects.reserves.refill()
         issued(ctx, result)
       },
     },
@@ -150,6 +154,7 @@ export function make(deps: Deps) {
         const result = await deps.auth.signup(input)
         if (result === "disabled") return send(ctx.res, 404, { error: "not-found" }, ctx.headers)
         if (result === "exists") return send(ctx.res, 409, { error: "exists" }, ctx.headers)
+        void deps.projects.reserves.refill()
         issued(ctx, result)
       },
     },
@@ -170,7 +175,8 @@ export function make(deps: Deps) {
       path: /^\/auth\/ping$/,
       auth: true,
       run: async (ctx) => {
-        await deps.auth.ping(bearer(ctx.req)!)
+        // The app pings at most once a minute while the user clicks, types or moves the pointer.
+        if (await deps.auth.ping(bearer(ctx.req)!)) void deps.projects.reserves.refill()
         send(ctx.res, 204, undefined, ctx.headers)
       },
     },
@@ -301,7 +307,7 @@ export function make(deps: Deps) {
       method: "GET",
       path: /^\/models\/shared$/,
       auth: true,
-      run: async (ctx) => send(ctx.res, 200, await deps.platform.models(), ctx.headers),
+      run: async (ctx) => send(ctx.res, 200, await usableShared(), ctx.headers),
     },
     {
       // The signed-in user's own model switches, the same in all their projects.
@@ -484,11 +490,22 @@ export function make(deps: Deps) {
     },
   ]
 
-  // A user can only be locked to a model the admin shares with everyone.
+  // A user can only be locked to a model the admin shares with everyone, and that can be used.
   async function sharedModel(model: { providerID: string; modelID: string } | null | undefined) {
     if (!model) return true
-    const shared = await deps.platform.models()
+    const shared = await usableShared()
     return shared.some((item) => item.providerID === model.providerID && item.modelID === model.modelID)
+  }
+
+  // The shared models people can actually use: switched on, from a provider the platform server still has connected.
+  // A model whose provider was disconnected stays switched on for when it comes back, but no one is offered it.
+  // When the platform server can't answer (still starting), the switched-on list stands in rather than nothing.
+  async function usableShared() {
+    const providers = await deps.shared().catch(() => undefined)
+    if (!providers) return deps.platform.models()
+    return providers
+      .flatMap((provider) => provider.models.map((modelID) => ({ providerID: provider.id, modelID })))
+      .toSorted((a, b) => `${a.providerID}/${a.modelID}`.localeCompare(`${b.providerID}/${b.modelID}`))
   }
 
   return async function handle(req: IncomingMessage, res: ServerResponse) {

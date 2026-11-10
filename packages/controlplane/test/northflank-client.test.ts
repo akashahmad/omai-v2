@@ -47,7 +47,10 @@ describe("NorthflankClient", () => {
     expect(String((error as Error).stack)).not.toContain("nf-secret-token")
   })
 
-  test("the client has no way to delete anything", () => {
-    expect(Object.keys(client()).filter((name) => /delete|remove|destroy/i.test(name))).toEqual([])
+  test("the only deletes are of one service and one volume, for unclaimed reserves", () => {
+    expect(Object.keys(client()).filter((name) => /delete|remove|destroy/i.test(name)).toSorted()).toEqual([
+      "deleteService",
+      "deleteVolume",
+    ])
   })
 })

@@ -52,7 +52,8 @@ export async function provision(
         slug: project.slug,
         env: {
           OMAI_PROJECT_ID: project.id,
-          OMAI_PROJECT_SLUG: project.slug,
+          // A reserve has no folder name yet; its VM asks the control plane once the reserve is claimed.
+          ...(project.slug ? { OMAI_PROJECT_SLUG: project.slug } : {}),
           OMAI_PROJECT_TOKEN: token,
           OMAI_CONTROL_PLANE_URL: config.controlPlaneVmUrl ?? `http://127.0.0.1:${config.internalPort}`,
           OMAI_TOKEN_PUBLIC_KEY: config.publicKey,

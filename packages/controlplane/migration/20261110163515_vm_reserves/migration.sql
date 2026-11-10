@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "reserved_at" timestamp with time zone;

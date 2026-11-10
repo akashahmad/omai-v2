@@ -205,3 +205,30 @@ describe("NorthflankVmProvider", () => {
     expect(() => provider({ OMAI_NORTHFLANK_NAME_PREFIX: "a-very-long-prefix" })).toThrow(/OMAI_NORTHFLANK_NAME_PREFIX/)
   })
 })
+
+describe("NorthflankVmProvider.destroy", () => {
+  test("deletes only the reserve's own service and volume, and is idempotent", async () => {
+    const p = provider()
+    const other = "7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
+    await p.provider.create(spec())
+    await p.provider.create(spec(other))
+    // Something of someone else's in the same Northflank project, outside our prefix.
+    fake.state.services.set("someone-else", {
+      ...[...fake.state.services.values()][0]!,
+      id: "someone-else",
+      name: "someone-else",
+      volumes: [],
+    })
+
+    await p.provider.destroy(PROJECT)
+    expect([...fake.state.services.keys()].toSorted()).toEqual(
+      [`omai-vm-${other.replace(/-/g, "")}`, "someone-else"].toSorted(),
+    )
+    expect([...fake.state.volumes.values()].map((volume) => volume.name)).toEqual([
+      `omai-vol-${other.replace(/-/g, "")}`.slice(0, 39),
+    ])
+    expect(await p.provider.list()).not.toContain(`omai-vm-${PROJECT.replace(/-/g, "")}`)
+    // Already gone: nothing to do, no error.
+    await p.provider.destroy(PROJECT)
+  })
+})

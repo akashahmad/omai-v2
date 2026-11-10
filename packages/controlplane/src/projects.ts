@@ -7,6 +7,7 @@ import { uniqueViolation } from "./users.js"
 import { Lifecycle } from "./vm/lifecycle.js"
 import type { VmProvider } from "./vm/provider.js"
 import { hashToken, provision, vmToken } from "./vm/provision.js"
+import { Reserves } from "./vm/reserves.js"
 
 export * as Projects from "./projects.js"
 
@@ -36,8 +37,15 @@ export function slugify(name: string) {
 
 export function make(db: Db, config: Config, provider: VmProvider, now = () => Date.now()) {
   const lifecycle = Lifecycle.make(db, config, provider, now)
+  const reserves = Reserves.make(db, config, provider, now)
+  // A reserve is not a project yet: its user never sees it, opens it or changes it.
   const owned = (userID: string, projectID: string) =>
-    and(eq(ProjectTable.id, projectID), eq(ProjectTable.user_id, userID), isNull(ProjectTable.deleted_at))
+    and(
+      eq(ProjectTable.id, projectID),
+      eq(ProjectTable.user_id, userID),
+      isNull(ProjectTable.deleted_at),
+      isNull(ProjectTable.reserved_at),
+    )
 
   async function thumbnailHashes(projectIDs: string[]) {
     if (projectIDs.length === 0) return new Map<string, string>()
@@ -61,12 +69,15 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
 
   return {
     lifecycle,
+    reserves,
 
     async list(userID: string) {
       const rows = await db
         .select()
         .from(ProjectTable)
-        .where(and(eq(ProjectTable.user_id, userID), isNull(ProjectTable.deleted_at)))
+        .where(
+          and(eq(ProjectTable.user_id, userID), isNull(ProjectTable.deleted_at), isNull(ProjectTable.reserved_at)),
+        )
         .orderBy(desc(ProjectTable.updated_at))
       const hashes = await thumbnailHashes(rows.map((item) => item.id))
       return rows.map((item) => view(item, hashes.get(item.id)))
@@ -106,6 +117,9 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
     async create(userID: string, name: string): Promise<ProjectView | "exists" | "invalid"> {
       const trimmed = validName(name)
       if (!trimmed) return "invalid"
+      // A reserve that already runs opens at once; one still booting carries on as this project.
+      const claimed = await reserves.claim(userID, { name: trimmed, slug: slugify(trimmed) })
+      if (claimed) return claimed === "exists" ? claimed : view(claimed)
       const at = new Date(now())
       const inserted = await db
         .insert(ProjectTable)
@@ -211,20 +225,26 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
         await db
           .select({ host: ProjectTable.vm_host, state: ProjectTable.vm_state })
           .from(ProjectTable)
-          .where(and(eq(ProjectTable.id, projectID), isNull(ProjectTable.deleted_at)))
+          .where(and(eq(ProjectTable.id, projectID), isNull(ProjectTable.deleted_at), isNull(ProjectTable.reserved_at)))
       )[0]
       return found?.state === "running" && found.host ? found.host : undefined
     },
 
-    /** What a live project's VM may know about itself: the preview's public origin, once known. */
+    /**
+     * What a live project's VM may know about itself: the preview's public origin once known, and its folder name
+     * (`slug`), which a reserve's VM learns here once the reserve is claimed.
+     */
     async vm(projectID: string) {
       const found = (
         await db
-          .select({ preview: ProjectTable.vm_preview })
+          .select({ preview: ProjectTable.vm_preview, slug: ProjectTable.slug, reserved: ProjectTable.reserved_at })
           .from(ProjectTable)
           .where(and(eq(ProjectTable.id, projectID), isNull(ProjectTable.deleted_at)))
       )[0]
-      return found?.preview ? { preview: found.preview } : {}
+      return {
+        ...(found?.preview ? { preview: found.preview } : {}),
+        ...(found && !found.reserved && found.slug ? { slug: found.slug } : {}),
+      }
     },
 
     /** The user a live project belongs to. */

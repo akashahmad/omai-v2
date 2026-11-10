@@ -59,6 +59,15 @@ export function fromEnv(env: Record<string, string | undefined>) {
     /** An idle VM that can't be reached is paused once it has been unreachable this long. */
     vmUnreachableGraceMs: number(read("OMAI_VM_UNREACHABLE_GRACE_MS"), 60_000),
     vmReconcileMs: number(read("OMAI_VM_RECONCILE_MS"), 180_000),
+    /**
+     * Reserve VMs kept booted for each active user, so a new project opens at once. 0 (the default) turns reserves
+     * off. Set it only on the deployed control plane: reserves are real, billed VMs.
+     */
+    vmReservesPerUser: Math.max(0, Math.floor(number(read("OMAI_VM_RESERVES_PER_USER"), 0))),
+    /** A user's reserves are deleted after this long with no activity and no project VM running. */
+    vmReserveIdleMs: number(read("OMAI_VM_RESERVE_IDLE_MS"), 600_000),
+    /** The most reserves across all users, so many visitors at once cannot boot an unbounded number of VMs. */
+    vmReservesMax: Math.max(0, Math.floor(number(read("OMAI_VM_RESERVES_MAX"), 20))),
     zipMaxBytes: number(read("OMAI_ZIP_MAX_BYTES"), 500 * 1024 * 1024),
     /** Cloudflare for publishing; undefined when unset. Only the control plane ever holds it, never a VM. */
     cloudflare: PublishConfig.read(env),

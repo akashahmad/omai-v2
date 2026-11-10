@@ -13,6 +13,12 @@ export interface VmProvider {
   ensureRunning(vmID: string): Promise<VmAddress>
   /** Stops the VM, keeping its volume. Idempotent; resolves once it no longer serves. */
   stop(vmID: string): Promise<void>
+  /**
+   * Deletes the VM and its volume for good. Only ever called for an unclaimed reserve. It derives every name from the
+   * project ID itself, never takes a VM ID, and does nothing to anything outside this control plane's own names.
+   * Idempotent: anything already gone is skipped.
+   */
+  destroy(projectID: string): Promise<void>
   /** The VMs this provider created that are running now. */
   list(): Promise<string[]>
 }

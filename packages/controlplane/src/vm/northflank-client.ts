@@ -23,8 +23,8 @@ const RATE_LIMIT_RETRIES = 3
 export type Client = ReturnType<typeof make>
 
 /**
- * Northflank API v1 for one project. It has no delete calls: the control plane only creates, pauses and resumes; a
- * person deletes by hand.
+ * Northflank API v1 for one project. The control plane creates, pauses and resumes; the only deletes are for unclaimed
+ * reserve VMs, and the provider guards which names those may name.
  */
 export function make(input: { apiBase: string; token: string; project: string }) {
   const base = `${input.apiBase.replace(/\/+$/, "")}/projects/${encodeURIComponent(input.project)}`
@@ -80,6 +80,8 @@ export function make(input: { apiBase: string; token: string; project: string })
         .ports,
     listVolumes: () => all("/volumes", (data) => data as VolumeSummary[]),
     createVolume: async (payload: unknown) => (await request<{ data: { id: string } }>("POST", "/volumes", payload)).data,
+    deleteService: (id: string) => request("DELETE", `/services/${encodeURIComponent(id)}`),
+    deleteVolume: (id: string) => request("DELETE", `/volumes/${encodeURIComponent(id)}`),
     attachVolume: (volumeID: string, serviceID: string) =>
       request("POST", `/volumes/${encodeURIComponent(volumeID)}/attach`, { nfObject: { id: serviceID, type: "service" } }),
   }

@@ -366,9 +366,13 @@ describe("control plane http", () => {
     expect((await vm(mine.id, "nope")).status).toBe(401)
     const local = await vm(mine.id, mine.projectToken)
     expect(local.status).toBe(200)
-    expect(await local.json()).toEqual({})
+    // Its folder name, which a reserve's VM learns here once claimed.
+    expect(await local.json()).toEqual({ slug: expect.any(String) })
     await s.db.update(ProjectTable).set({ vm_preview: "https://p.code.run" }).where(eq(ProjectTable.id, mine.id))
-    expect(await (await vm(mine.id, mine.projectToken)).json()).toEqual({ preview: "https://p.code.run" })
+    expect(await (await vm(mine.id, mine.projectToken)).json()).toEqual({
+      preview: "https://p.code.run",
+      slug: expect.any(String),
+    })
   })
 
   test("busy push needs the project's own token and records the report", async () => {

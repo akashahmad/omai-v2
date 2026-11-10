@@ -1,6 +1,6 @@
 import { execFile, spawn, type ChildProcess } from "node:child_process"
 import { createWriteStream } from "node:fs"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import { createServer } from "node:net"
 import path from "node:path"
 import { Option, Schema } from "effect"
@@ -105,6 +105,15 @@ export function make(
       const entry = running.get(vmID)
       running.delete(vmID)
       if (entry) await kill(entry.child)
+    },
+
+    async destroy(projectID) {
+      // The folder is `<root>/<projectID>`: a separator or dot segment could reach outside the root.
+      if (!/^[A-Za-z0-9-]+$/.test(projectID)) throw new Error(`Refusing to delete VM ${projectID}`)
+      const entry = running.get(projectID)
+      running.delete(projectID)
+      if (entry) await kill(entry.child)
+      await rm(dir(projectID), { recursive: true, force: true })
     },
 
     async list() {
