@@ -1,4 +1,4 @@
-import { createResource, Match, Switch } from "solid-js"
+import { createResource, createSignal, Match, Show, Switch } from "solid-js"
 import { useParams } from "@solidjs/router"
 import { Title } from "@solidjs/meta"
 import type { SessionInfo, SessionMessageInfo } from "@opencode/client/promise"
@@ -8,6 +8,7 @@ import { useControlPlane } from "@/controlplane/session"
 import { useLanguage } from "@/runtime/i18n/language"
 import { BrandIcon } from "@/shell/brand-icon"
 import { BrandLoader } from "@/shell/brand-loader"
+import { MessageRail } from "./message-rail"
 
 /**
  * The public page behind a share link: the conversation as its owner last shared it, read-only, with no sign-in.
@@ -16,6 +17,7 @@ export function SharePage() {
   const params = useParams()
   const session = useControlPlane()
   const language = useLanguage()
+  const [scroller, setScroller] = createSignal<HTMLElement>()
 
   const [shared] = createResource(
     () => params.id,
@@ -58,7 +60,13 @@ export function SharePage() {
         </Match>
         <Match when={shared()}>
           {(value) => (
-            <main class="min-h-0 flex-1 overflow-y-auto">
+            <main
+              ref={setScroller}
+              class="min-h-0 flex-1 overflow-y-auto [&_[data-timeline-row=UserMessage]]:scroll-mt-[24px]"
+            >
+              <Show when={scroller()}>
+                {(element) => <MessageRail messages={value().messages} scroller={element()} />}
+              </Show>
               <Title>{`${value().title} · O M A I +`}</Title>
               <div class="mx-auto flex w-full max-w-[820px] flex-col gap-8 px-4 pt-10 pb-24 md:px-6">
                 <div class="flex flex-col gap-2">
@@ -84,12 +92,6 @@ export function SharePage() {
                     }}
                   />
                 </DataProvider>
-                <a
-                  href="/"
-                  class="mx-auto mt-6 flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[#0a3a78] px-5 text-[14px] font-[600] text-[#fff] hover:bg-[#082f62]"
-                >
-                  {language.t("share.page.cta")}
-                </a>
               </div>
             </main>
           )}

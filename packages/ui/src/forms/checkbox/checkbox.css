@@ -1,4 +1,6 @@
 [data-component="checkbox"] {
+  /* Anchors the visually hidden input: unanchored, focusing it scrolls an outer container that should never scroll. */
+  position: relative;
   display: flex;
   align-items: var(--checkbox-align, center);
   gap: 12px;

@@ -46,6 +46,9 @@ export function SettingsNavigation(props: {
   const backLabel = () =>
     !searchable() && surface.search.state.selected ? language.t("settings.backToSettings") : props.backLabel
 
+  // A group whose pages are all hidden from this user leaves no orphaned label behind.
+  const groups = () => props.groups.filter((group) => group.items.length > 0 || group.action)
+
   const current = () => props.groups.flatMap((group) => group.items).find((item) => item.value === props.value)
 
   const change = (value: string) => {
@@ -88,7 +91,7 @@ export function SettingsNavigation(props: {
             <Menu.Portal>
               <Menu.Content class="settings-mobile-menu" onEscapeKeyDown={(event) => event.stopPropagation()}>
                 <Menu.RadioGroup value={props.value} onChange={change}>
-                  <For each={props.groups}>
+                  <For each={groups()}>
                     {(group, index) => (
                       <>
                         <Show when={index() > 0}>
@@ -135,7 +138,7 @@ export function SettingsNavigation(props: {
           </Show>
           <Show when={!searchable() || !surface.search.state.query.trim()}>
             <Tabs.List class="settings-nav-groups" data-scrollable>
-              <For each={props.groups}>
+              <For each={groups()}>
                 {(group) => (
                   <div class="settings-nav-group">
                     <Show when={group.label || group.action}>

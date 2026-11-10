@@ -2,11 +2,11 @@ import { expect, test } from "bun:test"
 import { clampSessionPanelWidth, sessionPanelWidthCss } from "./session-panel-width"
 
 test.each([
-  // By default the chat takes 30% of the row and the side panel (the preview) the other 70%, on every screen size.
-  ["gives the chat 30% of the row by default", 600, 1700, false, false, 510],
-  ["keeps 30% on a wide screen", 600, 3440, false, false, 1032],
-  ["keeps 30% whatever width was stored before", 1600, 2000, true, false, 600],
-  ["holds the chat panel minimum when 30% is too narrow", 600, 700, false, false, 400],
+  // By default the chat takes 35% of the row and the side panel (the preview) the other 65%, on every screen size.
+  ["gives the chat 35% of the row by default", 600, 1700, false, false, 595],
+  ["keeps 35% on a wide screen", 600, 3440, false, false, 1204],
+  ["keeps 35% whatever width was stored before", 1600, 2000, true, false, 700],
+  ["holds the chat panel minimum when 35% is too narrow", 600, 700, false, false, 400],
   ["never drops below the chat panel minimum on small windows", 1600, 0, false, false, 400],
   ["skips clamping before the layout is measured", 1600, undefined, false, false, 1600],
   ["lets a dragged width leave the side pane its hard minimum, split diffs included", 1600, 1700, true, true, 1380],
@@ -17,8 +17,8 @@ test.each([
   expect(clampSessionPanelWidth({ width, available, split, resized })).toBe(expected)
 })
 
-test("the default width in CSS is 30% of the row", () => {
+test("the default width in CSS is 35% of the row", () => {
   expect(sessionPanelWidthCss({ width: 600, split: false, resized: false })).toBe(
-    "max(400px, calc((100% - 4px) * 0.3))",
+    "max(400px, calc((100% - 4px) * 0.35))",
   )
 })

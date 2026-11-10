@@ -2,7 +2,7 @@ import { createMemo, Show, type JSX } from "solid-js"
 import { SessionElicitationDock } from "@/session/requests/session-elicitation-dock"
 import { SessionPermissionDock } from "@/session/requests/session-permission-dock"
 import { SessionQuestionDock } from "@/session/requests/session-question-dock"
-import { questionsInPreview } from "@/session/requests/preview-question"
+import { PreviewQuestionNotice, questionsInPreview } from "@/session/requests/preview-question"
 import { questionMotion } from "@/session/requests/question-motion"
 import { useSettings } from "@/settings/model"
 import { SessionWebSearchDock } from "@/session/requests/session-websearch-dock"
@@ -108,6 +108,7 @@ export function SessionComposerRegion(props: {
               </div>
             )}
           </ComposerMorph>
+          <PreviewQuestionNotice />
           <Show when={controller.showComposer() && controller.child()}>{props.subagent}</Show>
         </div>
       </div>

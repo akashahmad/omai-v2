@@ -702,6 +702,8 @@ export const dict = {
 
   "session.question.progress": "{{current}} of {{total}} questions",
   "session.question.title": "Question",
+  "session.question.waitingInPreview": "Answer the questions in the preview to continue",
+  "session.question.showInPreview": "Show questions",
   "session.share.title": "Share conversation",
   "session.share.description": "Anyone with the link can read this conversation.",
   "session.share.explain":
@@ -721,7 +723,8 @@ export const dict = {
   "share.page.missing.title": "This link doesn't work anymore",
   "share.page.missing.description": "The conversation was unshared, or the link is wrong.",
   "share.page.badge": "Shared conversation",
-  "share.page.cta": "Build your own with O M A I +",
+  "share.page.nav": "Messages in this conversation",
+  "share.page.untitledMessage": "Message",
   "session.question.answeredProgress": "{{answered}} of {{total}} answered",
   "session.elicitation.selectPlaceholder": "Select an option",
   "session.websearch.title": "Third-party web search",
