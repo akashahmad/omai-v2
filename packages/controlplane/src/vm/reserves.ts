@@ -4,7 +4,7 @@ import type { Db } from "../db/database.js"
 import { AuthSessionTable, ProjectTable, UserTable } from "../db/schema.js"
 import { uniqueViolation } from "../users.js"
 import type { VmProvider } from "./provider.js"
-import { provision } from "./provision.js"
+import { provision, relabel } from "./provision.js"
 
 export * as Reserves from "./reserves.js"
 
@@ -218,6 +218,8 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
         const project = claimed[0]
         if (!project) continue
         console.log(`claimed reserve ${project.id} for user ${userID} (${project.vm_state})`)
+        // One still booting has no VM ID yet: provision relabels it once the VM exists.
+        relabel(db, provider, project)
         void refill()
         return project
       }

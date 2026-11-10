@@ -132,7 +132,9 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
         if (!project?.vm_id) return
         const vmID = project.vm_id
         const running = (await provider.list()).includes(vmID)
-        if (running && (project.vm_state === "paused" || (project.deleted_at && project.vm_state === "running"))) {
+        // A reserve marked deleted is the reserve pool's to delete: pausing it first makes Northflank refuse the delete.
+        const deleted = project.deleted_at && !project.reserved_at
+        if (running && (project.vm_state === "paused" || (deleted && project.vm_state === "running"))) {
           console.log(`reconcile: stopping ${projectID} (${project.deleted_at ? "deleted" : "paused"})`)
           await provider.stop(vmID)
           await move(projectID, project.vm_state, { vm_state: "paused" })

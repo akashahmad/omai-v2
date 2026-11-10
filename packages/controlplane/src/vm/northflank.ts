@@ -1,6 +1,6 @@
 import type { Config } from "../config.js"
 import { NorthflankClient, NorthflankError } from "./northflank-client.js"
-import type { VmAddress, VmProvider, VmSpec } from "./provider.js"
+import type { VmAddress, VmLabel, VmProvider, VmSpec } from "./provider.js"
 
 export * as NorthflankVmProvider from "./northflank.js"
 
@@ -74,7 +74,7 @@ export function make(
     return api
       .createService({
         name,
-        description: describe(`project: ${spec.projectID}`),
+        description: describe(spec.projectID, spec.label),
         billing: { deploymentPlan: nf!.plan },
         // No instances yet: attaching a volume to a running service restarts it, a whole extra boot.
         deployment: { instances: 0, external: { imagePath: image }, docker: { configType: "default" } },
@@ -182,6 +182,11 @@ export function make(
       if (disk) await api.deleteVolume(disk.id).catch(gone)
     },
 
+    async label(vmID: string, projectID: string, label: VmLabel) {
+      ours(vmID)
+      await settle(() => api.describeService(vmID, describe(projectID, label)))
+    },
+
     async list() {
       if (!listed.ids || Date.now() - listed.at >= LIST_TTL_MS) {
         listed.at = Date.now()
@@ -234,9 +239,16 @@ function slug(value: string) {
 }
 
 // Northflank refuses a description over 200 characters or with anything outside this set, failing the whole create.
-const DESCRIPTION_DISALLOWED = /[^a-zA-Z0-9.,?\s\\/'"()[\];`%^&*\-_:!]/g
+const DESCRIPTION_DISALLOWED = /[^a-zA-Z0-9.,?\s\\/'"()[\];`%^&*\-_:!]/gu
 
-function describe(text: string) {
+/** `type: vm; projectName: My Shop; userName: alice; projectId: <id>;`, cut to fit and with disallowed characters replaced. */
+function describe(projectID: string, label?: VmLabel) {
+  const text = [
+    ...(label ? [`type: ${label.type};`] : []),
+    ...(label?.projectName ? [`projectName: ${label.projectName};`] : []),
+    ...(label ? [`userName: ${label.userName};`] : []),
+    `projectId: ${projectID};`,
+  ].join(" ")
   const cleaned = text.replace(DESCRIPTION_DISALLOWED, "-")
   return cleaned.length <= 200 ? cleaned : `${cleaned.slice(0, 197)}...`
 }

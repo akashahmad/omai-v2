@@ -4,6 +4,7 @@ import { Button } from "@opencode/ui/button"
 import { Checkbox } from "@opencode/ui/checkbox"
 import { Select } from "@opencode/ui/select"
 import { TextInput } from "@opencode/ui/text-input"
+import { Spinner } from "@opencode/ui/spinner"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Dialog, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -59,10 +60,12 @@ export function SettingsUsers() {
   )
 
   const [shared] = createResource(() => client.models.shared().catch(() => []))
+  // Read only once settled: reading a pending resource suspends the nearest boundary, which is all of Settings.
+  const status = () => (loaded.state === "ready" ? loaded() : undefined)
 
   const modelOptions = createMemo<ModelOption[]>(() => [
     { id: "none", label: language.t("settings.admin.user.model.none"), model: null },
-    ...(shared() ?? []).map((model) => ({
+    ...(shared.state === "ready" ? shared() : []).map((model) => ({
       id: modelID(model),
       label: `${model.modelID} (${model.providerID})`,
       model: { providerID: model.providerID, modelID: model.modelID },
@@ -334,10 +337,10 @@ export function SettingsUsers() {
             description={language.t("settings.admin.users.subtitle")}
           />
           <Show
-            when={loaded() === "ready"}
+            when={status() === "ready"}
             fallback={
               <div class="flex flex-col items-center gap-2 py-6 text-center text-[13px] text-v2-text-text-muted">
-                <Show when={loaded() === "failed" && !loaded.loading} fallback={language.t("common.loading")}>
+                <Show when={status() === "failed"} fallback={<Spinner class="size-5" />}>
                   <span>{language.t("settings.admin.users.loadFailed")}</span>
                   <button
                     type="button"

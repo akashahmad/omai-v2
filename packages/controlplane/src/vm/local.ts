@@ -116,6 +116,9 @@ export function make(
       await rm(dir(projectID), { recursive: true, force: true })
     },
 
+    // Local VMs have nowhere to show a label.
+    async label() {},
+
     async list() {
       return [...running.keys()]
     },

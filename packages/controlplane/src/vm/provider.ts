@@ -1,4 +1,10 @@
-export type VmSpec = { projectID: string; slug: string; env: Record<string, string> }
+/**
+ * Who a VM is for, for people reading the provider's console. A reserve has no project name until it is claimed. The
+ * platform server's VM, not a project's, has none.
+ */
+export type VmLabel = { type: "vm" | "reserve"; projectName?: string; userName: string }
+
+export type VmSpec = { projectID: string; slug: string; label?: VmLabel; env: Record<string, string> }
 
 /**
  * `home` is the VM's home folder; the project lives at `<home>/<slug>`. `preview` is the preview's public origin, for
@@ -19,6 +25,8 @@ export interface VmProvider {
    * Idempotent: anything already gone is skipped.
    */
   destroy(projectID: string): Promise<void>
+  /** Updates the label a VM was created with, after a claim or a rename. */
+  label(vmID: string, projectID: string, label: VmLabel): Promise<void>
   /** The VMs this provider created that are running now. */
   list(): Promise<string[]>
 }

@@ -73,6 +73,8 @@ export function make(input: { apiBase: string; token: string; project: string })
       request("POST", `/services/${encodeURIComponent(id)}/runtime-environment`, { runtimeEnvironment: variables }),
     scaleService: (id: string, instances: number) =>
       request("PATCH", `/services/deployment/${encodeURIComponent(id)}`, { deployment: { instances } }),
+    describeService: (id: string, description: string) =>
+      request("PATCH", `/services/deployment/${encodeURIComponent(id)}`, { description }),
     pauseService: (id: string) => request("POST", `/services/${encodeURIComponent(id)}/pause`, {}),
     resumeService: (id: string) => request("POST", `/services/${encodeURIComponent(id)}/resume`, {}),
     getPorts: async (id: string) =>

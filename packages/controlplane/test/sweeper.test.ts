@@ -114,6 +114,19 @@ describe("Sweeper", () => {
     expect(await s.state(id)).toBe("paused")
   })
 
+  test("reconcile leaves a reserve being deleted to the reserve pool", async () => {
+    const s = await setup()
+    const id = await s.running()
+    // The pool marks a reserve deleted, then deletes its VM; pausing it in between makes Northflank refuse the delete.
+    await s.db
+      .update(ProjectTable)
+      .set({ reserved_at: new Date(), deleted_at: new Date() })
+      .where(eq(ProjectTable.id, id))
+    await s.sweeper.reconcile()
+    expect(await s.provider.list()).toEqual([id])
+    expect(await s.state(id)).toBe("running")
+  })
+
   test("reconcile ignores unknown VMs", async () => {
     const s = await setup()
     const id = await s.running()

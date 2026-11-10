@@ -131,6 +131,7 @@ export async function fakeNorthflank() {
       if (req.method === "PATCH" && route.startsWith("/services/deployment/")) {
         if (service.paused) return fail(res, 409, "Service is paused")
         if (body.deployment?.instances !== undefined) service.instances = body.deployment.instances
+        if (body.description !== undefined) service.description = body.description
         return json(res, 200, { data: {} })
       }
       if (req.method === "POST" && rest === "/pause") {

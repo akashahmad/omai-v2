@@ -3,8 +3,8 @@ import { and, eq } from "drizzle-orm"
 import { SignedToken } from "@opencode/util/signed-token"
 import type { Config } from "../config.js"
 import type { Db } from "../db/database.js"
-import { ProjectTable } from "../db/schema.js"
-import type { VmProvider } from "./provider.js"
+import { ProjectTable, UserTable } from "../db/schema.js"
+import type { VmLabel, VmProvider } from "./provider.js"
 
 const VM_TOKEN_TTL_SECONDS = 12 * 60 * 60
 
@@ -30,6 +30,25 @@ export function vmToken(
   )
 }
 
+type Labelled = { id: string; user_id: string; name: string; reserved_at: Date | null; vm_id?: string | null }
+
+/** What the provider's console shows for a project's VM: a reserve has no project name yet. */
+export async function label(db: Db, project: Labelled): Promise<VmLabel> {
+  const user = (await db.select({ username: UserTable.username }).from(UserTable).where(eq(UserTable.id, project.user_id)))[0]
+  const userName = user?.username ?? project.user_id
+  if (project.reserved_at) return { type: "reserve", userName }
+  return { type: "vm", projectName: project.name, userName }
+}
+
+/** Brings a running VM's label up to date. Only a label, so a failure (Northflank refusing a paused VM, say) is logged. */
+export function relabel(db: Db, provider: VmProvider, project: Labelled) {
+  const vmID = project.vm_id
+  if (!vmID) return
+  void label(db, project)
+    .then((value) => provider.label(vmID, project.id, value))
+    .catch((error: unknown) => console.error(`labelling the VM of ${project.id} failed`, error))
+}
+
 /**
  * Creates the project's VM with a fresh project token and waits until its server answers.
  * Ends with the project `running`, or `failed` with the reason.
@@ -38,7 +57,7 @@ export async function provision(
   db: Db,
   config: Config,
   provider: VmProvider,
-  project: { id: string; user_id: string; slug: string },
+  project: Labelled & { slug: string },
   now = () => Date.now(),
 ) {
   const token = randomBytes(32).toString("base64url")
@@ -46,10 +65,12 @@ export async function provision(
     .update(ProjectTable)
     .set({ project_token_hash: hashToken(token) })
     .where(and(eq(ProjectTable.id, project.id), eq(ProjectTable.vm_state, "creating")))
-    .then(() =>
+    .then(() => label(db, project))
+    .then((value) =>
       provider.create({
         projectID: project.id,
         slug: project.slug,
+        label: value,
         env: {
           OMAI_PROJECT_ID: project.id,
           // A reserve has no folder name yet; its VM asks the control plane once the reserve is claimed.
@@ -72,6 +93,11 @@ export async function provision(
           vm_preview: address.preview ?? null,
         })
         .where(and(eq(ProjectTable.id, project.id), eq(ProjectTable.vm_state, "creating")))
+      // A reserve claimed while it booted was created with the reserve label.
+      if (project.reserved_at) {
+        const current = (await db.select().from(ProjectTable).where(eq(ProjectTable.id, project.id)))[0]
+        if (current && !current.reserved_at) relabel(db, provider, current)
+      }
       await waitReady(config, { userID: project.user_id, projectID: project.id, host: address.host }).catch(
         async (error: unknown) => {
           // A real VM bills while it runs; a retry starts it again.

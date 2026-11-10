@@ -30,14 +30,12 @@ import { usePlatform } from "@/runtime/platform/platform"
 import { useServerSDK } from "@/runtime/server/client"
 import { useData } from "@/runtime/server/current"
 import { useGlobal } from "@/runtime/server/runtime"
-import { ServerConnection } from "@/runtime/server/registry"
 import { useProviders } from "@/providers/catalog/providers"
 import { useIntegrations } from "@/providers/catalog/integrations"
 import { ProviderModelIcon } from "@/providers/models/provider-group"
 import type { ModelSelection } from "@/providers/models/selection"
 import { decode64 } from "@/runtime/persistence/base64"
 import { SettingsList } from "@/settings/list"
-import { useTabs } from "@/shell/tabs/tabs"
 import { Persist, persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
 import { Schema } from "effect"
@@ -477,7 +475,6 @@ function ProviderConnection(props: {
   const sdk = useServerSDK()
   const data = useData()
   const global = useGlobal()
-  const tabs = useTabs()
   // A sign-in belongs to the Location where it began, even if the route changes underneath it.
   const initialDirectory = props.defaultLocation ? undefined : (props.directory ?? decode64(params.dir))
   const directory = () => initialDirectory
@@ -1543,29 +1540,18 @@ function ProviderConnection(props: {
     )
   }
 
-  const startWithModel = async () => {
+  // Continue only closes the dialog; it never opens a new session.
+  const startWithModel = () => {
     const model = selectedModel()
 
     if (!model) return
-    const selection = { providerID: model.providerID, modelID: model.id }
 
     if (props.selection) {
-      props.selection.set(selection)
+      props.selection.set({ providerID: model.providerID, modelID: model.id })
       props.onDone?.()
-      dialog.close()
-
-      return
     }
 
     dialog.close()
-    await tabs.newDraft(
-      {
-        server: ServerConnection.key(sdk.server),
-        directory: initialDirectory ?? data.location.default().directory,
-      },
-      undefined,
-      selection,
-    )
   }
 
   function ConnectionModelList(listProps: { items: ReturnType<typeof connectionModels> }) {
@@ -1662,7 +1648,7 @@ function ProviderConnection(props: {
           data-component="first-provider-model-footer"
           class="-mx-5 flex h-15 shrink-0 items-center justify-end border-t border-v2-border-border-muted px-4"
         >
-          <Button variant="contrast" disabled={!selectedModel()} onClick={() => void startWithModel()}>
+          <Button variant="contrast" disabled={!selectedModel()} onClick={startWithModel}>
             {language.t("common.continue")}
           </Button>
         </div>

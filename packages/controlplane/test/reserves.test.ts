@@ -3,6 +3,7 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 import { and, eq, isNotNull } from "drizzle-orm"
 import { AuthSessionTable, ProjectTable } from "../src/db/schema.js"
+import type { VmLabel, VmProvider } from "../src/vm/provider.js"
 import { harness, until } from "./fixture/setup.js"
 
 const cleanup: (() => Promise<void>)[] = []
@@ -11,7 +12,23 @@ afterEach(async () => {
 })
 
 async function setup(env: Record<string, string> = {}) {
-  const s = await harness({ OMAI_VM_RESERVES_PER_USER: "2", OMAI_VM_RESERVE_IDLE_MS: "600000", ...env })
+  // Every label a VM was created with or given later, by project ID.
+  const labels = new Map<string, VmLabel[]>()
+  const record = (projectID: string, label: VmLabel) => labels.set(projectID, [...(labels.get(projectID) ?? []), label])
+  const s = await harness(
+    { OMAI_VM_RESERVES_PER_USER: "2", OMAI_VM_RESERVE_IDLE_MS: "600000", ...env },
+    (provider): VmProvider => ({
+      ...provider,
+      create: (spec) => {
+        if (spec.label) record(spec.projectID, spec.label)
+        return provider.create(spec)
+      },
+      label: (vmID, projectID, label) => {
+        record(projectID, label)
+        return provider.label(vmID, projectID, label)
+      },
+    }),
+  )
   cleanup.push(() => s.provider.close())
   const signIn = (userID: string) =>
     s.db.insert(AuthSessionTable).values({
@@ -35,7 +52,7 @@ async function setup(env: Record<string, string> = {}) {
       (rows) => rows.filter((row) => row.vm_state === "running").length === count,
     )
   const vmDir = (projectID: string) => path.join(s.root, projectID)
-  return { ...s, signIn, reserves, ready, vmDir }
+  return { ...s, signIn, reserves, ready, vmDir, labels }
 }
 
 describe("reserve VMs", () => {
@@ -69,6 +86,33 @@ describe("reserve VMs", () => {
     expect((await s.projects.list(s.a)).map((project) => project.id)).toEqual([created.id])
     const after = await s.ready(s.a, 2)
     expect(after.map((row) => row.id)).not.toContain(created.id)
+  })
+
+  test("a reserve's VM is labelled as one, then with its project and user once claimed or renamed", async () => {
+    const s = await setup()
+    await s.signIn(s.a)
+    await s.ready(s.a, 2)
+    const created = await s.projects.create(s.a, "My Shop")
+    if (typeof created === "string") throw new Error(created)
+    expect(s.labels.get(created.id)?.[0]).toEqual({ type: "reserve", userName: "a" })
+    await until(
+      async () => s.labels.get(created.id)?.at(-1),
+      (label) => label?.type === "vm",
+    )
+    expect(s.labels.get(created.id)?.at(-1)).toEqual({ type: "vm", projectName: "My Shop", userName: "a" })
+    await s.projects.rename(s.a, created.id, "Big Shop")
+    await until(
+      async () => s.labels.get(created.id)?.at(-1),
+      (label) => label?.projectName === "Big Shop",
+    )
+    // A project made without a reserve is labelled from the start.
+    const plain = await s.projects.create(s.b, "Plain")
+    if (typeof plain === "string") throw new Error(plain)
+    await until(
+      async () => s.labels.get(plain.id),
+      (labels) => labels !== undefined,
+    )
+    expect(s.labels.get(plain.id)).toEqual([{ type: "vm", projectName: "Plain", userName: "b" }])
   })
 
   test("a taken name is refused without using up a reserve", async () => {

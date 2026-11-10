@@ -6,7 +6,7 @@ import { ProjectTable, ProjectThumbnailTable, type VmState } from "./db/schema.j
 import { uniqueViolation } from "./users.js"
 import { Lifecycle } from "./vm/lifecycle.js"
 import type { VmProvider } from "./vm/provider.js"
-import { hashToken, provision, vmToken } from "./vm/provision.js"
+import { hashToken, provision, relabel, vmToken } from "./vm/provision.js"
 import { Reserves } from "./vm/reserves.js"
 
 export * as Projects from "./projects.js"
@@ -60,7 +60,7 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
     return (await db.select().from(ProjectTable).where(owned(userID, projectID)))[0]
   }
 
-  function start(project: { id: string; user_id: string; slug: string }) {
+  function start(project: Parameters<typeof provision>[3]) {
     // Background work: the caller polls the project's state.
     void provision(db, config, provider, project, now).catch((error: unknown) =>
       console.error(`provisioning ${project.id} failed`, error),
@@ -173,7 +173,9 @@ export function make(db: Db, config: Config, provider: VmProvider, now = () => D
           throw error
         })
       if (updated === "exists") return updated
-      return updated[0] ? view(updated[0]) : undefined
+      if (!updated[0]) return undefined
+      relabel(db, provider, updated[0])
+      return view(updated[0])
     },
 
     /** Soft delete: the row, VM and volume stay; the user no longer sees the project, and its VM pauses. */

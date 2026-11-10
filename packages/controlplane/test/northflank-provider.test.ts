@@ -33,6 +33,7 @@ const PROJECT = "0b6f1c2e-6a3c-4d0e-9a54-1f2e3d4c5b6a"
 const spec = (projectID = PROJECT) => ({
   projectID,
   slug: "shop",
+  label: { type: "vm" as const, projectName: "My Shop", userName: "alice" },
   env: {
     OMAI_PROJECT_ID: projectID,
     OMAI_PROJECT_SLUG: "shop",
@@ -57,7 +58,7 @@ describe("NorthflankVmProvider", () => {
     expect(volume.size).toBe(6 * 1024)
     expect(service.image).toBe("docker.io/someone/omai-vm:latest")
     expect(service.plan).toBe("nf-compute-50")
-    expect(service.description).toBe(`project: ${PROJECT}`)
+    expect(service.description).toBe(`type: vm; projectName: My Shop; userName: alice; projectId: ${PROJECT};`)
     expect(service.ports.map((port) => [port.name, port.internalPort, port.public])).toEqual([
       ["api", 4096, false],
       ["preview", 4097, true],
@@ -165,6 +166,19 @@ describe("NorthflankVmProvider", () => {
     expect(fake.state.requests.some((request) => /omai-e2e-vm-1|vm-other/.test(request.path))).toBe(false)
     await p.provider.stop(ours.vmID)
     expect(await p.provider.list()).toEqual([])
+  })
+
+  test("a reserve is labelled as one, relabelled once claimed, and a label never breaks the create", async () => {
+    const p = provider()
+    const created = await p.provider.create({ ...spec(), label: { type: "reserve", userName: "alice" } })
+    const service = () => fake.state.services.get(created.vmID)!
+    expect(service().description).toBe(`type: reserve; userName: alice; projectId: ${PROJECT};`)
+    await p.provider.label(created.vmID, PROJECT, { type: "vm", projectName: "Café <Shop> 🛒", userName: "alice" })
+    // Characters Northflank refuses are replaced, so the call is never a 400.
+    expect(service().description).toBe(`type: vm; projectName: Caf- -Shop- -; userName: alice; projectId: ${PROJECT};`)
+    await p.provider.label(created.vmID, PROJECT, { type: "vm", projectName: "x".repeat(300), userName: "alice" })
+    expect(service().description!.length).toBe(200)
+    await expect(p.provider.label("vm-other", PROJECT, { type: "vm", userName: "alice" })).rejects.toThrow()
   })
 
   test("public VMs expose the api port and use its public address", async () => {
