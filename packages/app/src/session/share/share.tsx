@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Match, Show, Switch } from "s
 import { Dialog, DialogBody, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Icon } from "@opencode/ui/icon"
+import { Spinner } from "@opencode/ui/spinner"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { useControlPlaneOptional } from "@/controlplane/session"
@@ -163,16 +164,24 @@ function ShareDialog(props: { projectID: string; sessionID: string }) {
                         href={url()}
                         target="_blank"
                         rel="noopener"
-                        class="flex h-8 cursor-pointer items-center rounded-[6px] border border-v2-border-border-base px-3 text-[13px] font-[500] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover"
+                        class="flex h-8 cursor-pointer items-center gap-1.5 rounded-[6px] border border-v2-border-border-base px-3 text-[13px] font-[500] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover"
                       >
                         {language.t("session.share.open")}
+                        {/* It opens in a new tab. */}
+                        <Icon name="square-arrow-top-right" size="small" class="text-v2-text-text-muted" />
                       </a>
                       <button
                         type="button"
-                        class="h-8 cursor-pointer rounded-[6px] border border-v2-border-border-base px-3 text-[13px] font-[500] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex h-8 cursor-pointer items-center gap-1.5 rounded-[6px] border border-v2-border-border-base px-3 text-[13px] font-[500] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={busy() !== undefined}
                         onClick={() => void publish()}
                       >
+                        <Show
+                          when={busy() === "share"}
+                          fallback={<Icon name="refresh" size="small" class="text-v2-text-text-muted" />}
+                        >
+                          <Spinner class="size-3.5 shrink-0" />
+                        </Show>
                         {busy() === "share" ? language.t("session.share.updating") : language.t("session.share.update")}
                       </button>
                     </div>
