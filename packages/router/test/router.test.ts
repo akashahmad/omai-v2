@@ -442,6 +442,18 @@ describe("Router", () => {
     expect(s.cp.calls.activity).toEqual([])
   })
 
+  // A terminal reconnecting to a VM that was paused gets through as soon as the VM runs again, not after a cache window.
+  test("a ticket reaches a project as soon as its VM is back", async () => {
+    const up = await upstream((req, res) => res.end(`reached ${req.url}`))
+    const s = await setup()
+    const path = "/api/experimental/persistent-pty/pty_1/connect?ticket=abc"
+    expect((await fetch(`${s.base}/vm/p1${path}`)).status).toBe(404)
+    s.cp.hosts.set("p1", up.host)
+    const res = await fetch(`${s.base}/vm/p1${path}`)
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe(`reached ${path}`)
+  })
+
   test("a ticket on any other address still needs a token", async () => {
     const up = await upstream((_req, res) => res.end("ok"))
     const s = await setup()

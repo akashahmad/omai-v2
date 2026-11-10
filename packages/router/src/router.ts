@@ -119,7 +119,9 @@ export async function start(options: Options) {
     })
       .then(async (res) => (res.ok ? readHost(await res.text()) : undefined))
       .catch(() => undefined)
-    hosts.set(projectID, { host, at: Date.now() })
+    // Only a found address is cached: a paused VM's terminal reconnects as soon as the VM is back, instead of being
+    // turned away for the rest of the cache window.
+    if (host) hosts.set(projectID, { host, at: Date.now() })
     return host
   }
 

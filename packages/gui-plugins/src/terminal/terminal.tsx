@@ -38,8 +38,9 @@ const DEFAULT_TERMINAL_COLORS = {
 
 const isHexColor = (value: string): value is HexColor => value.startsWith("#")
 
-// How many times a dropped terminal reconnects before it reports the failure: about a minute of tries.
-const RECONNECT_ATTEMPTS = 6
+// How many times a dropped terminal reconnects before it reports the failure: about two minutes of tries, enough for
+// a paused VM to start again (the first step of each try, the snapshot, wakes it).
+const RECONNECT_ATTEMPTS = 12
 
 const debugTerminal = (...values: unknown[]) => {
   if (!import.meta.env.DEV) return

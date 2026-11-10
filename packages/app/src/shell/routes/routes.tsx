@@ -1,5 +1,5 @@
-import { Route, useParams } from "@solidjs/router"
-import { createMemo, lazy, Show, Suspense, type ParentProps } from "solid-js"
+import { Route, useLocation, useNavigate, useParams } from "@solidjs/router"
+import { createMemo, createResource, lazy, Show, Suspense, type ParentProps } from "solid-js"
 import { Home } from "@/home/route"
 import { ProjectsLanding } from "@/projects/landing"
 import { AllProjects } from "@/projects/all"
@@ -11,10 +11,14 @@ import { BrandLoader } from "@/shell/brand-loader"
 import { LayoutProvider } from "@/shell/state/layout"
 import { SettingsSurfaceProvider } from "@/settings/surface"
 import Shell from "@/shell/shell"
-import { requireServerKey } from "./session"
+import { base64Encode } from "@opencode/util/encode"
+import { decode64 } from "@/runtime/persistence/base64"
+import { useLanguage } from "@/runtime/i18n/language"
+import { BrandIcon } from "@/shell/brand-icon"
+import { projectOfConnection } from "@/controlplane/presence"
 import { PluginAttachment } from "@/runtime/plugin/root"
 import { multiUser } from "@/controlplane/client"
-import { ControlPlaneRoot, RequireSignedIn } from "@/controlplane/session"
+import { ControlPlaneRoot, RequireSignedIn, useControlPlaneOptional } from "@/controlplane/session"
 
 export const File = lazy(() => import("@opencode/session-ui/file").then((module) => ({ default: module.File })))
 
@@ -120,15 +124,102 @@ function SessionRoute() {
 function TargetServerRoute(props: ParentProps) {
   const params = useParams<{ serverKey: string }>()
   const global = useGlobal()
+  const servers = useServers()
+  const session = useControlPlaneOptional()
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  const connection = createMemo(() =>
-    global.servers.list().find((item) => ServerConnection.key(item) === requireServerKey(params.serverKey)),
+  const key = createMemo(() => serverKeyOf(params.serverKey))
+
+  const connection = createMemo(() => global.servers.list().find((item) => ServerConnection.key(item) === key()))
+
+  // A link to a project this browser hasn't opened (a new window, cleared storage, someone else's link): the control
+  // plane opens it when it is the user's, and says no otherwise. Anything else ends on a page that says so.
+  const [reopened, { refetch }] = createResource(
+    () => (connection() ? undefined : (key() ?? "invalid")),
+    async (wanted) => {
+      const projectID =
+        wanted !== "invalid" && session && URL.canParse(wanted) ? projectOfConnection(wanted) : undefined
+
+      if (!projectID || !session) return "unavailable" as const
+      const project = await session.client.projects.get(projectID).catch(() => undefined)
+
+      if (!project) return "unavailable" as const
+      const opened = await session.client.projects.open(projectID).catch(() => undefined)
+
+      // Its VM is still being created: look again shortly.
+      if (opened === "not-ready") {
+        setTimeout(() => void refetch(), 3000)
+
+        return "starting" as const
+      }
+
+      if (!opened) return "unavailable" as const
+
+      const added = servers.add({
+        type: "http",
+        http: { url: opened.routerUrl, password: opened.token },
+        displayName: project.name,
+      })
+
+      // The project now answers at another address: follow it, keeping the rest of the path.
+      if (added && ServerConnection.key(added) !== wanted)
+        navigate(location.pathname.replace(params.serverKey, base64Encode(ServerConnection.key(added))), {
+          replace: true,
+        })
+
+      return added ? ("opened" as const) : ("unavailable" as const)
+    },
   )
 
   return (
-    <Show when={connection()} keyed>
+    <Show
+      when={connection()}
+      keyed
+      fallback={
+        <Show when={reopened() === "unavailable"} fallback={<BrandLoader />}>
+          <ProjectUnavailable />
+        </Show>
+      }
+    >
       {(connection) => <ServerProvider conn={connection}>{props.children}</ServerProvider>}
     </Show>
+  )
+}
+
+// The route's server key, or undefined when the address is not one this app wrote.
+function serverKeyOf(segment: string) {
+  const key = decode64(segment)
+
+  return key && base64Encode(key) === segment ? ServerConnection.Key.make(key) : undefined
+}
+
+/** A project link that doesn't open: it doesn't exist, it was deleted, or it belongs to someone else. */
+function ProjectUnavailable() {
+  const language = useLanguage()
+  const navigate = useNavigate()
+
+  return (
+    <div class="flex min-h-0 flex-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+      <SessionPanelFrame raised>
+        <div class="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+          <BrandIcon class="size-14 rounded-[12px] opacity-60" />
+          <div class="flex max-w-[380px] flex-col gap-1.5">
+            <h1 class="text-[18px] font-[600] text-v2-text-text-base">{language.t("project.unavailable.title")}</h1>
+            <p class="text-[13px] leading-[20px] text-v2-text-text-muted">
+              {language.t("project.unavailable.description")}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex h-9 cursor-pointer items-center gap-2 rounded-[8px] bg-[#0a3a78] px-4 text-[13px] font-[600] text-[#fff] hover:bg-[#082f62]"
+            onClick={() => navigate("/", { replace: true })}
+          >
+            {language.t("project.unavailable.back")}
+          </button>
+        </div>
+      </SessionPanelFrame>
+    </div>
   )
 }
 

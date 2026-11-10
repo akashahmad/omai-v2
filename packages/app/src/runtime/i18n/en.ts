@@ -719,6 +719,10 @@ export const dict = {
   "session.share.sharedAt": "Shows the conversation as of {{at}}.",
   "session.share.failed": "Sharing failed. Try again.",
   "session.share.untitled": "Shared conversation",
+  "project.unavailable.title": "This project isn't available",
+  "project.unavailable.description":
+    "It may have been deleted, or it belongs to someone else. Projects open only for the person who made them.",
+  "project.unavailable.back": "Go to your projects",
   "share.page.loading": "Loading shared conversation…",
   "share.page.missing.title": "This link doesn't work anymore",
   "share.page.missing.description": "The conversation was unshared, or the link is wrong.",
