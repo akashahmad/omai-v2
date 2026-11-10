@@ -148,6 +148,14 @@ export function terminalConnection(input: {
 
       if (controller && restored) interact()
     },
+    /** The shell exited or the connection failed for good: a lost socket is not worth reconnecting. */
+    ended() {
+      return exited || failed
+    },
+    /** The server attached this client and the stream is live. */
+    attached() {
+      return attached
+    },
     close() {
       if (!exited) fail("disconnected")
     },

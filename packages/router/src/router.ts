@@ -312,8 +312,19 @@ export async function start(options: Options) {
       socket.on("close", () => upstream.destroy())
       upstream.on("close", () => socket.destroy())
       upstream.pipe(socket).pipe(upstream)
-      // What the user sends (terminal keystrokes) is activity; what the VM sends isn't.
-      if (resolved.token && resolved.projectID !== PLATFORM) socket.on("data", () => activity(resolved.projectID))
+      // What the user sends (terminal keystrokes) is activity; what the VM sends isn't. A ticket-only connection counts
+      // once the VM accepts its ticket (101), which only a signed-in user could have asked for: otherwise typing in
+      // just the terminal lets the VM pause under it.
+      if (resolved.projectID === PLATFORM) return
+      const accepted = { value: resolved.token }
+      if (!accepted.value)
+        upstream.once("data", (chunk: Buffer) => {
+          accepted.value = /^HTTP\/1\.[01] 101/.test(chunk.toString("latin1", 0, 16))
+          if (accepted.value) activity(resolved.projectID)
+        })
+      socket.on("data", () => {
+        if (accepted.value) activity(resolved.projectID)
+      })
     })
     upstream.on("error", (error: NodeJS.ErrnoException) => {
       clearTimeout(timer)

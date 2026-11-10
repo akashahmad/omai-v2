@@ -38,6 +38,9 @@ const DEFAULT_TERMINAL_COLORS = {
 
 const isHexColor = (value: string): value is HexColor => value.startsWith("#")
 
+// How many times a dropped terminal reconnects before it reports the failure: about a minute of tries.
+const RECONNECT_ATTEMPTS = 6
+
 const debugTerminal = (...values: unknown[]) => {
   if (!import.meta.env.DEV) return
   console.debug("[terminal]", ...values)
@@ -158,36 +161,72 @@ export const Terminal = (props: TerminalProps) => {
     container.style.opacity = "1"
   }
 
-  const connection = terminalConnection({
-    attachmentID,
-    write: (data, done) => {
-      if (disposed || !term) {
-        done()
+  // A fresh connection per socket: each attach starts from the server's snapshot, so no state carries over.
+  const open = () =>
+    terminalConnection({
+      attachmentID,
+      write: (data, done) => {
+        if (disposed || !term) {
+          done()
 
-        return
-      }
+          return
+        }
 
-      term.write(data, () => {
-        setWritten((value) => value + 1)
-        done()
-      })
-      reveal()
-    },
-    resize: (size) => {
-      if (!disposed) term?.resize(size.cols, size.rows)
-    },
-    send: (frame) => {
-      if (socket?.readyState === WebSocket.OPEN) socket.send(frame)
-    },
-    fail: (next) => {
-      if (disposed) return
-      setFailure(next)
-      reveal()
-      props.onFailure?.()
+        term.write(data, () => {
+          setWritten((value) => value + 1)
+          done()
+        })
+        reveal()
+      },
+      resize: (size) => {
+        if (!disposed) term?.resize(size.cols, size.rows)
+      },
+      send: (frame) => {
+        if (socket?.readyState === WebSocket.OPEN) socket.send(frame)
+      },
+      fail: (next) => {
+        if (disposed) return
+        setFailure(next)
+        reveal()
+        props.onFailure?.()
 
-      if (next === "outdated") socket?.close(1000)
-    },
-  })
+        if (next === "outdated") socket?.close(1000)
+      },
+    })
+
+  let connection = open()
+  // The last size the pane measured, replayed to each new connection.
+  let size: Parameters<typeof connection.size>[0] | undefined
+  let attempts = 0
+  let retry: ReturnType<typeof setTimeout> | undefined
+  const [reconnecting, setReconnecting] = createSignal(false)
+
+  // A dropped socket (the VM paused, the network blinked, a proxy timed out) reconnects with growing pauses, and
+  // only reports a failure once every attempt has failed. A shell that exited stays closed.
+  const lost = (kind: "close" | "error") => {
+    if (disposed || connection.ended() || retry !== undefined) return
+
+    if (attempts >= RECONNECT_ATTEMPTS) {
+      setReconnecting(false)
+
+      return kind === "close" ? connection.close() : connection.error()
+    }
+
+    setReconnecting(true)
+    retry = setTimeout(
+      () => {
+        retry = undefined
+
+        if (disposed) return
+        connection = open()
+
+        if (size) connection.size(size)
+        void connect().catch(() => lost("error"))
+      },
+      Math.min(1000 * 2 ** attempts, 15_000),
+    )
+    attempts += 1
+  }
 
   const failureText = () => {
     const current = failure()
@@ -197,6 +236,8 @@ export const Terminal = (props: TerminalProps) => {
     if (current === "failed") return plugin.t("connectionFailed")
 
     if (current === "outdated") return plugin.t("serverOutdated")
+
+    if (reconnecting()) return plugin.t("reconnecting")
   }
 
   const cleanup = () => {
@@ -258,6 +299,7 @@ export const Terminal = (props: TerminalProps) => {
 
       if (!measured) {
         measured = true
+        size = next
         connection.size(next)
 
         return
@@ -266,6 +308,8 @@ export const Terminal = (props: TerminalProps) => {
       if (sizeTimer !== undefined) clearTimeout(sizeTimer)
       sizeTimer = setTimeout(() => {
         sizeTimer = undefined
+
+        size = next
 
         if (!disposed) connection.size(next)
       }, 100)
@@ -358,6 +402,9 @@ export const Terminal = (props: TerminalProps) => {
     const snapshot = await server.client.experimental.persistentPty.snapshot({ ptyID })
 
     if (disposed) return
+
+    // After a dropped socket the snapshot redraws everything, so the screen starts clean rather than doubled.
+    if (socket) term?.write("\x1bc")
     connection.restore({ size: snapshot.info.size, checkpoint: snapshot.checkpoint })
 
     const next = await createPersistentPtyClient(server.client, { url: server.url }).connect({
@@ -374,8 +421,14 @@ export const Terminal = (props: TerminalProps) => {
     }
 
     socket = next
+    const current = connection
     next.addEventListener("message", (event) => {
-      if (disposed) return
+      if (disposed || current !== connection) return
+
+      if (!current.attached()) {
+        attempts = 0
+        setReconnecting(false)
+      }
 
       if (event.data instanceof ArrayBuffer) {
         connection.output(new Uint8Array(event.data))
@@ -387,13 +440,13 @@ export const Terminal = (props: TerminalProps) => {
       connection.message(String(event.data))
     })
     next.addEventListener("error", (event) => {
-      if (disposed) return
+      if (disposed || current !== connection) return
       debugTerminal("websocket error", event)
-      connection.error()
+      lost("error")
     })
     // The removal event closes the tab separately; keep the terminal visible until then.
     next.addEventListener("close", () => {
-      if (!disposed) connection.close()
+      if (!disposed && current === connection) lost("close")
     })
   }
 
@@ -524,12 +577,13 @@ export const Terminal = (props: TerminalProps) => {
     void run().catch((err) => {
       if (disposed) return
       debugTerminal("failed to connect terminal", err)
-      connection.error()
+      lost("error")
     })
   })
 
   onCleanup(() => {
     disposed = true
+    clearTimeout(retry)
 
     if (measureFrame !== undefined) cancelAnimationFrame(measureFrame)
 

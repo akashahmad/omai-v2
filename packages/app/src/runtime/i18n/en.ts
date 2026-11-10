@@ -1250,6 +1250,7 @@ export const dict = {
   "settings.admin.delete": "Delete",
   "settings.admin.delete.confirm": "Delete {{username}}? This immediately revokes their access.",
   "settings.admin.error": "Admin action failed",
+  "settings.admin.users.loadFailed": "Couldn't load the users. Check your connection and try again.",
   "settings.admin.error.selfDemote": "You cannot demote your own account.",
   "settings.admin.error.selfDelete": "You cannot delete your own account.",
   "settings.admin.error.model": "That model is no longer shared with everyone.",

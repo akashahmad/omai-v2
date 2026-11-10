@@ -46,12 +46,17 @@ export function SettingsUsers() {
   const [error, setError] = createSignal<string>()
   const [saving, setSaving] = createSignal<string>()
 
-  const [loaded] = createResource(async () => {
-    const list = await client.admin.users()
-    setUsers(reconcile([...list]))
+  // A failed load stays on this page with a retry; read as an errored resource it would take down all of Settings.
+  const [loaded, { refetch }] = createResource(() =>
+    client.admin
+      .users()
+      .then((list) => {
+        setUsers(reconcile([...list]))
 
-    return true
-  })
+        return "ready" as const
+      })
+      .catch(() => "failed" as const),
+  )
 
   const [shared] = createResource(() => client.models.shared().catch(() => []))
 
@@ -329,10 +334,19 @@ export function SettingsUsers() {
             description={language.t("settings.admin.users.subtitle")}
           />
           <Show
-            when={loaded()}
+            when={loaded() === "ready"}
             fallback={
-              <div class="py-6 text-center text-[13px] text-v2-text-text-muted">
-                {loaded.error ? language.t("settings.admin.error") : language.t("common.loading")}
+              <div class="flex flex-col items-center gap-2 py-6 text-center text-[13px] text-v2-text-text-muted">
+                <Show when={loaded() === "failed" && !loaded.loading} fallback={language.t("common.loading")}>
+                  <span>{language.t("settings.admin.users.loadFailed")}</span>
+                  <button
+                    type="button"
+                    class="cursor-pointer rounded-[6px] px-2 py-1 font-[500] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))] hover:bg-[#1a64d6]/15 "
+                    onClick={() => void refetch()}
+                  >
+                    {language.t("common.retry")}
+                  </button>
+                </Show>
               </div>
             }
           >

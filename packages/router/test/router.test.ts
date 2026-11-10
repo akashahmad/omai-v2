@@ -253,6 +253,43 @@ describe("Router", () => {
     expect(cp.calls.activity).toContain("p1")
   })
 
+  // A terminal opened with only a ticket is someone using the project once its server accepts the ticket, so typing
+  // only in a terminal keeps the VM awake. A ticket the server turns down never counts.
+  test("websockets on an accepted ticket are activity", async () => {
+    const ws = Bun.serve({
+      port: 0,
+      hostname: "127.0.0.1",
+      fetch: (req, server) =>
+        new URL(req.url).searchParams.get("ticket") === "good" && server.upgrade(req)
+          ? undefined
+          : new Response("bad ticket", { status: 401 }),
+      websocket: { message: (socket, message) => void socket.send(`echo ${message}`) },
+    })
+    cleanup.push(() => ws.stop(true))
+    const cp = await controlPlane()
+    cp.hosts.set("p1", `http://127.0.0.1:${ws.port}`)
+    const port = await nodeRouter(cp.url)
+    const path = "/api/experimental/persistent-pty/pty_1/connect"
+    const rejected = await new Promise<string>((resolve) => {
+      const socket = new WebSocket(`ws://127.0.0.1:${port}/vm/p1${path}?ticket=bad`)
+      socket.onerror = () => resolve("refused")
+      socket.onopen = () => resolve("open")
+    })
+    expect(rejected).toBe("refused")
+    await Bun.sleep(100)
+    expect(cp.calls.activity).toEqual([])
+    const socket = new WebSocket(`ws://127.0.0.1:${port}/vm/p1${path}?ticket=good`)
+    const reply = await new Promise<string>((resolve, reject) => {
+      socket.onopen = () => socket.send("ls")
+      socket.onmessage = (event) => resolve(String(event.data))
+      socket.onerror = () => reject(new Error("websocket error"))
+    })
+    socket.close()
+    expect(reply).toBe("echo ls")
+    await Bun.sleep(100)
+    expect(cp.calls.activity).toContain("p1")
+  })
+
   test("preflight without token", async () => {
     const s = await setup()
     const ok = await fetch(`${s.base}/vm/p1/api/session`, {

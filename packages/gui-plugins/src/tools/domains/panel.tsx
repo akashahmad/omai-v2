@@ -103,9 +103,104 @@ function Body(props: { view: DomainsView; onPublish: () => void }) {
           <Show when={view.subdomain()}>{(subdomain) => <Subdomain view={view} subdomain={subdomain()} />}</Show>
           <For each={view.domains()}>{(domain) => <DomainCard view={view} domain={domain} />}</For>
           <Add view={view} />
+          <DnsHelp />
         </Match>
       </Switch>
     </Show>
+  )
+}
+
+// Where each common registrar explains adding DNS records. The video link searches YouTube, so it never goes stale.
+const PROVIDERS = [
+  { name: "Cloudflare", guide: "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/" },
+  { name: "GoDaddy", guide: "https://www.godaddy.com/help/add-a-cname-record-19236" },
+  {
+    name: "Namecheap",
+    guide:
+      "https://www.namecheap.com/support/knowledgebase/article.aspx/9646/2237/how-to-create-a-cname-record-for-your-domain/",
+  },
+  { name: "Hostinger", guide: "https://www.hostinger.com/support/1583249-how-to-manage-dns-records-at-hostinger/" },
+  { name: "Bluehost", guide: "https://www.bluehost.com/help/article/dns-management-add-edit-or-delete-dns-entries" },
+  {
+    name: "Squarespace",
+    guide: "https://support.squarespace.com/hc/en-us/articles/360002101888-Edit-your-domain-s-DNS-records",
+  },
+  {
+    name: "IONOS",
+    guide:
+      "https://www.ionos.com/help/domains/configuring-cname-records-for-subdomains/configuring-a-cname-record-for-a-subdomain/",
+  },
+  { name: "Porkbun", guide: "https://kb.porkbun.com/article/68-how-to-edit-dns-records" },
+  { name: "Hover", guide: "https://support.hover.com/support/solutions/articles/201000064728" },
+  {
+    name: "AWS Route 53",
+    guide: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html",
+  },
+] as const
+
+const BASICS = [
+  { label: "domains.help.basics.dns", url: "https://www.cloudflare.com/learning/dns/what-is-dns/" },
+  { label: "domains.help.basics.cname", url: "https://www.cloudflare.com/learning/dns/dns-records/dns-cname-record/" },
+  { label: "domains.help.basics.txt", url: "https://www.cloudflare.com/learning/dns/dns-records/dns-txt-record/" },
+] as const
+
+const video = (provider: string) =>
+  `https://www.youtube.com/results?search_query=${encodeURIComponent(`${provider} add CNAME record`)}`
+
+/** For people new to DNS: where their registrar explains adding the records above, and what the records are. */
+function DnsHelp() {
+  const ctx = usePlugin()
+
+  const link =
+    "inline-flex items-center gap-1 cursor-pointer rounded-[6px] px-1.5 py-0.5 text-12-medium text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))] hover:bg-[#1a64d6]/15 "
+
+  return (
+    <section data-slot="domains-help" class={`${card} flex flex-col gap-4`}>
+      <div class="flex flex-col gap-1">
+        <span class="text-14-medium text-v2-text-text-base">{ctx.t("domains.help.title")}</span>
+        <span class="text-12-regular leading-[1.5] text-v2-text-text-muted">{ctx.t("domains.help.body")}</span>
+      </div>
+      <ul class="grid grid-cols-1 gap-2 @[480px]:grid-cols-2 @[760px]:grid-cols-3">
+        <For each={PROVIDERS}>
+          {(provider) => (
+            <li class="flex items-center justify-between gap-2 rounded-[10px] border border-v2-border-border-base px-3 py-2.5">
+              <span class="min-w-0 truncate text-13-medium text-v2-text-text-base">{provider.name}</span>
+              <span class="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  class={link}
+                  aria-label={ctx.t("domains.help.guideFor", { provider: provider.name })}
+                  onClick={() => ctx.system.openExternal(provider.guide)}
+                >
+                  <Icon name="square-arrow-top-right" size="small" />
+                  {ctx.t("domains.help.guide")}
+                </button>
+                <button
+                  type="button"
+                  class={link}
+                  aria-label={ctx.t("domains.help.videoFor", { provider: provider.name })}
+                  onClick={() => ctx.system.openExternal(video(provider.name))}
+                >
+                  <Icon name="outline-video" size="small" />
+                  {ctx.t("domains.help.video")}
+                </button>
+              </span>
+            </li>
+          )}
+        </For>
+      </ul>
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-v2-border-border-base pt-3">
+        <span class="text-12-regular text-v2-text-text-muted">{ctx.t("domains.help.basics")}</span>
+        <For each={BASICS}>
+          {(item) => (
+            <button type="button" class={link} onClick={() => ctx.system.openExternal(item.url)}>
+              {ctx.t(item.label)}
+              <Icon name="square-arrow-top-right" size="small" />
+            </button>
+          )}
+        </For>
+      </div>
+    </section>
   )
 }
 

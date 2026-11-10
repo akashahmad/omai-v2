@@ -33,6 +33,7 @@ import { createMountedSession } from "@/runtime/plugin/mounted-session"
 import { SessionErrorFallback } from "./route-error"
 import { createSessionScreenLayout } from "./screen-layout"
 import { PaneTabs, SideRegion } from "@/runtime/plugin/side-region"
+import { usePreviewQuestionHost } from "@/session/requests/preview-question"
 import { createPaneDrag } from "@/runtime/plugin/pane-drag"
 import { useLanguage } from "@/runtime/i18n/language"
 import { IconButton } from "@opencode/ui/icon-button"
@@ -106,6 +107,27 @@ function SessionScreenContent(props: {
 
   onCleanup(attachment.region(region))
   const mobile = createMobileViews()
+  const [paneRow, setPaneRow] = createSignal<HTMLElement>()
+
+  // The agent's questions show in the preview panel: it opens, shows the preview and widens while one waits. Hosted
+  // here rather than in the side region, which mounts only once the panel first opens.
+  usePreviewQuestionHost({
+    preview: () =>
+      isDesktop() && session.identity.params.id
+        ? [...region.pane("side").keys(), ...region.pane("split").keys()].find(
+            (key) => region.entry(key)?.tab.section === "preview",
+          )
+        : undefined,
+    opened: () => session.layout.view().side.opened(),
+    open: () => session.layout.view().side.toggle(),
+    select: (key) => region.select(key),
+    row: paneRow,
+    session: {
+      width: () => session.layout.view().session.width(),
+      resized: () => session.layout.view().session.resized(),
+      resize: (width) => session.layout.view().session.resize(width),
+    },
+  })
 
   const bottomTabs = createMemo(() => region.pane("bottom").keys().length > 0)
   const bottomOpen = createMemo(() => bottomTabs() && session.layout.view().bottom.opened())
@@ -520,7 +542,10 @@ function SessionScreenContent(props: {
       <div class="flex-1 min-h-0 flex flex-col gap-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
         <div class="flex flex-1 min-h-0">
           <div
-            ref={screen.panel.ref}
+            ref={(element) => {
+              screen.panel.ref(element)
+              setPaneRow(element)
+            }}
             data-pane-row
             class="relative flex-1 min-w-0 min-h-0 flex flex-col md:flex-row gap-1"
           >
@@ -529,7 +554,10 @@ function SessionScreenContent(props: {
               <div
                 class="absolute end-3 top-0 z-30 flex items-center"
                 // Centered on the header under it: the right panel's 40px toolbar when open, else the chat's 48px header.
-                classList={{ "h-10": session.layout.view().side.opened(), "h-12": !session.layout.view().side.opened() }}
+                classList={{
+                  "h-10": session.layout.view().side.opened(),
+                  "h-12": !session.layout.view().side.opened(),
+                }}
                 data-slot="session-review-toggle"
                 onPointerDown={hideTimelineScrollbar}
                 onClick={hideTimelineScrollbar}

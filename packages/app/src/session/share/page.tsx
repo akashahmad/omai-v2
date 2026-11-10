@@ -47,7 +47,7 @@ export function SharePage() {
             O M A I <span class="text-[#1a64d6]">+</span>
           </span>
         </a>
-        <span class="rounded-full bg-[#1a64d6]/15 px-2.5 py-1 text-[12px] font-[500] text-[#0a3a78] dark:text-[#7fb0ff]">
+        <span class="rounded-full bg-[#1a64d6]/15 px-2.5 py-1 text-[12px] font-[500] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))]">
           {language.t("share.page.badge")}
         </span>
       </header>

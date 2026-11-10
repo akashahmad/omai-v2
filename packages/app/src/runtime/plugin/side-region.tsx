@@ -33,7 +33,8 @@ import { createTabStripScroll } from "./tab-strip-scroll"
 import { closedTabsModifier, type ClosedSideTab } from "./closed-tabs"
 import { ClosedTabsSection, NewTabButton } from "./closed-tabs-view"
 import type { PaneDrag } from "./pane-drag"
-import { PreviewQuestion, usePreviewQuestionHost } from "@/session/requests/preview-question"
+import { PreviewQuestion } from "@/session/requests/preview-question"
+import { restrictions } from "@/controlplane/restrictions"
 
 const PANE_HEIGHT_MIN = 120
 
@@ -85,25 +86,6 @@ export function SideRegion(props: {
   )
 
   const lowerHeight = createMemo(() => Math.round(column.height * (1 - view().split.ratio())))
-
-  // The agent's questions show in the preview panel: it opens, shows the preview and widens while one waits.
-  usePreviewQuestionHost({
-    preview: () =>
-      isDesktop() && params.id
-        ? [...props.region.pane("side").keys(), ...props.region.pane("split").keys()].find(
-            (key) => props.region.entry(key)?.tab.section === "preview",
-          )
-        : undefined,
-    opened: () => view().side.opened(),
-    open: () => view().side.toggle(),
-    select: (key) => props.region.select(key),
-    row: () => root()?.closest<HTMLElement>("[data-pane-row]") ?? undefined,
-    session: {
-      width: () => view().session.width(),
-      resized: () => view().session.resized(),
-      resize: (width) => view().session.resize(width),
-    },
-  })
 
   guardClosingFocus({
     root,
@@ -312,6 +294,16 @@ export function PaneTabs(props: {
 
   const pill = () => props.actions === true
 
+  // A section shows only when it has something to open: a tab of its own, or for Code the file tree, unless an admin
+  // hid the file tree too. A section with nothing behind it would be a button that does nothing.
+  const sections = createMemo(() =>
+    SECTIONS.filter((item) =>
+      item.id === "code"
+        ? codeKeys().length > 0 || !restrictions.hidden("file")
+        : props.pane.keys().some((key) => sectionOf(key) === item.id),
+    ),
+  )
+
   return (
     <Tabs
       data-pane-content={props.pane.id}
@@ -337,6 +329,7 @@ export function PaneTabs(props: {
       <Show when={pill()}>
         <SidePanelHeader
           section={section()}
+          sections={sections()}
           onChoose={choose}
           view={props.view}
           screen={props.screen}
@@ -752,6 +745,8 @@ const SECTIONS: ReadonlyArray<{
  */
 function SidePanelHeader(props: {
   section: Section
+  /** The sections that have something to show, in the pill's order. */
+  sections: typeof SECTIONS
   onChoose: (section: Section) => void
   view: MountedSession
   screen: SessionScreen
@@ -762,7 +757,7 @@ function SidePanelHeader(props: {
   const language = useLanguage()
   const settings = useSettings()
   const expanded = () => settings.appearance.sidePanelExpanded()
-  const others = () => SECTIONS.filter((item) => item.id !== props.section)
+  const others = () => props.sections.filter((item) => item.id !== props.section)
 
   return (
     <div
@@ -787,7 +782,7 @@ function SidePanelHeader(props: {
           aria-label={language.t("session.side.sections")}
           class="flex-none flex gap-0.5 items-center p-0.5 rounded-full bg-v2-overlay-simple-overlay-hover"
         >
-          <For each={SECTIONS}>
+          <For each={props.sections}>
             {(item) => (
               <Tooltip value={language.t(item.label)} placement="bottom">
                 <button

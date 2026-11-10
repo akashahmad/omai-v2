@@ -34,7 +34,7 @@ ENV CHROME_PATH=/usr/bin/chromium
 RUN useradd --create-home --home-dir /home/omai --shell /bin/bash --uid 1000 omai
 
 COPY --from=builder /omai/ /opt/omai/
-RUN ln -s /opt/omai/bin/omai /usr/local/bin/omai && omai --version
+RUN ln -s /opt/omai/bin/omai /usr/local/bin/omai && omai --version && rm -rf /tmp/omai
 COPY docker/microvm/entrypoint.sh /usr/local/bin/omai-entrypoint
 
 EXPOSE 4096 4097

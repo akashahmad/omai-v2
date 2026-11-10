@@ -4,8 +4,7 @@ export default {
   "seo.name": "SEO",
 
   "seo.title": "Website audit",
-  "seo.description":
-    "Google Lighthouse scores and technical checks for the app in this project, or for any website.",
+  "seo.description": "Google Lighthouse scores and technical checks for the app in this project, or for any website.",
   "target.preview": "This project",
   "target.url": "Website",
   "url.label": "Website address",
@@ -81,7 +80,8 @@ export default {
   "severity.info": "Info",
 
   "check.status-error.title": "The page answers with an error",
-  "check.status-error.detail": "The server answered with HTTP {{status}}. Visitors and search engines see an error page.",
+  "check.status-error.detail":
+    "The server answered with HTTP {{status}}. Visitors and search engines see an error page.",
   "check.broken-links.title": "Broken internal links ({{count}})",
   "check.broken-links.detail": "Broken links: {{links}}",
   "check.slow-response.title": "Slow server response",
@@ -92,7 +92,8 @@ export default {
   "check.no-local-business.detail":
     "Structured location data can help search engines understand business and location details. Its absence alone does not prove a lower ranking.",
   "check.no-lang.title": "No page language set",
-  "check.no-lang.detail": "The html element has no lang attribute, so browsers and search engines must guess the language.",
+  "check.no-lang.detail":
+    "The html element has no lang attribute, so browsers and search engines must guess the language.",
   "check.no-structured-data.title": "Structured data missing (Schema.org; recommendation)",
   "check.no-structured-data.detail":
     "AI assistants and search engines can classify and cite content less well without structured data.",
@@ -106,7 +107,8 @@ export default {
   "check.no-favicon.title": "No favicon",
   "check.no-favicon.detail": "No icon appears in the browser tab and in bookmarks.",
   "check.no-theme-color.title": "No theme color (Design)",
-  "check.no-theme-color.detail": "The mobile browser bar is not shown in the brand color (meta theme-color is missing).",
+  "check.no-theme-color.detail":
+    "The mobile browser bar is not shown in the brand color (meta theme-color is missing).",
   "check.no-title.title": "No page title",
   "check.no-title.detail": "Search results and browser tabs have no title to show.",
   "check.no-description.title": "No meta description",
@@ -116,7 +118,8 @@ export default {
   "check.many-h1.title": "Several main headings (H1): {{count}}",
   "check.many-h1.detail": "One H1 per page is recommended so its main topic is clear.",
   "check.no-canonical.title": "No canonical link",
-  "check.no-canonical.detail": "A canonical link tells search engines which address is the original when content repeats.",
+  "check.no-canonical.detail":
+    "A canonical link tells search engines which address is the original when content repeats.",
   "check.no-https.title": "No HTTPS",
   "check.no-https.detail": "The page loads without encryption. Browsers mark it as not secure.",
   "check.no-hsts.title": "HSTS missing",
@@ -128,7 +131,8 @@ export default {
   "check.no-clickjacking.title": "No protection against clickjacking",
   "check.no-clickjacking.detail": "X-Frame-Options or CSP frame-ancestors is missing.",
   "check.certificate-expiring.title": "The certificate expires soon",
-  "check.certificate-expiring.detail": "The TLS certificate expires in {{days}} days. Renew it before visitors see warnings.",
+  "check.certificate-expiring.detail":
+    "The TLS certificate expires in {{days}} days. Renew it before visitors see warnings.",
   "check.mixed-content.title": "Insecure content on a secure page",
   "check.mixed-content.detail": "{{count}} resources load over plain HTTP, which browsers block or warn about.",
   "check.legacy-analytics.title": "Outdated Google Analytics (UA) included",
@@ -145,8 +149,7 @@ export default {
     "Can restrict access to browser features. Not on its own proof of a legal violation.",
 
   "optimize.title": "Fix with AI",
-  "optimize.description":
-    "The AI fixes them in this project's code, then the audit runs again to show what changed.",
+  "optimize.description": "The AI fixes them in this project's code, then the audit runs again to show what changed.",
   "optimize.all": "Fix all with AI",
   "optimize.fixOne": "Fix",
   "optimize.issueCount.one": "{{count}} finding",
@@ -252,7 +255,8 @@ export default {
   "pdf.notes.qa.technical": "Technical findings",
   "pdf.notes.qa.technical.body": "Reproduce the finding; document URL, time, test environment, tool and result.",
   "pdf.notes.qa.privacy": "Data protection",
-  "pdf.notes.qa.privacy.body": "Review the actual data processing, tracking, third parties and privacy notices separately.",
+  "pdf.notes.qa.privacy.body":
+    "Review the actual data processing, tracking, third parties and privacy notices separately.",
   "pdf.notes.qa.security": "Security",
   "pdf.notes.qa.security.body":
     "Where needed, carry out an authorized manual security test. Do not derive a security guarantee from an automated scan.",
@@ -592,6 +596,17 @@ export default {
   "domains.copy.failed": "This could not be copied.",
   "domains.apex.hint":
     "Root domains can't use a CNAME at most DNS providers. Use an ALIAS, ANAME or flattened CNAME record if yours offers one, and add the TXT record too: it proves the domain is yours, because a flattened record doesn't show where it points. DNS changes can take up to a few hours to show.",
+  "domains.help.title": "Need help with DNS?",
+  "domains.help.body":
+    "You add the records above where you bought your domain. Pick your provider for its step-by-step guide or a video walkthrough.",
+  "domains.help.guide": "Guide",
+  "domains.help.video": "Video",
+  "domains.help.guideFor": "{{provider}} guide to DNS records",
+  "domains.help.videoFor": "{{provider}} video walkthrough",
+  "domains.help.basics": "New to DNS?",
+  "domains.help.basics.dns": "What DNS is",
+  "domains.help.basics.cname": "CNAME records",
+  "domains.help.basics.txt": "TXT records",
   "domains.moving.title": "Moving from another host?",
   "domains.moving.body":
     "Add this TXT record first to verify the domain before you switch its DNS, so the site has a certificate the moment it moves.",

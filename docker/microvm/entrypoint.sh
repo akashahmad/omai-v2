@@ -6,6 +6,10 @@ home=/home/omai
 rm -rf "$home/lost+found"
 [ -f "$home/.bashrc" ] || cp -a /etc/skel/. "$home/"
 [ "$(stat -c %U "$home")" = omai ] || chown -R omai:omai "$home"
+# The server's temp folder (archives for downloads, generated images) must be the server's own: anything run as root
+# first, such as the image build's version check, leaves it owned by root and every write in it fails.
+mkdir -p /tmp/omai
+chown -R omai:omai /tmp/omai
 # setpriv replaces this shell, so the server is the container's main process and gets its stop signal.
 exec setpriv --reuid=omai --regid=omai --init-groups env HOME="$home" USER=omai LOGNAME=omai \
   omai serve --hostname 0.0.0.0 --port 4096 --cors "${OMAI_APP_ORIGIN:?OMAI_APP_ORIGIN is required}"

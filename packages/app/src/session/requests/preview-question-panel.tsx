@@ -261,7 +261,7 @@ export function PreviewQuestionPanel(props: { request: FormInfo; agent?: string 
               style={{ background: "linear-gradient(90deg, #0a3a78, transparent)" }}
             />
             <span
-              class="flex max-w-[160px] shrink-0 items-center gap-1.5 truncate rounded-[8px] border border-[#1a64d6]/25 px-3 py-1 text-[13px] font-[600] text-[#0a3a78] dark:text-[#7fb0ff]"
+              class="flex max-w-[160px] shrink-0 items-center gap-1.5 truncate rounded-[8px] border border-[#1a64d6]/25 px-3 py-1 text-[13px] font-[600] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))]"
               title={props.agent}
             >
               <svg viewBox="0 0 16 16" fill="none" class="size-3.5 shrink-0">

@@ -13,6 +13,7 @@ export default {
   "rename.unsupported": "Terminal renaming will be available after O M A I +'s terminal service restarts",
   disconnected: "Terminal disconnected",
   connectionFailed: "Terminal connection failed",
+  reconnecting: "Reconnecting to the terminal…",
   serverOutdated: "This server is too old for terminals; update O M A I + on it",
   "tab.title": "Terminal",
   "quote.actions": "Quote selection",

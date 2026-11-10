@@ -7,11 +7,12 @@ import { DEFAULT_SHARE } from "@/session/session-panel-width"
 import { sessionFormRequest } from "./session-request-tree"
 import { PreviewQuestionPanel } from "./preview-question-panel"
 
-// Whether the routed session's questions are answered in the preview panel. The composer then shows no question dock.
-const [host, setHost] = createSignal(false)
+// The mounted session screens whose preview panel answers questions. Kept sessions mount and unmount out of order, so
+// each counts itself rather than one shared flag that the last cleanup could clear.
+const [hosts, setHosts] = createSignal(0)
 
 /** Whether the preview panel answers the routed session's questions, so the composer need not. */
-export const questionsInPreview = host
+export const questionsInPreview = () => hosts() > 0
 
 // Bumped by the chat's note to bring a waiting question back to the front.
 const [shown, setShown] = createSignal(0)
@@ -36,8 +37,8 @@ export function usePendingQuestion() {
 
 /**
  * Brings the agent's questions to the preview panel, as the old app did: while a question waits, the side panel is
- * open, shows the preview, and is wide enough for it. Runs from the side region, which is mounted on desktop whether
- * the panel is open or not. Without a preview tab (a narrow window, no project, or hidden by an admin) the composer's
+ * open, shows the preview, and is wide enough for it. Runs from the session screen, so it can open a panel that has
+ * never been opened. Without a preview tab (a narrow window, no project, or hidden by an admin) the composer's
  * dock asks instead.
  */
 export function usePreviewQuestionHost(input: {
@@ -53,8 +54,9 @@ export function usePreviewQuestionHost(input: {
   const question = usePendingQuestion()
 
   createEffect(() => {
-    setHost(!!input.preview())
-    onCleanup(() => setHost(false))
+    if (!input.preview()) return
+    setHosts((count) => count + 1)
+    onCleanup(() => setHosts((count) => count - 1))
   })
 
   // The panel stays open while a question waits: closed, the question would have nowhere to show.
@@ -92,7 +94,7 @@ export function PreviewQuestionNotice() {
         <span>{language.t("session.question.waitingInPreview")}</span>
         <button
           type="button"
-          class="cursor-pointer rounded-[6px] px-1.5 py-0.5 font-[500] text-[#0a3a78] hover:bg-[#1a64d6]/15 dark:text-[#7fb0ff]"
+          class="cursor-pointer rounded-[6px] px-1.5 py-0.5 font-[500] text-[color-mix(in_srgb,#1a64d6_80%,var(--v2-text-text-base))] hover:bg-[#1a64d6]/15 "
           onClick={() => setShown((count) => count + 1)}
         >
           {language.t("session.question.showInPreview")}
