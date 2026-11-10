@@ -71,12 +71,15 @@ export function createHomeController() {
     void tabs.newDraft({ server: ServerConnection.key(conn), directory })
   }
 
-  /** `preview` opens the side panel, which shows the project's preview first; false closes it. */
+  /**
+   * `preview` opens the side panel, which shows the project's preview first; false closes it. `later` opens it after
+   * all when files turn up that the quick check was too early to see, e.g. on a VM that was still waking.
+   */
   function openProjectSession(
     conn: ServerConnection.Any,
     directory: string,
     session: SessionInfo,
-    options?: { preview?: boolean },
+    options?: { preview?: boolean; later?: Promise<boolean> },
   ) {
     const ctx = global.ensureServerCtx(conn)
     void ctx.data.session.message.sync(session.id).catch(() => undefined)
@@ -85,6 +88,11 @@ export function createHomeController() {
 
       // Opening a project decides the side panel both ways: the tab may be reused and still hold the last project's.
       if (options?.preview !== undefined) tabs.setRegion(tab, "side", options.preview)
+
+      if (options?.preview === false)
+        void options.later?.then((found) => {
+          if (found) tabs.setRegion(tab, "side", true)
+        })
       tabs.select(tab)
       ctx.data.session.remember(session)
       ctx.projects.touch(directory)

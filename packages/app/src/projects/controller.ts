@@ -3,7 +3,7 @@ import { createHomeController } from "@/home/model"
 import { multiUser } from "@/controlplane/client"
 import { createControlPlaneProjectsController } from "@/controlplane/projects-controller"
 import { createHomeProjectsController } from "@/home/projects/controller"
-import { hasProjectFiles } from "@/home/projects/has-files"
+import { checkProjectFiles } from "@/home/projects/has-files"
 import { useLanguage } from "@/runtime/i18n/language"
 import { errorMessage } from "@/shell/layout/helpers"
 import { showToast } from "@/shell/notifications/toast"
@@ -75,7 +75,7 @@ export function createProjectsController() {
 
     try {
       // Checked alongside the session lookup, so it adds no wait: a project with files opens with its preview.
-      const preview = hasProjectFiles(ctx, project.worktree)
+      const preview = checkProjectFiles(ctx, project.worktree)
 
       const page = await ctx.sdk.api.session.list({
         ...(project.id ? { project: project.id } : { directory: project.worktree }),
@@ -89,7 +89,10 @@ export function createProjectsController() {
         page.data[0] ??
         (await ctx.data.session.create({ location: { directory: project.worktree }, projectID: project.id }).request)
 
-      home.project.openProjectSession(conn, project.worktree, session, { preview: await preview })
+      home.project.openProjectSession(conn, project.worktree, session, {
+        preview: await preview.now,
+        later: preview.later,
+      })
     } catch (cause) {
       showToast({
         title: language.t("common.requestFailed"),

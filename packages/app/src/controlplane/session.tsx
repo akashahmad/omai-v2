@@ -8,6 +8,7 @@ import { requireServerKey } from "@/shell/routes/session"
 import { createIdleLogout } from "./idle"
 import { createPresence, projectOfConnection } from "./presence"
 import { applyRestrictions } from "./restrictions"
+import { setProjectTokenRefresh } from "./project-token"
 
 const IDLE_MS = Number(import.meta.env.VITE_OMAI_SESSION_IDLE_MS) || 900_000
 
@@ -72,6 +73,29 @@ function createSession(apiUrl: string) {
     })
 
     onCleanup(dispose)
+  })
+
+  // A project connection whose VM token stopped working gets a fresh one, while signed in.
+  createEffect(() => {
+    if (state.status !== "in") return
+
+    onCleanup(
+      setProjectTokenRefresh(async (url) => {
+        const projectID = projectOfConnection(url)
+
+        if (!projectID) return undefined
+        const opened = await client.projects.open(projectID)
+
+        if (opened === "not-ready") return undefined
+        const stored = servers.list.find((conn) => conn.type === "http" && conn.http.url === url)
+        const http = { url: opened.routerUrl, password: opened.token }
+
+        // The stored connection keeps the token too, for uploads and anything else that reads it.
+        if (stored?.type === "http") servers.add({ ...stored, http })
+
+        return http
+      }),
+    )
   })
 
   // The open project's VM stays awake while its tab is in use.

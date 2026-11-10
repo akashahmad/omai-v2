@@ -6,6 +6,8 @@ import { createApiForServer, type ServerApi } from "@/runtime/server/api"
 import { createMediaCache, type MediaCache } from "@/runtime/server/media"
 import { setMediaBlobLoader } from "@/runtime/persistence/drafts"
 import { usePlatform } from "@/runtime/platform/platform"
+import { multiUser } from "@/controlplane/client"
+import { projectReconnect } from "@/controlplane/project-token"
 import { ServerConnection } from "./registry"
 import { createRefCountMap } from "@/runtime/server/refcount"
 import { createRequestQueue } from "@/runtime/server/request-queue"
@@ -88,10 +90,17 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
   })
 
   const events = createOpenCodeEventSource()
-  const reconnect = resolveEndpoint(server)
+  const reconnect = resolveEndpoint(server, () => transport.http)
 
   const connection = createClientConnection(transport.api, {
-    reconnect: reconnect ? async (signal) => transport.update(await reconnect(signal)) : undefined,
+    // Rebuilds the client only for a new address or token, so a plain retry keeps the one it has.
+    reconnect: reconnect
+      ? async (signal) => {
+          const next = await reconnect(signal)
+
+          return sameEndpoint(next, transport.http) ? transport.api : transport.update(next)
+        }
+      : undefined,
     flushInterval: 16,
     pageLifecycle: true,
     onEvent(event) {
@@ -147,10 +156,14 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
  */
 function resolveEndpoint(
   server: ServerConnection.Any,
+  current: () => ServerConnection.HttpBase,
 ): ((signal: AbortSignal) => Promise<ServerConnection.HttpBase>) | undefined {
   if (server.type === "plugin") return (signal) => server.reconnect?.(signal) ?? Promise.resolve(server.http)
 
   if (server.type === "sidecar") return server.reconnect
+
+  // A multi-user project VM: a rejected token is replaced with a fresh one from the control plane.
+  if (server.type === "http" && multiUser()) return projectReconnect(current)
 
   return undefined
 }

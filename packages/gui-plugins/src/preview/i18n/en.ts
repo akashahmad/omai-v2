@@ -16,6 +16,7 @@ export default {
   more: "More preview options",
   "publish.button": "Publish",
   "publish.title": "Publish to Internet",
+  "frame.loading": "Loading the preview",
   "publish.loading": "Loading the publishing status …",
   "publish.dismiss": "Dismiss",
   "publish.notConfigured.title": "Publishing isn't set up",
@@ -116,7 +117,8 @@ export default {
   "visual.hint.move": "Move it up or down",
   "visual.hint.exit": "Exit visual editing",
   "visual.empty.title": "Select an element",
-  "visual.empty.body": "Click anything in the preview to change its text, colors, spacing or size. Double-click text to edit it in place.",
+  "visual.empty.body":
+    "Click anything in the preview to change its text, colors, spacing or size. Double-click text to edit it in place.",
   "visual.parent": "Select parent",
   "visual.ask": "Ask AI about this element",
   "visual.move.up": "Move up",
@@ -131,7 +133,8 @@ export default {
   "visual.section.effects": "Effects",
   "visual.text": "Text",
   "visual.text.hint": "⌘/Ctrl + Enter to apply",
-  "visual.text.mixed": "This element contains other elements. Double-click it in the preview to edit its text in place.",
+  "visual.text.mixed":
+    "This element contains other elements. Double-click it in the preview to edit its text in place.",
   "visual.link": "Link",
   "visual.image": "Image",
   "visual.image.replace": "Replace image",

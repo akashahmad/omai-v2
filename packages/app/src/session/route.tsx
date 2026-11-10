@@ -1,4 +1,4 @@
-import { ErrorBoundary, createEffect, createMemo, Show, type ParentProps } from "solid-js"
+import { ErrorBoundary, createEffect, createMemo, createSignal, onCleanup, Show, type ParentProps } from "solid-js"
 import { Title } from "@solidjs/meta"
 import { useParams } from "@solidjs/router"
 import { createStore } from "solid-js/store"
@@ -32,6 +32,8 @@ import { createSessionResolution } from "./session-resolution"
 import { SessionScreenView } from "./screen"
 import { PreparingComposer } from "./preparing-composer"
 import { BrandLoader } from "@/shell/brand-loader"
+import { multiUser } from "@/controlplane/client"
+import { projectOfConnection } from "@/controlplane/presence"
 
 export function TargetSessionRouteContent() {
   const params = useParams<{ serverKey: string; id: string }>()
@@ -142,6 +144,19 @@ function ResolvedTargetSessionRoute() {
     return !!health && !health.healthy && !health.checking && !health.unauthorized && !health.incompatible
   }
 
+  // A project VM that paused is unreachable while it starts again, which takes a while; the health check that keeps
+  // asking wakes it. Until it has been down for a few minutes that is starting, not an outage.
+  const project = () => !!multiUser() && server.conn.type === "http" && !!projectOfConnection(server.conn.http.url)
+  const [stuck, setStuck] = createSignal(false)
+
+  createEffect(() => {
+    if (!project() || !unreachable()) return setStuck(false)
+
+    const timer = setTimeout(() => setStuck(true), 180_000)
+
+    onCleanup(() => clearTimeout(timer))
+  })
+
   return (
     <Show
       when={!server.health?.incompatible}
@@ -158,7 +173,10 @@ function ResolvedTargetSessionRoute() {
         when={directory()}
         fallback={
           // Nothing is cached and an unreachable server never resolves the session, so explain instead of waiting blank.
-          <Show when={unreachable()} fallback={<PendingSessionState sessionID={params.id} />}>
+          <Show
+            when={unreachable() && (!project() || stuck())}
+            fallback={<PendingSessionState sessionID={params.id} starting={!!project() && unreachable()} />}
+          >
             <SessionStatePanel>
               <ServerUnavailablePanel
                 reason="unreachable"
@@ -180,11 +198,22 @@ function ResolvedTargetSessionRoute() {
   )
 }
 
-function PendingSessionState(props: { sessionID: string }) {
+function PendingSessionState(props: { sessionID: string; starting?: boolean }) {
+  const language = useLanguage()
+
   return (
     <SessionStatePanel>
       <SessionIdentityHeader sessionID={props.sessionID} />
-      <BrandLoader />
+      <div class="relative flex min-h-0 flex-1 flex-col">
+        <BrandLoader />
+        {/* Just under the centered icon, without moving it. */}
+        <Show when={props.starting}>
+          <div class="absolute start-1/2 top-[calc(50%+52px)] flex w-[min(340px,calc(100%-48px))] -translate-x-1/2 flex-col items-center gap-1 text-center rtl:translate-x-1/2">
+            <span class="text-[14px] font-[500] text-v2-text-text-base">{language.t("session.starting.title")}</span>
+            <span class="text-[12px] text-v2-text-text-muted">{language.t("session.starting.description")}</span>
+          </div>
+        </Show>
+      </div>
     </SessionStatePanel>
   )
 }

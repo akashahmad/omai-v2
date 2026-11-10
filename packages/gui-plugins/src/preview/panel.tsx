@@ -62,6 +62,21 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
     return { shown, height, viewport, scale, desktop }
   })
 
+  // The address whose first page has arrived in the frame. Reloads happen inside the frame and keep its address, so
+  // the loader shows only for a fresh load. A page that never reports loading is shown after a while anyway.
+  const [loaded, setLoaded] = createSignal<string>()
+  const [gaveUp, setGaveUp] = createSignal(false)
+
+  createKeyed(
+    () => (view.running() && view.state.src !== loaded() ? view.state.src : undefined),
+    () => {
+      setGaveUp(false)
+      const timer = setTimeout(() => setGaveUp(true), 20_000)
+
+      onCleanup(() => clearTimeout(timer))
+    },
+  )
+
   const editRecipe = () =>
     dialog.show(() => <RecipeDialog recipe={view.state.status.recipe} onSave={(recipe) => view.setRecipe(recipe)} />)
 
@@ -75,7 +90,7 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
             {(src) => (
               <div class="flex h-full items-center justify-center">
                 <div
-                  class="overflow-hidden"
+                  class="relative overflow-hidden"
                   classList={{
                     "rounded-[10px] border border-v2-border-border-base shadow-[var(--v2-elevation-raised)]":
                       !frame().desktop,
@@ -93,7 +108,36 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
                       transform: `scale(${frame().scale})`,
                     }}
                     allow="clipboard-read; clipboard-write; fullscreen"
+                    onLoad={() => setLoaded(src())}
                   />
+                  {/* Until the app's first page arrives the frame is blank white; the brand loader covers it. */}
+                  <Show when={loaded() !== src() && !gaveUp()}>
+                    <div class="absolute inset-0 flex items-center justify-center bg-v2-background-bg-base">
+                      <div
+                        data-component="brand-loader"
+                        role="status"
+                        aria-live="polite"
+                        aria-label={ctx.t("frame.loading")}
+                        class="flex items-center justify-center"
+                      >
+                        <span class="relative flex size-14 items-center justify-center">
+                          <span
+                            data-slot="brand-loader-halo"
+                            class="absolute inset-0 rounded-[14px] bg-[#0a3a78]/30"
+                            aria-hidden="true"
+                          />
+                          <span data-slot="brand-loader-icon" class="relative">
+                            <img
+                              src={LOGO}
+                              alt=""
+                              draggable={false}
+                              class="size-14 rounded-[14px] shadow-[0_8px_24px_rgb(10_58_120/0.25)]"
+                            />
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </Show>
                 </div>
               </div>
             )}

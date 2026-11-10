@@ -3,6 +3,8 @@ import { Accessor, batch, createEffect, createMemo, createResource, createRoot, 
 import { createServerProjects, ServerConnection, useServers } from "./registry"
 import { pathKey } from "@/workspaces/path-key"
 import { useServerHealth } from "@/runtime/server/health"
+import { multiUser } from "@/controlplane/client"
+import { refreshProjectToken } from "@/controlplane/project-token"
 import { createServerSdkContext } from "./client"
 import { createServerSyncContext } from "./sync"
 import { createData, createSessionRetention } from "@opencode/client/solid"
@@ -100,6 +102,17 @@ export const { use: useGlobal, provider: GlobalProvider } = createSimpleContext(
         const hostname = serverHealth.status[key]?.hostname
 
         if (hostname) server.setHostname(key, hostname)
+      }
+    })
+
+    // A project VM that turns our token away gets a fresh one from the control plane; its health check then passes
+    // with the stored token and the connection starts again. Without this it would stay unauthorized until a reload.
+    createEffect(() => {
+      if (!multiUser()) return
+
+      for (const conn of server.list) {
+        if (conn.type === "http" && serverHealth.status[ServerConnection.key(conn)]?.unauthorized)
+          void refreshProjectToken(conn.http.url)
       }
     })
 

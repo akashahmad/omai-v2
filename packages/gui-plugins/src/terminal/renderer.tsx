@@ -53,10 +53,17 @@ const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
     layout.open(key(id), session, layout.narrow() ? undefined : { tab: "select" })
   }
 
-  const create = (session: MountedSession, terminal: TerminalSession) =>
-    void terminal.new().then((id) => {
+  // The pane opens at once on a tab that says the terminal is starting; the real tab takes its place when the server
+  // has made it. Clicking again meanwhile shows the same starting tab rather than making another terminal.
+  const create = (session: MountedSession, terminal: TerminalSession) => {
+    const running = terminal.new()
+    const starting = terminal.creating()
+
+    if (starting) layout.open(key(starting), session, layout.narrow() ? undefined : { tab: "select" })
+    void running.then((id) => {
       if (id && !ctx.signal.aborted) show(session, terminal, id)
     })
+  }
 
   ctx.add(BuiltinSlot, {
     at: "session.location.branch.menu",
@@ -185,6 +192,16 @@ const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
     },
   )
 
+  // The tab of a terminal the server is still creating: it opens the pane at once, then gives way to the real one.
+  const startingTab = (id: string): PanelTab => ({
+    id,
+    get title() {
+      return ctx.t("starting")
+    },
+    group: "terminal",
+    label: () => <span class="truncate text-[12px] text-v2-text-text-muted">{ctx.t("starting")}</span>,
+  })
+
   const tab = (session: SessionRef, id: string): PanelTab => {
     const terminal = () => model.load(session)
     const info = () => terminal().get(id)
@@ -231,7 +248,11 @@ const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
     // restore keeps them.
     list: (input) => {
       const terminal = model.load(input.session)
-      const ids = [...new Set([...input.open, ...terminal.all().map((info) => info.id)])]
+      const starting = terminal.creating()
+
+      const ids = [
+        ...new Set([...input.open, ...terminal.all().map((info) => info.id), ...(starting ? [starting] : [])]),
+      ]
 
       if (ids.length === 0) return []
 
@@ -239,6 +260,14 @@ const setup: Plugin.Setup<typeof Terminal> = (ctx) => {
       tabs.set(input.session.key, cache)
 
       return ids.flatMap((id) => {
+        if (id === starting) {
+          const existing = cache.get(id) ?? startingTab(id)
+
+          cache.set(id, existing)
+
+          return [existing]
+        }
+
         if (terminal.ready() && !terminal.get(id)) {
           cache.delete(id)
 

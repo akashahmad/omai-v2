@@ -7,12 +7,15 @@ import { useLanguage } from "@/runtime/i18n/language"
 import type { LocalProject } from "@/shell/state/layout"
 import { ServerConnection } from "@/runtime/server/registry"
 import { showToast } from "@/shell/notifications/toast"
+import { useControlPlaneOptional } from "@/controlplane/session"
+import { projectOfConnection } from "@/controlplane/presence"
 
 type ProjectPatch = Pick<ProjectUpdateInput, "name" | "icon">
 
 export function createEditProjectModel(props: { project: LocalProject; server: ServerConnection.Any }) {
   const language = useLanguage()
   const global = useGlobal()
+  const session = useControlPlaneOptional()
   const serverCtx = createMemo(() => global.ensureServerCtx(props.server))
   const folderName = createMemo(() => getFilename(props.project.worktree))
   const defaultName = createMemo(() => props.project.name || folderName())
@@ -66,7 +69,26 @@ export function createEditProjectModel(props: { project: LocalProject; server: S
     if (!store.saving && value === saved.name) return
     persist({ name: value }, () => {
       saved.name = value
+      renameOnControlPlane(value || folderName())
     })
+  }
+
+  // In multi-user mode the projects list reads its names from the control plane, so it is told too.
+  const renameOnControlPlane = (name: string) => {
+    const projectID = session && props.server.type === "http" ? projectOfConnection(props.server.http.url) : undefined
+
+    if (!session || !projectID) return
+    void session.client.projects.rename(projectID, name).then(
+      (result) => {
+        if (result === "exists" || result === "invalid")
+          showToast({
+            variant: "error",
+            title: language.t("common.requestFailed"),
+            description: language.t(result === "exists" ? "cp.create.exists" : "cp.create.invalid"),
+          })
+      },
+      () => undefined,
+    )
   }
 
   const saveIcon = (color = store.color, override = store.iconOverride) => {

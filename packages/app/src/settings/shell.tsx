@@ -248,11 +248,7 @@ function RootSettings() {
   const shown = (value: string) => !restrictions.hidden(`settings:${value}`)
 
   const groups = createMemo<SettingsNavGroup[]>(() => [
-    {
-      label: language.t("settings.group.workspace"),
-      items: serverTabs.flatMap((item) => (shown(item.value) ? [{ ...item, label: language.t(item.label) }] : [])),
-    },
-    // Multi-user admins: the providers and models O M A I + offers everyone.
+    // Multi-user admins first: the providers and models O M A I + offers everyone, and the users they manage.
     ...(platform.tabs().length > 0
       ? [
           {
@@ -263,6 +259,10 @@ function RootSettings() {
           },
         ]
       : []),
+    {
+      label: language.t("settings.group.workspace"),
+      items: serverTabs.flatMap((item) => (shown(item.value) ? [{ ...item, label: language.t(item.label) }] : [])),
+    },
     {
       label: language.t("settings.group.personal"),
       items: [

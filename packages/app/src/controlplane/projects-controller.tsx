@@ -7,9 +7,11 @@ import { createMemo, createResource, createSignal, onCleanup, Show } from "solid
 import { createStore } from "solid-js/store"
 import { createHomeController } from "@/home/model"
 import { addProjects } from "@/home/projects/add"
-import { hasProjectFiles } from "@/home/projects/has-files"
+import { checkProjectFiles } from "@/home/projects/has-files"
 import { useLanguage } from "@/runtime/i18n/language"
-import { useServers } from "@/runtime/server/registry"
+import { ServerConnection, useServers } from "@/runtime/server/registry"
+import { useSettingsSurface } from "@/settings/surface"
+import { projectOfConnection } from "./presence"
 import { useGlobal } from "@/runtime/server/runtime"
 import { errorMessage } from "@/shell/layout/helpers"
 import { showToast } from "@/shell/notifications/toast"
@@ -26,6 +28,7 @@ export function createControlPlaneProjectsController() {
   const session = useControlPlane()
   const language = useLanguage()
   const servers = useServers()
+  const settings = useSettingsSurface()
   const global = useGlobal()
   const home = createHomeController()
   const dialog = useDialog()
@@ -94,7 +97,7 @@ export function createControlPlaneProjectsController() {
           openDirectory: async (conn, directory) => {
             const ctx = global.ensureServerCtx(conn)
             // Checked alongside the session lookup, so it adds no wait: a project with files opens with its preview.
-            const preview = hasProjectFiles(ctx, directory)
+            const preview = checkProjectFiles(ctx, directory)
             const added = await addProjects(ctx, [directory])
 
             const page = await ctx.sdk.api.session.list({
@@ -108,7 +111,10 @@ export function createControlPlaneProjectsController() {
             const latest =
               page.data[0] ?? (await ctx.data.session.create({ location: { directory }, projectID: added?.id }).request)
 
-            home.project.openProjectSession(conn, added?.worktree ?? directory, latest, { preview: await preview })
+            home.project.openProjectSession(conn, added?.worktree ?? directory, latest, {
+              preview: await preview.now,
+              later: preview.later,
+            })
           },
         }),
       )
@@ -141,13 +147,38 @@ export function createControlPlaneProjectsController() {
           onReady={(created) => void open(toLocal(created))}
         />
       )),
+    // Edit opens the project's settings, as for a local project. They live on its VM, so a project this browser has
+    // not opened yet is opened first (which starts a paused VM); its settings show once it answers.
     edit: (project: LocalProject) => {
       const found = project.id ? byID().get(project.id) : undefined
 
-      if (found)
-        void dialog.show(() => (
-          <RenameProjectDialog client={session.client} project={found} onRenamed={() => void refetch()} />
-        ))
+      if (!found) return
+      const known = servers.list.find((conn) => conn.type === "http" && projectOfConnection(conn.http.url) === found.id)
+
+      if (known) return settings.openProject({ server: ServerConnection.key(known), project: toLocal(found).worktree })
+      void session.client.projects
+        .open(found.id)
+        .then((opened) => {
+          if (opened === "not-ready") {
+            showToast({ title: language.t("cp.projects.starting") })
+
+            return
+          }
+
+          const conn = servers.add({
+            type: "http",
+            http: { url: opened.routerUrl, password: opened.token },
+            displayName: found.name,
+          })
+
+          if (conn) settings.openProject({ server: ServerConnection.key(conn), project: opened.directory })
+        })
+        .catch((cause: unknown) =>
+          showToast({
+            title: language.t("common.requestFailed"),
+            description: errorMessage(cause, language.t("common.requestFailed")),
+          }),
+        )
     },
     remove: (project: LocalProject) => {
       if (!project.id) return
@@ -409,66 +440,6 @@ function CreateProjectDialog(props: {
                 <Loader width={14} height={14} style={{ color: "inherit" }} />
               </Show>
               {language.t("cp.create.submit")}
-            </button>
-          </div>
-        </form>
-      </DialogBody>
-    </Dialog>
-  )
-}
-
-function RenameProjectDialog(props: { client: Client; project: ProjectView; onRenamed: () => void }) {
-  const dialog = useDialog()
-  const language = useLanguage()
-  const [state, setState] = createStore({ name: props.project.name, error: undefined as string | undefined })
-
-  const submit = async (event: SubmitEvent) => {
-    event.preventDefault()
-    const result = await props.client.projects.rename(props.project.id, state.name)
-
-    if (result === "exists") return setState("error", language.t("cp.create.exists"))
-
-    if (result === "invalid") return setState("error", language.t("cp.create.invalid"))
-    dialog.close()
-    props.onRenamed()
-  }
-
-  return (
-    <Dialog class="w-[420px]" fit>
-      <DialogHeader>
-        <DialogTitleGroup title={language.t("cp.projects.rename.title")} />
-      </DialogHeader>
-      <DialogBody>
-        <form class="flex flex-col gap-4 px-5 pb-5" onSubmit={(event) => void submit(event)}>
-          <label class="flex flex-col gap-1.5">
-            <span class="text-[11px] text-v2-text-text-muted">{language.t("cp.create.name")}</span>
-            <span class={FIELD}>
-              <input
-                autofocus
-                maxLength={64}
-                class="h-9 min-w-0 flex-1 bg-transparent px-3 text-[13px] text-v2-text-text-base outline-none"
-                value={state.name}
-                onInput={(event) => setState("name", event.currentTarget.value)}
-              />
-            </span>
-          </label>
-          <Show when={state.error}>
-            {(text) => (
-              <p
-                role="alert"
-                class="flex items-start gap-2 rounded-lg bg-v2-state-bg-danger p-2.5 text-[12px] text-v2-state-fg-danger"
-              >
-                <Icon name="circle-exclamation" size="small" class="mt-px shrink-0" />
-                {text()}
-              </p>
-            )}
-          </Show>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" class={SECONDARY} onClick={() => dialog.close()}>
-              {language.t("common.cancel")}
-            </button>
-            <button type="submit" class={PRIMARY} disabled={!state.name.trim()}>
-              {language.t("common.save")}
             </button>
           </div>
         </form>

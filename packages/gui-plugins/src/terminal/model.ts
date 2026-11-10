@@ -1,5 +1,6 @@
 import { createRoot, getOwner, runWithOwner, type Owner } from "solid-js"
 import { createStore } from "solid-js/store"
+import { uuid } from "@opencode/util/uuid"
 import { Predicate, Schema } from "effect"
 import {
   ClientError,
@@ -53,7 +54,13 @@ export function createTerminalModel(input: {
     initial: { sessions: {} },
   })
 
-  const [state, setState] = createStore<{ capabilities: Record<string, boolean>; focus?: FocusRequest }>({
+  const [state, setState] = createStore<{
+    capabilities: Record<string, boolean>
+    focus?: FocusRequest
+    // Per session, the placeholder tab of a terminal the server is still creating.
+    creating: Record<string, string | undefined>
+  }>({
+    creating: {},
     capabilities: {},
   })
 
@@ -61,6 +68,8 @@ export function createTerminalModel(input: {
   const handles = new Map<string, ReturnType<typeof handle>>()
   const selected = new Map<string, Persisted<typeof Selected.Type>>()
   const sequence = new Map<string, number>()
+  // The terminal each session is creating: a second request joins it instead of creating another.
+  const inflight = new Map<string, Promise<string | undefined>>()
   const watched = new Map<string, { data: ServerRef["data"]; stop: VoidFunction }>()
   const cleared = new Set<string>()
   const cleanups: VoidFunction[] = []
@@ -227,7 +236,7 @@ export function createTerminalModel(input: {
       return !state.focus.id || state.focus.id === id
     }
 
-    return {
+    const methods = {
       key,
       server: () => session().server,
       /** The server answered this session's first terminal list. */
@@ -245,60 +254,86 @@ export function createTerminalModel(input: {
         selection(session()).set({ id })
       },
       refresh: () => refresh(session()),
-      /** Creates a terminal and selects it; resolves its id, or undefined when the server refuses. */
-      async new() {
-        const target = session()
-        const request = requestFocus(key, undefined, true)
+      /** The placeholder tab id while the server creates this session's terminal. */
+      creating: () => state.creating[key],
+      /**
+       * Creates a terminal and selects it; resolves its id, or undefined when the server refuses. While one is being
+       * created, asking again joins it, so repeated clicks on a slow server make one terminal, not several.
+       */
+      new() {
+        const running = inflight.get(key)
 
-        await settled(target, owner)
+        if (running) return running
 
-        // The next default title counts the terminals the server already has.
-        if (lists.sessions[key] === undefined) await refresh(target).catch(() => undefined)
+        setState("creating", key, `starting-${uuid()}`)
 
-        const used = new Set(all().flatMap((info) => titleNumber(info.title) ?? []))
-        const number = Array.from({ length: used.size + 1 }, (_, index) => index + 1).find((n) => !used.has(n)) ?? 1
+        const created = create().finally(() => {
+          inflight.delete(key)
+          setState("creating", key, undefined)
+        })
 
-        const info = await target.server.client.experimental.persistentPty
-          .create({
-            sessionID: target.id,
-            args: [],
-            // A session that moved keeps its object; the server's record has the directory it runs in now.
-            cwd: target.server.data.session.get(target.id)?.location.directory ?? target.location?.directory,
-            title: defaultTitle(number),
-            env: {},
-          })
-          .catch((error) => {
-            cancelFocus(request)
+        inflight.set(key, created)
 
-            // A server without the persistent terminal routes answers with a status its API never declares for them.
-            const outdated =
-              error instanceof ClientError &&
-              error.reason === "UnexpectedStatus" &&
-              Predicate.hasProperty(error.cause, "status") &&
-              (error.cause.status === 404 || error.cause.status === 405)
-
-            input.toast.show(
-              outdated
-                ? { variant: "error", title: input.t("create.unsupported") }
-                : {
-                    variant: "error",
-                    title: input.t("create.failed"),
-                    description: error instanceof Error ? error.message : String(error),
-                  },
-            )
-
-            return undefined
-          })
-
-        if (!info) return undefined
-
-        await listed(target)
-        selection(target).set({ id: info.id })
-
-        if (state.focus?.request === request) setState("focus", { key, request, id: info.id, pending: false })
-
-        return info.id
+        return created
       },
+    }
+
+    async function create() {
+      const target = session()
+      const request = requestFocus(key, undefined, true)
+
+      await settled(target, owner)
+
+      // The next default title counts the terminals the server already has.
+      if (lists.sessions[key] === undefined) await refresh(target).catch(() => undefined)
+
+      const used = new Set(all().flatMap((info) => titleNumber(info.title) ?? []))
+      const number = Array.from({ length: used.size + 1 }, (_, index) => index + 1).find((n) => !used.has(n)) ?? 1
+
+      const info = await target.server.client.experimental.persistentPty
+        .create({
+          sessionID: target.id,
+          args: [],
+          // A session that moved keeps its object; the server's record has the directory it runs in now.
+          cwd: target.server.data.session.get(target.id)?.location.directory ?? target.location?.directory,
+          title: defaultTitle(number),
+          env: {},
+        })
+        .catch((error) => {
+          cancelFocus(request)
+
+          // A server without the persistent terminal routes answers with a status its API never declares for them.
+          const outdated =
+            error instanceof ClientError &&
+            error.reason === "UnexpectedStatus" &&
+            Predicate.hasProperty(error.cause, "status") &&
+            (error.cause.status === 404 || error.cause.status === 405)
+
+          input.toast.show(
+            outdated
+              ? { variant: "error", title: input.t("create.unsupported") }
+              : {
+                  variant: "error",
+                  title: input.t("create.failed"),
+                  description: error instanceof Error ? error.message : String(error),
+                },
+          )
+
+          return undefined
+        })
+
+      if (!info) return undefined
+
+      await listed(target)
+      selection(target).set({ id: info.id })
+
+      if (state.focus?.request === request) setState("focus", { key, request, id: info.id, pending: false })
+
+      return info.id
+    }
+
+    return {
+      ...methods,
       /** Removes the terminal on the server; its tab leaves once the server lists it no longer. */
       async close(id: string) {
         const target = session()

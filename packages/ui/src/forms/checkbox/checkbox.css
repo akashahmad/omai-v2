@@ -4,7 +4,7 @@
   display: flex;
   align-items: var(--checkbox-align, center);
   gap: 12px;
-  cursor: default;
+  cursor: pointer;
 
   [data-slot="checkbox-checkbox-input"] {
     position: absolute;
@@ -89,22 +89,32 @@
     box-shadow: var(--shadow-xs-border-focus);
   }
 
+  /* Checked boxes are the brand blue with a white tick, in light and dark. */
   &[data-checked] [data-slot="checkbox-checkbox-control"],
   &[data-indeterminate] [data-slot="checkbox-checkbox-control"] {
-    border-color: var(--v2-border-border-strong);
-    background-color: var(--surface-weak);
+    border-color: #0a3a78;
+    background-color: #0a3a78;
   }
 
   &[data-checked]:hover:not([data-disabled], [data-readonly]) [data-slot="checkbox-checkbox-control"],
   &[data-indeterminate]:hover:not([data-disabled]) [data-slot="checkbox-checkbox-control"] {
-    border-color: var(--v2-border-border-strong);
-    background-color: var(--surface-hover);
+    border-color: #082f62;
+    background-color: #082f62;
   }
 
   &[data-checked] [data-slot="checkbox-checkbox-indicator"],
   &[data-indeterminate] [data-slot="checkbox-checkbox-indicator"] {
+    color: #fff;
     opacity: 1;
     transform: scale(1);
+  }
+
+  /* A disabled box that is checked stays readable as checked, only fainter. */
+  &[data-disabled][data-checked] [data-slot="checkbox-checkbox-control"],
+  &[data-disabled][data-indeterminate] [data-slot="checkbox-checkbox-control"] {
+    border-color: #0a3a78;
+    background-color: #0a3a78;
+    opacity: 0.5;
   }
 
   &[data-disabled] {

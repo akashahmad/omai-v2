@@ -3,6 +3,7 @@ import { createStore } from "solid-js/store"
 import { Tabs } from "@opencode/ui/tabs"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Icon } from "@opencode/ui/icon"
+import { Spinner } from "@opencode/ui/spinner"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Keybind } from "@opencode/ui/keybind"
 import { uuid } from "@opencode/util/uuid"
@@ -216,6 +217,12 @@ export default function TerminalPanel(props: {
           </div>
         }
       >
+        <Show when={!mobile() && props.tab() === terminal().creating()}>
+          <div role="status" class="flex flex-1 items-center justify-center gap-2 text-[13px] text-v2-text-text-muted">
+            <Spinner class="size-3.5 shrink-0" />
+            {plugin.t("starting")}
+          </div>
+        </Show>
         <Show when={mobile()} fallback={surfaces()}>
           <div class="h-[49px] shrink-0 flex border-b border-v2-border-border-base">
             <Tabs
