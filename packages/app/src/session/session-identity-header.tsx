@@ -274,7 +274,7 @@ export function SessionLocation(props: {
                 {projectName()}
               </bdi>
             </Menu.Item>
-            <Show when={worktree() || git()}>
+            <Show when={worktree()}>
               <Show when={props.context} fallback={workspace()}>
                 {(context) => (
                   <PluginSlot

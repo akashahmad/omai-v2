@@ -108,7 +108,10 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
                       transform: `scale(${frame().scale})`,
                     }}
                     allow="clipboard-read; clipboard-write; fullscreen"
-                    onLoad={() => setLoaded(src())}
+                    onLoad={() => {
+                      setLoaded(src())
+                      view.frameLoaded()
+                    }}
                   />
                   {/* Until the app's first page arrives the frame is blank white; the brand loader covers it. */}
                   <Show when={loaded() !== src() && !gaveUp()}>
@@ -141,6 +144,18 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
                 </div>
               </div>
             )}
+          </Match>
+          {/* Running, but the preview didn't answer: the brand icon, as for a project with nothing to show. */}
+          <Match when={view.running() && view.state.unreachable}>
+            <Centered>
+              <img src={LOGO} alt="" draggable={false} class="size-14 rounded-[12px]" />
+            </Centered>
+          </Match>
+          {/* Running, while the window waits for the preview to answer before loading the frame. */}
+          <Match when={view.running()}>
+            <Centered>
+              <img src={LOGO} alt="" draggable={false} class="size-16 rounded-[14px] opacity-30 animate-pulse" />
+            </Centered>
           </Match>
           <Match when={view.busy()}>
             <Centered>

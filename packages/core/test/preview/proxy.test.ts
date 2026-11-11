@@ -244,6 +244,34 @@ describe("proxy", () => {
     expect(res.headers["x-omai-starting"]).toBe("1")
   })
 
+  // The app and the loading page ask this before loading the preview: an error page from the network in between
+  // (Northflank's Envoy while a VM boots) has neither the answer nor the CORS header.
+  test("health answers anyone, cross-origin, with whether the dev server is up", async () => {
+    const app = await upstream(html("<p>app</p>"))
+    const target: { value: Upstream } = { value: { kind: "down" } }
+    const opened = await proxy({
+      upstream: () => target.value,
+      auth: { verify: () => false, exchange: () => undefined },
+    })
+    const down = await get(opened.port, "/__omai/health")
+    expect(down.status).toBe(200)
+    expect(down.headers["access-control-allow-origin"]).toBe("*")
+    expect(down.headers["cache-control"]).toBe("no-store")
+    expect(JSON.parse(down.body)).toEqual({ preview: "omai", up: false })
+    target.value = { kind: "port", port: app.port }
+    expect(JSON.parse((await get(opened.port, "/__omai/health")).body)).toEqual({ preview: "omai", up: true })
+  })
+
+  test("the starting page reloads only once the proxy itself says the app is up", async () => {
+    const opened = await proxy({ upstream: () => ({ kind: "down" }) })
+    const res = await get(opened.port, "/", { accept: "text/html" })
+    // Polling its own address would reload into whatever answers in between, like a load balancer's error page.
+    expect(res.body).toContain("/__omai/health")
+    expect(res.body).not.toContain("fetch(location.href")
+    // It reports itself to the window like any page of the preview, so the window knows it is the preview's.
+    expect(res.body).toContain('<script src="/__omai/bridge.js"></script>')
+  })
+
   test("serves the bridge script for the entered parent", async () => {
     const opened = await proxy({ upstream: () => ({ kind: "down" }) })
     const entered = await get(opened.port, "/__omai/enter?parent=http%3A%2F%2Flocalhost%3A4096&to=%2Fabout")

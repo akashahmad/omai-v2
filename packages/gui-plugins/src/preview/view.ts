@@ -6,7 +6,7 @@ import { createMemo, createRoot, createSignal, onCleanup, type Accessor, type Ow
 import { createStore, reconcile } from "solid-js/store"
 import { createKeyed, type MountedSession } from "@opencode/plugin/gui"
 import { Preview } from "@opencode/schema/preview"
-import { appendLog, enterURL, locationFrom, pagesFrom, previewOrigin } from "./model"
+import { appendLog, enterURL, leftFrom, locationFrom, pagesFrom, previewHealth, previewOrigin } from "./model"
 import { visualMessage, type ElementInfo } from "./visual/protocol"
 import { createVisual } from "./visual/session"
 
@@ -19,12 +19,23 @@ export const ZOOM_OPTIONS = [25, 50, 75, 100, 125, 150, 200] as const
 
 const WATCH_INTERVAL = 60_000
 
+/** How long a page in the frame has, after it loads, to report itself before the window asks the preview why. */
+const REPORT_GRACE = 2_500
+
+/** How long the window waits for the preview to answer before it loads the frame anyway. */
+const REACH_LIMIT = 20_000
+
+/** At most this many automatic reloads a minute; then the preview shows as unreachable. */
+const RECOVER_LIMIT = 3
+
 type State = {
   status: Preview.Status
   log: string
   path: string
   pages: string[]
   src?: string
+  /** The preview didn't answer: the panel shows the brand icon, and reload restarts the preview. */
+  unreachable: boolean
   device: Device
   zoom: number
   logs: boolean
@@ -64,6 +75,7 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     log: "",
     path: "/",
     pages: ["/"],
+    unreachable: false,
     device: "desktop",
     zoom: 100,
     logs: false,
@@ -139,25 +151,80 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     },
   )
 
-  // The frame enters the preview once per preview origin; restarts reload it from inside.
+  // Whether the page now in the frame reported itself, and the automatic reloads of the last minute.
+  const frameState = { reported: false, recoveries: new Array<number>(), check: setTimeout(() => {}, 0) }
+
+  onCleanup(() => clearTimeout(frameState.check))
+
+  // Each time the preview runs (and after a recovery), the frame enters it again, but only once the preview itself
+  // answers: until a VM's port is up, the load balancer in front of it answers with an error page that would stay in the
+  // frame. A preview that doesn't answer in time is shown as unreachable instead.
+  const [entry, setEntry] = createSignal(0)
   createKeyed(
-    () => (state.status.state === "running" ? origin() : undefined),
-    (current) => {
-      if (state.src?.startsWith(current)) return
-      const ticket = state.status.auth ? call(rpc().ticket({}, scope())).then((value) => value?.ticket) : undefined
-      void Promise.resolve(ticket).then((value) =>
-        setState("src", enterURL(current, { parent: window.location.origin, to: state.path, ticket: value })),
-      )
+    () => (state.status.state === "running" && origin() ? `${origin()}\u0000${entry()}` : undefined),
+    () => {
+      const current = origin()!
+      const controller = new AbortController()
+      onCleanup(() => controller.abort())
+      setState({ src: undefined, unreachable: false })
+      void enter(current, controller.signal)
     },
   )
+
+  const enter = async (current: string, signal: AbortSignal) => {
+    const reached = await reach(current, signal)
+
+    if (signal.aborted) return
+
+    if (!reached) return void setState("unreachable", true)
+    const ticket = state.status.auth ? await call(rpc().ticket({}, scope())).then((value) => value?.ticket) : undefined
+
+    if (signal.aborted) return
+    frameState.reported = false
+    setState("src", enterURL(current, { parent: window.location.origin, to: state.path, ticket }))
+  }
+
+  // Asks the preview until it answers, sooner when the browser comes back online; false after REACH_LIMIT.
+  const reach = async (current: string, signal: AbortSignal) => {
+    const deadline = Date.now() + REACH_LIMIT
+
+    for (let wait = 500; !signal.aborted && Date.now() < deadline; wait = Math.min(wait * 2, 3_000)) {
+      if (await previewHealth(current)) return true
+      await pause(wait, signal)
+    }
+
+    return false
+  }
+
+  // A page that loads without reporting itself isn't the preview's: an error page from the network in between, after
+  // the page reloaded while the VM paused or the connection dropped. The frame enters the preview again once it answers.
+  const frameLoaded = () => {
+    const current = origin()
+    clearTimeout(frameState.check)
+
+    if (!current || state.status.state !== "running") return
+    frameState.check = setTimeout(() => {
+      if (frameState.reported || origin() !== current || state.status.state !== "running") return
+      const now = Date.now()
+      frameState.recoveries = frameState.recoveries.filter((at) => now - at < 60_000)
+
+      // Reloading keeps landing on a page that isn't the preview's: show it as unreachable, never that page.
+      if (frameState.recoveries.length >= RECOVER_LIMIT) return void setState({ src: undefined, unreachable: true })
+      frameState.recoveries.push(now)
+      setEntry((value) => value + 1)
+    }, REPORT_GRACE)
+  }
 
   const onMessage = (event: MessageEvent) => {
     const current = origin()
 
     if (!current || event.source !== frame()?.contentWindow) return
+
+    if (leftFrom(event, current)) frameState.reported = false
     const location = locationFrom(event, current)
 
     if (location) {
+      frameState.reported = true
       setState("path", location.path)
       visual.pageLoaded()
     }
@@ -218,6 +285,8 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     running: () => state.status.state === "running",
     busy: () => ["detecting", "installing", "starting", "fixing"].includes(state.status.state),
     setFrame: (element: HTMLIFrameElement | undefined) => setFrame(element),
+    /** The frame finished loading a page, the first or any later one. */
+    frameLoaded,
     /** Marks the preview as on screen while the returned function isn't called; starts it the first time. */
     watch: () => {
       watchers++
@@ -236,7 +305,16 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     stop: () => void call(rpc().stop({}, scope())).then(apply),
     restart: () => void call(rpc().restart({}, scope())).then(apply),
     setRecipe: (recipe: Preview.Recipe | null) => void call(rpc().setRecipe({ recipe }, scope())).then(apply),
-    reload: () => navigate("reload"),
+    /** Reloads the page; an unreachable preview is restarted instead, and shown again once it answers. */
+    reload: () => {
+      if (!state.unreachable) return navigate("reload")
+      frameState.recoveries = []
+      setState("unreachable", false)
+      void call(rpc().restart({}, scope())).then((status) => {
+        apply(status)
+        setEntry((value) => value + 1)
+      })
+    },
     back: () => navigate("back"),
     forward: () => navigate("forward"),
     go: (path: string) => {
@@ -255,4 +333,21 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
   }
 
   return view
+}
+
+/** Waits `ms`, or less when the browser comes back online or the wait is no longer wanted. */
+function pause(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      clearTimeout(timer)
+      window.removeEventListener("online", done)
+      signal.removeEventListener("abort", done)
+      resolve()
+    }
+
+    const timer = setTimeout(done, ms)
+
+    window.addEventListener("online", done)
+    signal.addEventListener("abort", done)
+  })
 }

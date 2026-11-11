@@ -323,7 +323,7 @@ function CreateProjectDialog(props: {
               type="button"
               data-action="project-create-zip"
               disabled={!!state.busy}
-              class="group relative flex h-36 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-dashed px-6 text-center transition-colors disabled:cursor-default"
+              class="group relative flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-dashed px-6 py-6 text-center transition-colors disabled:cursor-default"
               classList={{
                 "border-[#1a64d6] bg-[#1a64d6]/[0.08]": state.over,
                 "border-v2-border-border-strong hover:border-[#1a64d6]/60 hover:bg-[#1a64d6]/[0.04]": !state.over,
@@ -357,7 +357,7 @@ function CreateProjectDialog(props: {
                     <span class="text-[13px] font-[500] text-v2-text-text-base">
                       {language.t("cp.create.dropTitle")}
                     </span>
-                    <span class="-mt-1 text-[12px] text-v2-text-text-muted">{language.t("cp.create.dropBody")}</span>
+                    <span class="-mt-1 max-w-[360px] text-[12px] leading-[18px] text-v2-text-text-muted">{language.t("cp.create.dropBody")}</span>
                     <span class="text-[11px] text-v2-text-text-faint">{language.t("cp.create.formats")}</span>
                   </>
                 }

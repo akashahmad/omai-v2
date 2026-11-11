@@ -21,6 +21,9 @@ export function bridgeScript(parentOrigin: string | undefined) {
       return result
     }
   }
+  // The window tells a page of the preview from an error page that replaced it (a VM pausing, a lost connection) by
+  // whether the next page reports itself after this one left.
+  window.addEventListener("pagehide", () => post({ type: "omai:leave" }))
   window.addEventListener("popstate", report)
   window.addEventListener("hashchange", report)
   window.addEventListener("load", report)

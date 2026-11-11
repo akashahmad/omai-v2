@@ -1,5 +1,6 @@
 // The page the preview shows while the dev server is not answering yet. It reloads itself once the app is up: on a
-// `reload` event from the proxy, or when polling finds a real page.
+// `reload` event from the proxy, or when the proxy's health says so. It never reloads on any other answer: while a VM
+// pauses or boots, the load balancer in front of it answers with its own error page, which would stay on screen.
 
 export const startingPage = `<!doctype html>
 <html>
@@ -17,12 +18,13 @@ export const startingPage = `<!doctype html>
 </head>
 <body>
 <img src="/__omai/logo" alt="">
+<script src="/__omai/bridge.js"></script>
 <script>
   const reload = () => location.reload()
   new EventSource("/__omai/events").addEventListener("reload", reload)
   setInterval(async () => {
-    const res = await fetch(location.href, { headers: { accept: "text/html" } }).catch(() => undefined)
-    if (res && !res.headers.get("x-omai-starting")) reload()
+    const health = await fetch("/__omai/health", { cache: "no-store" }).then((res) => res.json()).catch(() => undefined)
+    if (health && health.preview === "omai" && health.up) reload()
   }, 2000)
 </script>
 </body>

@@ -68,6 +68,14 @@ describe("bridge", () => {
     })
   })
 
+  // The window can tell a page of the preview from an error page that replaced it only if each page says it is going.
+  test("says when the page leaves", () => {
+    const view = page()
+    view.dispatch("pagehide", {})
+
+    expect(view.posted.at(-1)).toEqual({ message: { type: "omai:leave" }, origin: PARENT })
+  })
+
   test("reports the location after pushState", () => {
     const view = page()
     view.history.pushState({}, "", "/about")

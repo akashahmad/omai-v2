@@ -38,7 +38,6 @@ import { SettingsServerSwitcher } from "./servers/switcher"
 import { SettingsServerNone, SettingsServerUnavailable } from "./servers/unavailable"
 import { settingsServerReachable, useSettingsServers, useSettingsServersLoaded } from "./servers/inventory"
 import { SettingsExtensions } from "./providers/extensions"
-import { SettingsAbout } from "./about/about"
 import { SettingsUsers } from "./users/users"
 import { restrictions } from "@/controlplane/restrictions"
 import { SettingsServerDataScope } from "./server-scope"
@@ -76,7 +75,6 @@ const experimentalTab = [
   { value: "experimental", icon: pageIcons.experimental, label: "settings.tab.experimental" },
 ] as const
 
-const aboutTab = [{ value: "about", icon: pageIcons.about, label: "settings.tab.about" }] as const
 
 const nestedProjectTabs = [
   { value: "general", icon: "folder", label: "settings.general.section.general" },
@@ -291,7 +289,7 @@ function RootSettings() {
     },
     {
       label: language.t("settings.group.more"),
-      items: [...aboutTab.map((item) => ({ ...item, label: language.t(item.label) })), ...pluginTabs("about")],
+      items: pluginTabs("about"),
     },
   ])
 
@@ -318,9 +316,6 @@ function RootSettings() {
       <PluginSettingsPages />
       <Tabs.Content value="experimental" class="settings-panel">
         <SettingsExperimental />
-      </Tabs.Content>
-      <Tabs.Content value="about" class="settings-panel settings-about">
-        <SettingsAbout active={surface.view().tab === "about"} />
       </Tabs.Content>
       <Show
         when={reachable()}

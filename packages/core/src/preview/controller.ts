@@ -169,8 +169,17 @@ export function createController(input: ControllerInput): Controller {
     input.emit.log(chunk)
   }
 
-  const proxy = async () => {
-    if (state.proxy) return state.proxy
+  // One listener for the life of the controller: a start racing the one a VM opens up front joins it.
+  const opening: { current?: Promise<Proxy> } = {}
+  const proxy = () => {
+    opening.current ??= openListener().catch((error: unknown) => {
+      opening.current = undefined
+      throw error
+    })
+    return opening.current
+  }
+
+  const openListener = async () => {
     secret.value = await loadSecret(input.store)
     const saved = input.port ?? (await input.store.get("port"))
     const open = (port: number) =>
@@ -213,6 +222,10 @@ export function createController(input: ControllerInput): Controller {
 
     return opened
   }
+
+  // A VM publishes a fixed port, and while nothing listens on it the load balancer in front answers with its own error
+  // page. The listener opens with the preview, so the port answers with the starting page until the app is up.
+  if (input.port !== undefined) void proxy().catch(() => undefined)
 
   const tree = directoryTree(input.directory)
 
@@ -538,8 +551,10 @@ export function createController(input: ControllerInput): Controller {
       capture.stop()
       clearInterval(timer)
       await halt()
+      await opening.current?.catch(() => undefined)
       await state.proxy?.close()
       state.proxy = undefined
+      opening.current = undefined
     },
   }
 }

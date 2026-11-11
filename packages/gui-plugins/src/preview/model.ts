@@ -56,3 +56,35 @@ export function pagesFrom(event: { origin: string; data: unknown }, origin: stri
 
   return Option.getOrUndefined(decodePages(event.data))?.pages.slice()
 }
+
+const Health = Schema.Struct({ preview: Schema.Literal("omai"), up: Schema.Boolean })
+
+const decodeHealth = Schema.decodeUnknownOption(Health)
+
+/**
+ * The preview's own answer to whether it is there, or undefined when something else answers: while a VM boots or
+ * pauses, the load balancer in front of it answers with its own error page, which has neither this body nor the CORS
+ * header the read needs.
+ */
+export async function previewHealth(
+  origin: string,
+  fetcher: (url: string, init: RequestInit) => Promise<Response> = (url, init) => fetch(url, init),
+) {
+  const body = await fetcher(new URL("/__omai/health", origin).href, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(8_000),
+  })
+    .then((res) => (res.ok ? res.json() : undefined))
+    .catch(() => undefined)
+
+  const health = Option.getOrUndefined(decodeHealth(body))
+
+  return health ? { up: health.up } : undefined
+}
+
+const decodeLeave = Schema.decodeUnknownOption(Schema.Struct({ type: Schema.Literal("omai:leave") }))
+
+/** Whether a message from the frame says its page of the preview is leaving. */
+export function leftFrom(event: { origin: string; data: unknown }, origin: string) {
+  return event.origin === origin && Option.isSome(decodeLeave(event.data))
+}

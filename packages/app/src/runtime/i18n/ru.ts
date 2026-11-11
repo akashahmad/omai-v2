@@ -730,11 +730,6 @@ export const dict = {
   "titlebar.tabs": "Вкладки",
   "settings.tab.experimental": "Экспериментальный",
   "settings.experimental.description": "Попробуйте экспериментальные функции",
-  "settings.tab.about": "О нас",
-  "settings.about.version": "Версия {{version}}",
-  "settings.about.devVersion": "разработка",
-  "settings.about.description": "O M A I +, агент кодирования с открытым исходным кодом.",
-  "settings.about.typeset": "Набор в Inter и IBM Plex Mono",
   "project.settings.title": "Редактировать проект",
   "settings.timeline.title": "Хронология",
   "settings.timeline.detail": "Подробности временной шкалы",
@@ -1291,25 +1286,6 @@ export const dict = {
   "settings.plugins.part.tui": "TUI",
   "settings.plugins.parts.note":
     'Переключатели отключают только интерфейс плагина на компьютере. Добавьте "-<id>" в plugins в глобальном omai.json, чтобы отключить его серверную часть, либо "-" и ID его TUI-плагина в plugins в cli.json, чтобы отключить его часть TUI.',
-  "settings.about.copyVersionFailed": "Не удалось скопировать версию",
-  "settings.about.summary":
-    "ИИ-агент, который работает внутри ваших проектов. Он читает и редактирует ваш код, выполняет команды в терминале и проводит вас через каждое изменение, а сессии каждого проекта хранятся вместе, чтобы вы могли продолжить с того же места.",
-  "settings.about.notices.title": "Уведомления о стороннем ПО",
-  "settings.about.notices.description":
-    "O M A I + включает следующее программное обеспечение с открытым исходным кодом.",
-  "settings.about.notices.license": "Текст лицензии",
-  "settings.about.notices.fonts.title": "Шрифты в предпросмотре Office",
-  "settings.about.notices.fonts.description":
-    "Каждое семейство распространяется по лицензии SIL Open Font License 1.1 со строками об авторских правах ниже.",
-  "settings.about.notices.eigenpal": "Части BetterOffice основаны на нём.",
-  "settings.about.notices.loadFailed": "Не удалось загрузить уведомления о стороннем ПО",
-  "settings.about.notices.crates.title": "Rust-крейты в движках Office",
-  "settings.about.notices.crates.description":
-    "BetterOffice компилирует эти крейты в свои движки Word, Excel и PowerPoint. Если у крейта есть выбор лицензий, применяется выделенная лицензия.",
-  "settings.about.notices.crates.licenses": "Тексты лицензий",
-  "settings.about.notices.crates.count.one": "{{count}} крейт",
-  "settings.about.notices.crates.count.other": "Крейтов: {{count}}",
-  "settings.about.notices.crates.appliesTo": "Применяется к: {{names}}",
   "settings.general.row.interfaceMode.title": "Интерфейс",
   "settings.general.row.interfaceMode.top": "Вкладки сверху",
   "settings.general.row.interfaceMode.top.description": "Вкладки в стиле браузера в верхней части окна.",

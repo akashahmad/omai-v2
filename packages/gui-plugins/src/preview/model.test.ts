@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { appendLog, enterURL, locationFrom, pagesFrom, previewOrigin } from "./model"
+import { appendLog, enterURL, leftFrom, locationFrom, pagesFrom, previewHealth, previewOrigin } from "./model"
 
 describe("previewOrigin", () => {
   test("uses the server's host with the preview port", () => {
@@ -79,5 +79,48 @@ describe("pagesFrom", () => {
       pagesFrom({ origin: "https://evil.example", data: { type: "omai:pages", pages: ["/"] } }, origin),
     ).toBeUndefined()
     expect(pagesFrom({ origin, data: { type: "omai:pages", pages: [1] } }, origin)).toBeUndefined()
+  })
+})
+
+describe("previewHealth", () => {
+  const origin = "https://preview--vm.code.run"
+  const answer = (body: string, init: ResponseInit = {}) => async () => new Response(body, init)
+  const health = (up: boolean) => answer(JSON.stringify({ preview: "omai", up }))
+
+  test("reads the preview's own answer", async () => {
+    expect(await previewHealth(origin, health(true))).toEqual({ up: true })
+    expect(await previewHealth(origin, health(false))).toEqual({ up: false })
+  })
+
+  test("asks the health address, uncached", async () => {
+    const asked: Array<{ url: string; cache?: RequestCache }> = []
+    await previewHealth(origin, async (url, init) => {
+      asked.push({ url: String(url), cache: init?.cache })
+
+      return new Response(JSON.stringify({ preview: "omai", up: true }))
+    })
+    expect(asked).toEqual([{ url: `${origin}/__omai/health`, cache: "no-store" }])
+  })
+
+  // What answers while a VM boots or pauses: a load balancer's error page, or nothing at all.
+  test("anything else is unreachable", async () => {
+    expect(await previewHealth(origin, answer("upstream connect error", { status: 503 }))).toBeUndefined()
+    expect(await previewHealth(origin, async () => new Response("<html>"))).toBeUndefined()
+    expect(await previewHealth(origin, answer(JSON.stringify({ up: true })))).toBeUndefined()
+    expect(
+      await previewHealth(origin, async () => {
+        throw new TypeError("Failed to fetch")
+      }),
+    ).toBeUndefined()
+  })
+})
+
+describe("leftFrom", () => {
+  const origin = "http://127.0.0.1:5000"
+
+  test("reads a page leaving, from the preview only", () => {
+    expect(leftFrom({ origin, data: { type: "omai:leave" } }, origin)).toBe(true)
+    expect(leftFrom({ origin: "https://evil.example", data: { type: "omai:leave" } }, origin)).toBe(false)
+    expect(leftFrom({ origin, data: { type: "omai:location" } }, origin)).toBe(false)
   })
 })

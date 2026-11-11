@@ -84,6 +84,14 @@ function handle(input: ProxyInput, req: IncomingMessage, res: ServerResponse) {
 
   if (url.pathname === "/__omai/enter") return enter(input, req, url, res)
 
+  // Open to anyone and any origin, and saying only whether the app is up: the app and the starting page ask it before
+  // loading the preview, and an error page from the network in between answers neither this body nor this header.
+  if (url.pathname === "/__omai/health")
+    return send(res, 200, "application/json", JSON.stringify({ preview: "omai", up: input.upstream().kind === "port" }), {
+      "access-control-allow-origin": "*",
+      "cache-control": "no-store",
+    })
+
   if (input.auth && !input.auth.verify(cookie(req.headers, AUTH_COOKIE)))
     return send(res, 401, "text/plain", "Open this preview from O M A I +.")
 

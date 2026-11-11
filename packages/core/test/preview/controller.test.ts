@@ -255,6 +255,22 @@ describe("controller", () => {
     expect(store.values.get("port")).toBe(fixed + 1)
   }, 30_000)
 
+  // A VM's published port answers from the moment the preview exists, with the starting page, rather than leaving
+  // the network in front of it to answer with its own error while nothing listens.
+  test("a fixed port listens before the preview starts", async () => {
+    const dir = await project()
+    const { freePort } = await import("@opencode/core/preview/ports")
+    const fixed = await freePort()
+    start({ ...dir, port: fixed })
+    const answer: { body?: string } = {}
+    const deadline = Date.now() + 5_000
+    while (answer.body === undefined && Date.now() < deadline) {
+      answer.body = await get(fixed, "/__omai/health").catch(() => undefined)
+      await Bun.sleep(50)
+    }
+    expect(JSON.parse(answer.body ?? "null")).toEqual({ preview: "omai", up: false })
+  }, 30_000)
+
   test("the status carries the public origin once it is known", async () => {
     const dir = await project()
     const origin: { value?: string } = {}
