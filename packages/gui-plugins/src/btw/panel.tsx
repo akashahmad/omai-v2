@@ -41,7 +41,7 @@ export default function SessionBtwPanel(props: { btw: BtwModel; session: Mounted
     const models = props.session.server.data.location.model.list(ref)
 
     const found = models?.findLast(
-      (item) => item.providerID === model.providerID && item.id === model.id && item.status !== "deprecated",
+      (item) => item.providerID === model.providerID && item.id === model.id,
     )
 
     const name = found?.name ?? model.id

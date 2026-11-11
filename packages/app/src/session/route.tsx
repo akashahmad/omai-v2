@@ -32,6 +32,8 @@ import { createSessionResolution } from "./session-resolution"
 import { SessionScreenView } from "./screen"
 import { PreparingComposer } from "./preparing-composer"
 import { BrandLoader } from "@/shell/brand-loader"
+import { NetworkRecovery } from "@/shell/network-recovery"
+import { isNetworkError } from "@/runtime/network-error"
 import { multiUser } from "@/controlplane/client"
 import { projectOfConnection } from "@/controlplane/presence"
 
@@ -112,9 +114,15 @@ function TargetSessionSettingsCommand() {
 function SessionRouteErrorBoundary(props: ParentProps<{ sessionID?: string; serverKey?: ServerConnection.Key }>) {
   return (
     <ErrorBoundary
-      fallback={(error) => (
+      fallback={(error, reset) => (
         <SessionStatePanel>
-          <SessionErrorFallback error={error} sessionID={props.sessionID} serverKey={props.serverKey} />
+          {/* A request that failed in transit passes once the network is back: wait it out instead of an error. */}
+          <Show
+            when={isNetworkError(error)}
+            fallback={<SessionErrorFallback error={error} sessionID={props.sessionID} serverKey={props.serverKey} />}
+          >
+            <NetworkRecovery reset={reset} />
+          </Show>
         </SessionStatePanel>
       )}
     >

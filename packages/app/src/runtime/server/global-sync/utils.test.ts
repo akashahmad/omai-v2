@@ -82,7 +82,8 @@ describe("normalizeProviderList", () => {
 
     expect(result.connected).toEqual(["openai"])
     expect(result.default).toEqual({ openai: "gpt-5" })
-    expect(result.all.get("openai")?.models["gpt-old"]).toBeUndefined()
+    // Every model is listed, deprecated ones too; only the default prefers a current one.
+    expect(result.all.get("openai")?.models["gpt-old"]).toBeDefined()
     expect(result.all.get("openai")?.models["gpt-5"]).toMatchObject({
       id: "gpt-5",
       providerID: "openai",

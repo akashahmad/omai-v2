@@ -25,6 +25,8 @@ import type { SessionModel } from "@/session/model"
 import { SESSION_PANEL_WIDTH_MIN } from "@/session/session-panel-width"
 import { SessionPanelFrame } from "@/session/session-frame"
 import { BrandLoader } from "@/shell/brand-loader"
+import { NetworkRecovery } from "@/shell/network-recovery"
+import { isNetworkError } from "@/runtime/network-error"
 import { PluginLinks, PluginSlot } from "@/runtime/plugin/render"
 import { TimelineCover, useTimelineCover } from "@/runtime/plugin/timeline-cover"
 import { createPanelSidebar, createRegion, MobilePanel } from "@/runtime/plugin/panels"
@@ -308,6 +310,9 @@ function SessionScreenContent(props: {
 
   const sessionErrorFallback = (cause: unknown, reset: () => void) => {
     createEffect(on(session.identity.sessionKey, reset, { defer: true }))
+
+    // A request that failed in transit passes once the network is back: wait it out instead of an error.
+    if (isNetworkError(cause)) return <NetworkRecovery reset={reset} />
 
     return <SessionErrorFallback error={cause} sessionID={session.identity.params.id} />
   }

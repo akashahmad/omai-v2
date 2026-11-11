@@ -11,28 +11,11 @@ type Visibility = "show" | "hide"
 
 const RECENT_LIMIT = 5
 
-// luxon's diffNow().as("months") used an average month; keep the same window.
-const sixMonths = 6 * 30.436875 * 24 * 60 * 60 * 1000
-
 function modelKey(model: ModelKey) {
   return `${model.providerID}:${model.modelID}`
 }
 
 export const isFreeModel = (model: { cost?: { input: number } }) => model.cost?.input === 0
-
-// The newest release of each family per provider. A free model shares its family and release date with its paid twin,
-// so the two are grouped apart. A tie keeps the first model listed.
-export function latestModels<
-  T extends { id: string; provider: { id: string }; family?: string; release_date: string; cost?: { input: number } },
->(models: T[]) {
-  return [...Map.groupBy(models, (x) => x.provider.id).values()].flatMap((provider) =>
-    [...Map.groupBy(provider, (x) => `${x.family}:${isFreeModel(x)}`).values()].map((group) => {
-      const first = group.reduce((best, x) => (x.release_date > best.release_date ? x : best))
-
-      return { modelID: first.id, providerID: first.provider.id }
-    }),
-  )
-}
 
 export function uniqueModels(models: ModelKey[]) {
   const seen = new Set<string>()
@@ -74,29 +57,6 @@ const createModelsController = (
     ),
   )
 
-  // Release dates as epoch ms; an unparseable date is NaN and never counts as recent.
-  const release = createMemo(
-    () =>
-      new Map(
-        available().map(
-          (model) =>
-            [modelKey({ providerID: model.provider.id, modelID: model.id }), Date.parse(model.release_date)] as const,
-        ),
-      ),
-  )
-
-  const latest = createMemo(() =>
-    latestModels(
-      available().filter((x) => {
-        const released = release().get(modelKey({ providerID: x.provider.id, modelID: x.id })) ?? NaN
-
-        return Math.abs(Date.now() - released) < sixMonths
-      }),
-    ),
-  )
-
-  const latestSet = createMemo(() => new Set(latest().map((x) => modelKey(x))))
-
   const visibility = createMemo(() => {
     const map = new Map<string, Visibility>()
 
@@ -131,17 +91,9 @@ const createModelsController = (
     const decided = source()?.visible(model)
 
     if (decided !== undefined) return decided
-    const key = modelKey(model)
-    const state = visibility().get(key)
 
-    if (state === "hide") return false
-
-    if (state === "show") return true
-
-    if (latestSet().has(key)) return true
-
-    // Models without a parseable release date stay visible.
-    return !Number.isFinite(release().get(key) ?? NaN)
+    // Every model shows until its switch is turned off.
+    return visibility().get(modelKey(model)) !== "hide"
   }
 
   const setVisibility = (model: ModelKey, state: boolean) => {

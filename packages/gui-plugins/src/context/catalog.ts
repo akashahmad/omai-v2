@@ -60,7 +60,7 @@ export function catalogModel(session: MountedSession, model: { readonly provider
   return {
     provider,
     model: models.findLast(
-      (item) => item.providerID === model.providerID && item.id === model.id && item.status !== "deprecated",
+      (item) => item.providerID === model.providerID && item.id === model.id,
     ),
   }
 }

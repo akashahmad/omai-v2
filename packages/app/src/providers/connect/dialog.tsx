@@ -570,7 +570,7 @@ function ProviderConnection(props: {
     const ids = new Set(connectionProviders().map((provider) => provider.id))
 
     return (data.location.model.list(location()) ?? []).filter(
-      (model) => ids.has(model.providerID) && model.enabled && model.status !== "deprecated",
+      (model) => ids.has(model.providerID) && model.enabled,
     )
   })
 

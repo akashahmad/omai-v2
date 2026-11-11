@@ -35,14 +35,17 @@ export function createControlPlaneProjectsController() {
   const [opening, setOpening] = createSignal<string>()
   const [projects, { refetch }] = createResource(() => session.client.projects.list())
 
-  // A project still starting updates on its own.
+  const loaded = () => projects.state === "ready" || projects.state === "refreshing"
+
+  // A project still starting updates on its own, and a list that failed to load (a dropped connection) is asked for
+  // again. `latest` throws once the list failed, so it is only read while loaded.
   const timer = setInterval(() => {
-    if (projects.latest?.some((project) => project.vmState === "creating")) void refetch()
+    if (projects.state === "errored") return void refetch()
+
+    if (loaded() && projects.latest?.some((project) => project.vmState === "creating")) void refetch()
   }, 2000)
 
   onCleanup(() => clearInterval(timer))
-
-  const loaded = () => projects.state === "ready" || projects.state === "refreshing"
   const byID = createMemo(() => new Map((loaded() ? projects.latest : undefined)?.map((item) => [item.id, item]) ?? []))
   const list = createMemo(() => [...byID().values()].map(toLocal))
 

@@ -274,3 +274,108 @@ describe("createRequestQueue", () => {
     expect(input.logs).toHaveLength(2)
   })
 })
+
+// A read that fails in transit (the connection drops, a load balancer cuts it, the body stops halfway) is asked again,
+// so a moment's network trouble never reaches the screen. Writes are never sent twice.
+describe("createRequestQueue retries", () => {
+  const json = (body: string) => new Response(body, { headers: { "content-type": "application/json" } })
+
+  const cut = () =>
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"data":['))
+          controller.error(new TypeError("network error"))
+        },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+  function setup(answers: Array<() => Response | Promise<Response>>) {
+    const calls: string[] = []
+    const queue = createRequestQueue({
+      retryDelays: [0, 0, 0],
+      fetch: Object.assign(
+        async (resource: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(resource, init)
+          calls.push(request.method)
+
+          const answer = answers.shift()
+
+          if (!answer) throw new TypeError("Failed to fetch")
+
+          return answer()
+        },
+        { preconnect() {} },
+      ),
+    })
+
+    return { queue, calls }
+  }
+
+  test("a read whose connection fails is asked again", async () => {
+    const input = setup([
+      () => {
+        throw new TypeError("Failed to fetch")
+      },
+      () => json('{"ok":true}'),
+    ])
+
+    const response = await input.queue.fetch("http://server/api/session/s1/message")
+
+    expect(await response.json()).toEqual({ ok: true })
+    expect(input.calls).toEqual(["GET", "GET"])
+  })
+
+  test("a read whose body stops halfway is asked again", async () => {
+    const input = setup([cut, () => json('{"data":[]}')])
+    const response = await input.queue.fetch("http://server/api/session/s1/message")
+
+    expect(await response.json()).toEqual({ data: [] })
+    expect(input.calls).toEqual(["GET", "GET"])
+  })
+
+  test("gives up after the last retry with the network error", async () => {
+    const input = setup([])
+
+    await expect(input.queue.fetch("http://server/api/session")).rejects.toBeInstanceOf(TypeError)
+    expect(input.calls).toEqual(["GET", "GET", "GET", "GET"])
+  })
+
+  test("a write is never sent twice", async () => {
+    const input = setup([
+      () => {
+        throw new TypeError("Failed to fetch")
+      },
+    ])
+
+    await expect(input.queue.fetch("http://server/api/session", { method: "POST", body: "{}" })).rejects.toBeInstanceOf(
+      TypeError,
+    )
+    expect(input.calls).toEqual(["POST"])
+  })
+
+  test("an aborted read is not asked again", async () => {
+    const controller = new AbortController()
+
+    const input = setup([
+      () => {
+        controller.abort()
+        throw new DOMException("The operation was aborted.", "AbortError")
+      },
+    ])
+
+    await expect(input.queue.fetch("http://server/api/session", { signal: controller.signal })).rejects.toBeInstanceOf(
+      DOMException,
+    )
+    expect(input.calls).toEqual(["GET"])
+  })
+
+  test("other answers pass through untouched, errors and all", async () => {
+    const input = setup([() => new Response("nope", { status: 503 })])
+    const response = await input.queue.fetch("http://server/api/session")
+
+    expect(response.status).toBe(503)
+    expect(input.calls).toEqual(["GET"])
+  })
+})

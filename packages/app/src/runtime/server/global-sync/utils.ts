@@ -70,7 +70,8 @@ export function normalizeProviderList(
   for (const model of models ?? []) {
     const provider = all.get(model.providerID)
 
-    if (!provider || model.status === "deprecated") continue
+    // Every model is listed, deprecated ones too.
+    if (!provider) continue
     const cost = model.cost.find((item) => item.tier === undefined) ?? model.cost[0]
     provider.models[model.id] = {
       id: model.id,

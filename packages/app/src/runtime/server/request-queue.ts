@@ -25,6 +25,10 @@ const requestHeadersTimeoutMs = 60_000
 // kills the script midway and leaves a registered but half-initialised worktree behind.
 const setupRequestHeadersTimeoutMs = 10 * 60_000
 
+// A read that fails in transit is asked again after these waits: the connection dropped, a load balancer cut it
+// (while a VM wakes or a network blips), or its body stopped halfway. Writes are never sent twice.
+const retryDelaysMs = [500, 1_500, 3_000]
+
 function isSlowRequest(pathname: string) {
   return slowRequestPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
@@ -40,6 +44,7 @@ export function createRequestQueue(input: {
   stallMs?: number
   headersTimeoutMs?: number
   setupHeadersTimeoutMs?: number
+  retryDelays?: number[]
   log?: (message: string, data: Record<string, unknown>) => void
   now?: () => number
 }) {
@@ -48,6 +53,7 @@ export function createRequestQueue(input: {
   const stallMs = input.stallMs ?? requestStallMs
   const headersTimeoutMs = input.headersTimeoutMs ?? requestHeadersTimeoutMs
   const setupHeadersTimeoutMs = input.setupHeadersTimeoutMs ?? setupRequestHeadersTimeoutMs
+  const retryDelays = input.retryDelays ?? retryDelaysMs
   // Call the browser fetch unbound; `input.fetch(...)` would make `this` the options object.
   const base = input.fetch
   const now = input.now ?? Date.now
@@ -117,45 +123,90 @@ export function createRequestQueue(input: {
     })
   }
 
+  const once = async (resource: RequestInfo | URL, init?: RequestInit) => {
+    const request = new Request(resource, init)
+    const url = new URL(request.url)
+    const pathname = url.pathname
+
+    // The event stream is long-lived; never count it against the request budget.
+    if (pathname === "/api/event") return base(request)
+    // Writes go first. Session lists and the first transcript page unblock navigation, so they
+    // go ahead of location reads. Older pages and filtered indexes keep background priority.
+    const initialMessages =
+      /^\/api\/session\/[^/]+\/message$/.test(pathname) &&
+      !url.searchParams.has("cursor") &&
+      !url.searchParams.has("before") &&
+      !url.searchParams.has("type") &&
+      url.searchParams.get("order") !== "asc"
+
+    const priority = request.method !== "GET" ? 2 : pathname === "/api/session" || initialMessages ? 1 : 0
+    const entry = { method: request.method, url: request.url, at: now(), slow: isSlowRequest(pathname), priority }
+
+    const queued = acquire(entry)
+
+    if (queued) await queued
+
+    if (request.signal.aborted) {
+      release(entry)
+      throw request.signal.reason ?? new DOMException("The operation was aborted.", "AbortError")
+    }
+
+    const controller = new AbortController()
+    request.signal.addEventListener("abort", () => controller.abort(request.signal.reason), { once: true })
+
+    const timer = setTimeout(
+      () => controller.abort(new DOMException("Timed out waiting for the server to respond", "TimeoutError")),
+      isSetupRequest(request.method, pathname) ? setupHeadersTimeoutMs : headersTimeoutMs,
+    )
+
+    return base(new Request(request, { signal: controller.signal })).finally(() => {
+      clearTimeout(timer)
+      release(entry)
+    })
+  }
+
+  // A read is safe to send again. Its JSON body is read here, so a body cut off halfway is retried like a failed
+  // connection instead of failing whoever reads it; streams and files pass through as they arrive.
+  const read = async (resource: RequestInfo | URL, init?: RequestInit) => {
+    const response = await once(resource, init)
+
+    if (!response.headers.get("content-type")?.includes("json")) return response
+
+    // Browsers report a body that stopped as a TypeError, other runtimes otherwise; an abort stays an abort.
+    const body = await response.arrayBuffer().catch((error: Error) => {
+      if (error instanceof DOMException && (error.name === "AbortError" || error.name === "TimeoutError")) throw error
+      throw new TypeError("The response stopped halfway", { cause: error })
+    })
+
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    })
+  }
+
   const fetch: typeof globalThis.fetch = Object.assign(
     async (resource: RequestInfo | URL, init?: RequestInit) => {
       const request = new Request(resource, init)
-      const url = new URL(request.url)
-      const pathname = url.pathname
+      const method = request.method
 
-      // The event stream is long-lived; never count it against the request budget.
-      if (pathname === "/api/event") return base(request)
-      // Writes go first. Session lists and the first transcript page unblock navigation, so they
-      // go ahead of location reads. Older pages and filtered indexes keep background priority.
-      const initialMessages =
-        /^\/api\/session\/[^/]+\/message$/.test(pathname) &&
-        !url.searchParams.has("cursor") &&
-        !url.searchParams.has("before") &&
-        !url.searchParams.has("type") &&
-        url.searchParams.get("order") !== "asc"
-      const priority = request.method !== "GET" ? 2 : pathname === "/api/session" || initialMessages ? 1 : 0
-      const entry = { method: request.method, url: request.url, at: now(), slow: isSlowRequest(pathname), priority }
-      const queued = acquire(entry)
+      if ((method !== "GET" && method !== "HEAD") || new URL(request.url).pathname === "/api/event")
+        return once(resource, init)
 
-      if (queued) await queued
+      for (const delay of retryDelays) {
+        const result = await read(resource, init).then(
+          (response) => ({ response }),
+          (error: Error) => ({ error }),
+        )
 
-      if (request.signal.aborted) {
-        release(entry)
-        throw request.signal.reason ?? new DOMException("The operation was aborted.", "AbortError")
+        if ("response" in result) return result.response
+
+        // Only a failure in transit is worth another try: not an abort, a timeout or a caller's own error.
+        if (request.signal.aborted || !(result.error instanceof TypeError)) throw result.error
+        await new Promise((resolve) => setTimeout(resolve, delay))
       }
 
-      const controller = new AbortController()
-      request.signal.addEventListener("abort", () => controller.abort(request.signal.reason), { once: true })
-
-      const timer = setTimeout(
-        () => controller.abort(new DOMException("Timed out waiting for the server to respond", "TimeoutError")),
-        isSetupRequest(request.method, pathname) ? setupHeadersTimeoutMs : headersTimeoutMs,
-      )
-
-      return base(new Request(request, { signal: controller.signal })).finally(() => {
-        clearTimeout(timer)
-        release(entry)
-      })
+      return read(resource, init)
     },
     // Bun's fetch type carries preconnect; the browser never calls it.
     { preconnect: () => {} },

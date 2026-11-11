@@ -21,6 +21,8 @@ import { ServerConnection, ServersProvider } from "@/runtime/server/registry"
 import { SettingsProvider } from "@/settings/model"
 import { TabsProvider } from "@/shell/tabs/tabs"
 import { ErrorPage } from "@/shell/errors/error"
+import { NetworkRecovery } from "@/shell/network-recovery"
+import { isNetworkError } from "@/runtime/network-error"
 import { AppRoutes, File, preloadRoute } from "@/shell/routes/routes"
 import { PluginRoot } from "@/runtime/plugin/root"
 
@@ -69,7 +71,14 @@ export function AppBaseProviders(
         <LanguageProvider locale={props.locale} onNativeTranslations={props.onNativeTranslations}>
           <UiI18nBridge>
             <ErrorBoundary
-              fallback={(error) => {
+              fallback={(error, reset) => {
+                // A request that failed in transit passes once the network is back: wait it out, never an error page.
+                if (isNetworkError(error))
+                  return (
+                    <div class="flex h-dvh w-full flex-col bg-v2-background-bg-base">
+                      <NetworkRecovery reset={reset} />
+                    </div>
+                  )
                 void import("@sentry/solid").then(({ captureException }) => captureException(error))
 
                 return <ErrorPage error={error} />

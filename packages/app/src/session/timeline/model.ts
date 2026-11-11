@@ -8,6 +8,13 @@ const leadingTurnPageDelay = 200
 
 const leadingTurnPageLimit = 3
 
+/** Waits between tries to load a transcript: quick at first, then every 10 seconds for as long as it takes. */
+function* syncRetryDelays() {
+  yield* [1_000, 2_000, 4_000, 8_000]
+
+  while (true) yield 10_000
+}
+
 // The store preserves the transcript array across prepends and tab switches, and replaces it on eviction.
 // Remember the original turn so interrupted enrichment can resume without chasing newly prepended turns.
 const enrichmentTurns = new WeakMap<SessionMessageInfo[], string>()
@@ -20,7 +27,19 @@ export function createTimelineModel(input: { session: Pick<SessionModel, "identi
     async (id) => {
       if (!id) return
       const owner = input.session.ownership.capture()
-      await Promise.all([data.session.message.sync(id), data.session.pending.sync(id)])
+
+      // Never fails: an error here would reach the app's error screen. While the server can't be reached (a VM that is
+      // waking, a dropped connection) the loader stays up and the transcript is asked for again until it arrives.
+      for (const wait of syncRetryDelays()) {
+        const loaded = await Promise.all([data.session.message.sync(id), data.session.pending.sync(id)]).then(
+          () => true,
+          () => false,
+        )
+
+        if (loaded || !owner.current()) break
+        await new Promise((resolve) => setTimeout(resolve, wait))
+      }
+
       await enrichLeadingTurn({
         current: owner.current,
         messages: () => data.session.message.list(id),

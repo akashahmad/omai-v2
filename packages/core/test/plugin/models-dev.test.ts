@@ -624,7 +624,7 @@ describe("ModelsDevPlugin", () => {
     }),
   )
 
-  it.effect("omits deprecated and non-text model definitions", () =>
+  it.effect("keeps deprecated models and omits non-text model definitions", () =>
     Effect.gen(function* () {
       const integrations = yield* Integration.Service
       const providers = yield* Provider.Service
@@ -700,7 +700,8 @@ describe("ModelsDevPlugin", () => {
 
       yield* activate(providers)
       expect(yield* modelState.get(providerID, activeID)).toBeDefined()
-      expect(yield* modelState.get(providerID, deprecatedID)).toBeUndefined()
+      // Every model the catalog lists is offered, deprecated ones too.
+      expect(yield* modelState.get(providerID, deprecatedID)).toBeDefined()
       expect(yield* modelState.get(providerID, videoID)).toBeUndefined()
       expect(yield* modelState.get(providerID, sttID)).toBeUndefined()
     }),
