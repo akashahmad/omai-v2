@@ -259,6 +259,7 @@ const pre = [
   CommandPlugin.Plugin,
   GoalPlugin.Plugin,
   PreviewPlugin.Plugin,
+  PreviewPlugin.GuidancePlugin,
   GitToolPlugin.Plugin,
   CheckpointsPlugin.Plugin,
   PublishPlugin.Plugin,

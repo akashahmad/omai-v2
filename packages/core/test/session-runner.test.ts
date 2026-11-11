@@ -73,6 +73,7 @@ import { SkillInstructions } from "@opencode/core/skill/instructions"
 import { ReferenceInstructions } from "@opencode/core/reference/instructions"
 import { McpInstructions } from "@opencode/core/mcp/instructions"
 import { SessionSystemPrompt } from "@opencode/core/session/system-prompt"
+import PROMPT_DEFAULT from "../src/plugin/system-prompt/default.txt"
 import { ID, Model } from "@opencode/core/model"
 import { Location } from "@opencode/core/location"
 import { Provider } from "@opencode/core/provider"
@@ -124,14 +125,16 @@ const testModel = (id: string, limit: ModelLimit = defaultModelLimit) => {
   return LanguageModel.make({ id, provider: "fake", route: OpenAIChat.route })
 }
 const model = testModel("fake-model")
-const defaultSystem = SessionSystemPrompt.make([])
+// The test model has no tuned prompt, so it gets the default one.
+const defaultSystem = SessionSystemPrompt.render(PROMPT_DEFAULT, [])
 const identity = (providerID: string, id: string) =>
   ["# Your Model", `- Name: ${id}`, `- Provider ID: ${providerID}`, `- Model ID: ${id}`].join("\n")
 const fakeIdentity = identity("fake", "fake-model")
 const replacementIdentity = identity("fake", "replacement")
 const gptIdentity = identity("openai", "gpt-5")
 const replacementModel = testModel("replacement")
-const compactModel = testModel("compact", { context: 4_000, output: 50 })
+// Sized so the default system prompt still leaves room for a retained recent turn.
+const compactModel = testModel("compact", { context: 8_000, output: 50 })
 const fullOutputModel = testModel("full-output", { context: 262_144, output: 262_144 })
 const unknownContextModel = testModel("unknown-context", { context: 0, output: 32_000 })
 const undersizedContextModel = testModel("undersized-context", { context: 1, output: 1_000 })
@@ -3431,14 +3434,14 @@ describe("SessionRunnerLLM", () => {
 
   scenario("automatically compacts into a completed summary and retained recent turn", function* (s) {
     const store = yield* SessionStore.Service
-    yield* s.llm.push(TestLLM.textWithUsage("Earlier answer", "text-first", 3_950))
+    yield* s.llm.push(TestLLM.textWithUsage("Earlier answer", "text-first", 7_950))
     yield* s.runPrompt("Earlier question ".repeat(180))
 
     s.currentModel = compactModel
     s.requests.length = 0
     yield* s.llm.push(
       TestLLM.text("## Objective\n- Preserve the task", "text-summary"),
-      TestLLM.textWithUsage("Continued", "text-final", 3_950),
+      TestLLM.textWithUsage("Continued", "text-final", 7_950),
     )
     yield* s.runPrompt("Recent exact request ".repeat(180))
 
@@ -3590,7 +3593,7 @@ describe("SessionRunnerLLM", () => {
   })
 
   scenario("stops after required automatic compaction fails", function* (s) {
-    yield* s.llm.push(TestLLM.textWithUsage("Earlier answer", "text-before-failed-compaction", 3_950))
+    yield* s.llm.push(TestLLM.textWithUsage("Earlier answer", "text-before-failed-compaction", 7_950))
     yield* s.runPrompt("Earlier question ".repeat(180))
 
     s.currentModel = compactModel

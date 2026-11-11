@@ -12,6 +12,7 @@ import PROMPT_KIMI from "./system-prompt/kimi.txt"
 import PROMPT_META from "./system-prompt/meta.txt"
 import PROMPT_TRINITY from "./system-prompt/trinity.txt"
 import PROMPT_ANTHROPIC from "./system-prompt/anthropic.txt"
+import PROMPT_DEFAULT from "./system-prompt/default.txt"
 
 export const OpenAIPlugin = make("omai.prompt.openai", (model) => {
   const id = model.id.toLowerCase()
@@ -59,7 +60,15 @@ export const MetaPlugin = make("omai.prompt.meta", (model) => {
   return PROMPT_META.replaceAll("{{MODEL_NAME}}", model.name)
 })
 
-export const Plugins = [OpenAIPlugin, AnthropicPlugin, KimiPlugin, ArceePlugin, MetaPlugin] as const
+// Every model without a prompt above gets this one. The baseline alone sets no scope or stopping point, so models
+// such as DeepSeek kept running, testing and re-checking the app long after the requested change was made.
+export const DefaultPlugin = make("omai.prompt.default", (model) => {
+  const id = model.id.toLowerCase()
+  const tuned = ["gpt", "claude", "kimi", "trinity", "muse"].some((name) => id.includes(name))
+  return tuned ? undefined : PROMPT_DEFAULT
+})
+
+export const Plugins = [OpenAIPlugin, AnthropicPlugin, KimiPlugin, ArceePlugin, MetaPlugin, DefaultPlugin] as const
 
 const models = new WeakMap<SessionHooks["context"], Model.Info>()
 

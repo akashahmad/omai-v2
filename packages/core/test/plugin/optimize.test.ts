@@ -20,6 +20,7 @@ import PROMPT_ASTRA from "../../src/plugin/system-prompt/gpt-astra.txt"
 import PROMPT_KIMI from "../../src/plugin/system-prompt/kimi.txt"
 import PROMPT_TRINITY from "../../src/plugin/system-prompt/trinity.txt"
 import PROMPT_ANTHROPIC from "../../src/plugin/system-prompt/anthropic.txt"
+import PROMPT_DEFAULT from "../../src/plugin/system-prompt/default.txt"
 
 const it = testEffect(PluginTestLayer)
 const fallback = SessionSystemPrompt.make([])
@@ -54,6 +55,7 @@ describe("OptimizePlugin", () => {
       "omai.prompt.kimi",
       "omai.prompt.arcee",
       "omai.prompt.meta",
+      "omai.prompt.default",
     ])
   })
 
@@ -75,17 +77,18 @@ describe("OptimizePlugin", () => {
       const cases = [
         ["gpt-5", PROMPT_GPT],
         ["gpt-4.1", PROMPT_GPT],
-        ["o3", fallback],
+        ["o3", PROMPT_DEFAULT],
         ["gpt-5-codex", PROMPT_GPT],
         ["gpt-6", PROMPT_GPT],
         ["gpt-6-astra", PROMPT_ASTRA],
         ["gpt-5-astra", PROMPT_ASTRA],
-        ["gemini-2.5-pro", fallback],
+        ["gemini-2.5-pro", PROMPT_DEFAULT],
         ["claude-sonnet-4", appended],
         ["kimi-k2", PROMPT_KIMI],
         ["trinity", PROMPT_TRINITY],
         ["meta/muse-spark-1.1", PROMPT_META.replaceAll("{{MODEL_NAME}}", "Muse Spark")],
-        ["llama-3.3", fallback],
+        ["llama-3.3", PROMPT_DEFAULT],
+        ["deepseek-v4-flash", PROMPT_DEFAULT],
       ] as const
 
       yield* Effect.forEach(
@@ -324,13 +327,13 @@ describe("OptimizePlugin", () => {
         ["gpt-5-alias", "custom-model", undefined, PROMPT_GPT],
         ["gpt-6-alias", "custom-model", undefined, PROMPT_GPT],
         ["gpt-5-astra-alias", "custom-model", undefined, PROMPT_ASTRA],
-        ["openai-alias", "GPT-5", undefined, fallback],
-        ["codex-family-alias", "custom-deployment", "GPT-CODEX", fallback],
-        ["astra-api-alias", "gpt-6-astra", undefined, fallback],
-        ["astra-family-alias", "custom-deployment", "gpt-6", fallback],
+        ["openai-alias", "GPT-5", undefined, PROMPT_DEFAULT],
+        ["codex-family-alias", "custom-deployment", "GPT-CODEX", PROMPT_DEFAULT],
+        ["astra-api-alias", "gpt-6-astra", undefined, PROMPT_DEFAULT],
+        ["astra-family-alias", "custom-deployment", "gpt-6", PROMPT_DEFAULT],
         ["claude-catalog-alias", "custom-model", undefined, appended],
-        ["anthropic-api-alias", "Claude-Opus-4-8", undefined, fallback],
-        ["anthropic-family-alias", "custom-deployment", "CLAUDE-SONNET", fallback],
+        ["anthropic-api-alias", "Claude-Opus-4-8", undefined, PROMPT_DEFAULT],
+        ["anthropic-family-alias", "custom-deployment", "CLAUDE-SONNET", PROMPT_DEFAULT],
       ] as const
       yield* catalog.transform((editor) => {
         for (const [id, modelID, family] of cases)

@@ -1,6 +1,8 @@
 export * as PreviewPlugin from "./preview.js"
 
+import { SystemPart } from "@opencode/ai/effect"
 import { define } from "@opencode/plugin/effect/plugin"
+import type { SessionHooks } from "@opencode/plugin/effect/session"
 import { Agent } from "@opencode/schema/agent"
 import { Audit } from "@opencode/schema/audit"
 import { Preview } from "@opencode/schema/preview"
@@ -21,6 +23,14 @@ const SETUP_AGENT = Agent.ID.make("preview-setup")
 
 const TOOL = "preview_try"
 
+// Without this, agents start their own dev server to check their work and loop on run, test and fix.
+export const GUIDANCE = [
+  "# App preview",
+  "O M A I + runs this project's web preview by itself and shows it to the user next to the chat; it picks up your file changes on its own.",
+  "- Do not start a dev server, or open the app with curl or a browser to verify your work, unless the user asks you to.",
+  "- When the requested change is made, stop and reply with a short summary.",
+].join("\n")
+
 const TryInput = Schema.Struct({
   root: Schema.String.annotate({
     description: 'The app directory, relative to the project. "." is the project itself.',
@@ -40,6 +50,19 @@ const TryInput = Schema.Struct({
 })
 
 const TryOutput = Schema.Struct({ ok: Schema.Boolean, reason: Schema.String, log: Schema.String })
+
+// Agents with their own system prompt (preview setup, compaction, titles) do their own narrow job and skip it.
+export const GuidancePlugin = define({
+  id: "omai.preview.guidance",
+  effect: Effect.fn("PreviewPlugin.guidance")(function* (ctx) {
+    yield* ctx.session.hook("context", (event: SessionHooks["context"]) =>
+      Effect.gen(function* () {
+        if ((yield* ctx.agent.get({ agentID: event.agent })).data.system) return
+        event.system.push(SystemPart.make(GUIDANCE))
+      }).pipe(Effect.catch(() => Effect.void)),
+    )
+  }),
+})
 
 export const Plugin = define({
   id: "omai.preview",
