@@ -24,6 +24,7 @@ import { useSettings } from "@/settings/model"
 import type { SessionModel } from "@/session/model"
 import { SESSION_PANEL_WIDTH_MIN } from "@/session/session-panel-width"
 import { SessionPanelFrame } from "@/session/session-frame"
+import { BrandLoader } from "@/shell/brand-loader"
 import { PluginLinks, PluginSlot } from "@/runtime/plugin/render"
 import { TimelineCover, useTimelineCover } from "@/runtime/plugin/timeline-cover"
 import { createPanelSidebar, createRegion, MobilePanel } from "@/runtime/plugin/panels"
@@ -537,10 +538,24 @@ function SessionScreenContent(props: {
     </>
   )
 
+  // Until the session's messages are there, its panels stay hidden (still mounted, so the messages, the preview and
+  // the rest keep loading) behind the same breathing brand icon the screen showed while the session was found.
+  const loading = () => !!session.identity.params.id && !messagesReady()
+
   return (
     <>
-      <div class="flex-1 min-h-0 flex flex-col gap-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
-        <div class="flex flex-1 min-h-0">
+      <div class="relative flex-1 min-h-0 flex flex-col gap-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+        <Show when={loading()}>
+          <div class="absolute inset-0 z-[90] flex px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+            <SessionPanelFrame raised>
+              <SessionIdentityHeader sessionID={session.identity.params.id!} />
+              <div class="relative flex min-h-0 flex-1 flex-col">
+                <BrandLoader />
+              </div>
+            </SessionPanelFrame>
+          </div>
+        </Show>
+        <div class="flex flex-1 min-h-0" classList={{ invisible: loading() }}>
           <div
             ref={(element) => {
               screen.panel.ref(element)
@@ -681,7 +696,7 @@ function SessionScreenContent(props: {
           <div
             data-slot="session-bottom-pane"
             class="relative shrink-0 min-h-0"
-            classList={{ hidden: !bottomOpen() }}
+            classList={{ hidden: !bottomOpen(), invisible: loading() }}
             style={{ height: `${session.layout.view().bottom.height()}px` }}
           >
             <div onPointerDown={() => screen.size.start()}>

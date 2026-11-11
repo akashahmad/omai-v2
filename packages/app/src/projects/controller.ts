@@ -125,8 +125,6 @@ export function createProjectsController() {
 
       if (conn) actions.project.hide(conn, project)
     },
-    // Local projects need nothing started before they open.
-    prepare: (_project: LocalProject) => {},
     ready: () => home.server.focusedContext()?.sync.project.ready() ?? false,
   }
 }

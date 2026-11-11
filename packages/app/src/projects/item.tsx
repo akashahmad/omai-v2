@@ -1,4 +1,4 @@
-import { createResource, createSignal, onMount, Show } from "solid-js"
+import { createResource, createSignal, Show } from "solid-js"
 import {
   displayName,
   getProjectAvatarGenerated,
@@ -97,7 +97,6 @@ function DeleteProjectDialog(props: { projects: ProjectsController; project: Loc
 export function ProjectRow(props: { projects: ProjectsController; project: LocalProject }) {
   return (
     <li
-      onPointerEnter={() => props.projects.prepare(props.project)}
       data-component="project-row"
       class="group flex items-center gap-1 rounded-[8px] pr-1 transition-colors hover:bg-v2-background-bg-layer-01"
     >
@@ -123,12 +122,8 @@ export function ProjectCard(props: { projects: ProjectsController; project: Loca
   const [thumbnail] = createResource(() => props.projects.thumbnailKey(props.project.id), props.projects.thumbnail)
   const [loaded, setLoaded] = createSignal(false)
 
-  // In multi-user mode a paused project's VM starts as soon as its card shows, so opening it is quick.
-  onMount(() => props.projects.prepare(props.project))
-
   return (
     <div
-      onPointerEnter={() => props.projects.prepare(props.project)}
       data-component="project-card"
       class="relative flex flex-col overflow-hidden rounded-[12px] border border-v2-border-border-muted bg-v2-background-bg-base transition-colors hover:bg-v2-background-bg-layer-01"
     >

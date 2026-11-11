@@ -255,20 +255,20 @@ describe("controller", () => {
     expect(store.values.get("port")).toBe(fixed + 1)
   }, 30_000)
 
-  // A VM's published port answers from the moment the preview exists, with the starting page, rather than leaving
-  // the network in front of it to answer with its own error while nothing listens.
-  test("a fixed port listens before the preview starts", async () => {
+  // A VM's server keeps a preview for every folder it was asked about, and all of them share the published port: only
+  // the one that starts may take it, or another folder's idle preview keeps it and this one can never start.
+  test("a fixed port is taken by the preview that starts, not by one that merely exists", async () => {
     const dir = await project()
+    const other = await project()
     const { freePort } = await import("@opencode/core/preview/ports")
     const fixed = await freePort()
-    start({ ...dir, port: fixed })
-    const answer: { body?: string } = {}
-    const deadline = Date.now() + 5_000
-    while (answer.body === undefined && Date.now() < deadline) {
-      answer.body = await get(fixed, "/__omai/health").catch(() => undefined)
-      await Bun.sleep(50)
-    }
-    expect(JSON.parse(answer.body ?? "null")).toEqual({ preview: "omai", up: false })
+    start({ ...other, port: fixed })
+    const { controller } = start({ ...dir, port: fixed })
+    await Bun.sleep(100)
+    const status = await controller.start()
+
+    expect(status.state).toBe("running")
+    expect(await get(fixed)).toContain("fake dev server")
   }, 30_000)
 
   test("the status carries the public origin once it is known", async () => {

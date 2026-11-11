@@ -76,29 +76,44 @@ function createSession(apiUrl: string) {
     onCleanup(dispose)
   })
 
+  // The address of the project whose session is on screen, if any. Reads the route, so effects follow navigation.
+  const onScreen = () => {
+    const segment = /^\/server\/([^/]+)\/session\//.exec(location.pathname)?.[1]
+
+    if (!segment) return undefined
+    const key = requireServerKey(segment)
+    const conn = servers.list.find((item) => ServerConnection.key(item) === key)
+
+    return conn?.type === "http" ? conn.http.url : undefined
+  }
+
   // A project connection whose VM token stopped working gets a fresh one, while signed in.
   createEffect(() => {
     if (state.status !== "in") return
 
     onCleanup(
-      setProjectTokenRefresh(async (url) => {
-        const projectID = projectOfConnection(url)
+      setProjectTokenRefresh(
+        async (url) => {
+          const projectID = projectOfConnection(url)
 
-        if (!projectID) return undefined
+          if (!projectID) return undefined
 
-        // The platform server behind an admin's Shared providers and Shared models is opened on its own route.
-        const opened =
-          projectID === PLATFORM_PROJECT ? await client.platform.open() : await client.projects.open(projectID)
+          // The platform server behind an admin's Shared providers and Shared models is opened on its own route.
+          const opened =
+            projectID === PLATFORM_PROJECT ? await client.platform.open() : await client.projects.open(projectID)
 
-        if (opened === "not-ready") return undefined
-        const stored = servers.list.find((conn) => conn.type === "http" && conn.http.url === url)
-        const http = { url: opened.routerUrl, password: opened.token }
+          if (opened === "not-ready") return undefined
+          const stored = servers.list.find((conn) => conn.type === "http" && conn.http.url === url)
+          const http = { url: opened.routerUrl, password: opened.token }
 
-        // The stored connection keeps the token too, for uploads and anything else that reads it.
-        if (stored?.type === "http") servers.add({ ...stored, http })
+          // The stored connection keeps the token too, for uploads and anything else that reads it.
+          if (stored?.type === "http") servers.add({ ...stored, http })
 
-        return http
-      }),
+          return http
+        },
+        // The project on screen, and the platform server (no VM to start), never one only kept in the list.
+        (url) => projectOfConnection(url) === PLATFORM_PROJECT || url === onScreen(),
+      ),
     )
   })
 
@@ -108,13 +123,9 @@ function createSession(apiUrl: string) {
 
     const dispose = createPresence({
       projectID: () => {
-        const segment = /^\/server\/([^/]+)\/session\//.exec(location.pathname)?.[1]
+        const url = onScreen()
 
-        if (!segment) return undefined
-        const key = requireServerKey(segment)
-        const conn = servers.list.find((item) => ServerConnection.key(item) === key)
-
-        return conn?.type === "http" ? projectOfConnection(conn.http.url) : undefined
+        return url ? projectOfConnection(url) : undefined
       },
       send: (id) => void client.projects.presence(id).catch(() => undefined),
     })

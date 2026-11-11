@@ -169,7 +169,9 @@ export function createController(input: ControllerInput): Controller {
     input.emit.log(chunk)
   }
 
-  // One listener for the life of the controller: a start racing the one a VM opens up front joins it.
+  // One listener for the life of the controller, opened by the first start; two starts at once share it. It never
+  // opens up front: a VM's server keeps a preview per folder, all on one published port, and only one that starts may
+  // take it.
   const opening: { current?: Promise<Proxy> } = {}
   const proxy = () => {
     opening.current ??= openListener().catch((error: unknown) => {
@@ -222,10 +224,6 @@ export function createController(input: ControllerInput): Controller {
 
     return opened
   }
-
-  // A VM publishes a fixed port, and while nothing listens on it the load balancer in front answers with its own error
-  // page. The listener opens with the preview, so the port answers with the starting page until the app is up.
-  if (input.port !== undefined) void proxy().catch(() => undefined)
 
   const tree = directoryTree(input.directory)
 

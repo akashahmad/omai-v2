@@ -46,18 +46,6 @@ export function createControlPlaneProjectsController() {
   const byID = createMemo(() => new Map((loaded() ? projects.latest : undefined)?.map((item) => [item.id, item]) ?? []))
   const list = createMemo(() => [...byID().values()].map(toLocal))
 
-  const woken = new Map<string, number>()
-
-  /** Starts a paused project's VM early, when its card shows or the pointer is over it; at most once a minute. */
-  function prepare(project: LocalProject) {
-    const found = project.id ? byID().get(project.id) : undefined
-
-    if (!found || found.vmState === "running" || found.vmState === "creating" || found.vmState === "failed") return
-    if (Date.now() - (woken.get(found.id) ?? -Infinity) < 60_000) return
-    woken.set(found.id, Date.now())
-    void session.client.projects.wake(found.id).catch(() => undefined)
-  }
-
   const images = new Map<string, Promise<string | undefined>>()
   const objectUrls: string[] = []
   onCleanup(() => objectUrls.splice(0).forEach((url) => URL.revokeObjectURL(url)))
@@ -184,7 +172,6 @@ export function createControlPlaneProjectsController() {
       if (!project.id) return
       void session.client.projects.remove(project.id).then(() => refetch())
     },
-    prepare,
     ready: loaded,
   }
 }
@@ -357,7 +344,9 @@ function CreateProjectDialog(props: {
                     <span class="text-[13px] font-[500] text-v2-text-text-base">
                       {language.t("cp.create.dropTitle")}
                     </span>
-                    <span class="-mt-1 max-w-[360px] text-[12px] leading-[18px] text-v2-text-text-muted">{language.t("cp.create.dropBody")}</span>
+                    <span class="-mt-1 max-w-[360px] text-[12px] leading-[18px] text-v2-text-text-muted">
+                      {language.t("cp.create.dropBody")}
+                    </span>
                     <span class="text-[11px] text-v2-text-text-faint">{language.t("cp.create.formats")}</span>
                   </>
                 }
