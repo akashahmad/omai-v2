@@ -6,7 +6,16 @@ import { createMemo, createRoot, createSignal, onCleanup, type Accessor, type Ow
 import { createStore, reconcile } from "solid-js/store"
 import { createKeyed, type MountedSession } from "@opencode/plugin/gui"
 import { Preview } from "@opencode/schema/preview"
-import { appendLog, enterURL, leftFrom, locationFrom, pagesFrom, previewHealth, previewOrigin } from "./model"
+import {
+  aliveFrom,
+  appendLog,
+  enterURL,
+  leftFrom,
+  locationFrom,
+  pagesFrom,
+  previewHealth,
+  previewOrigin,
+} from "./model"
 import { visualMessage, type ElementInfo } from "./visual/protocol"
 import { createVisual } from "./visual/session"
 
@@ -27,6 +36,9 @@ const REACH_LIMIT = 20_000
 
 /** At most this many automatic reloads a minute; then the preview shows as unreachable. */
 const RECOVER_LIMIT = 3
+
+/** How long a page that has been beating may stay silent, in a visible tab, before the frame is entered again. */
+const SILENCE_LIMIT = 8_000
 
 type State = {
   status: Preview.Status
@@ -151,10 +163,36 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     },
   )
 
-  // Whether the page now in the frame reported itself, and the automatic reloads of the last minute.
-  const frameState = { reported: false, recoveries: new Array<number>(), check: setTimeout(() => {}, 0) }
+  // Whether the page now in the frame reported itself, the automatic reloads of the last minute, when the page last
+  // said anything, and whether its pages beat at all (older previews don't, and are never judged by silence).
+  const frameState = {
+    reported: false,
+    recoveries: new Array<number>(),
+    check: setTimeout(() => {}, 0),
+    heard: Date.now(),
+    beats: false,
+  }
 
   onCleanup(() => clearTimeout(frameState.check))
+
+  // A page of the preview beats every 2 seconds. Silence means something else took its place, such as the browser's
+  // own error page after a reload while the connection dropped, whatever order the events around it came in. A hidden
+  // tab throttles the beat, so silence counts only while the tab is visible, from when it became visible.
+  const silence = setInterval(() => {
+    if (!frameState.beats || !state.src || state.status.state !== "running") return
+
+    if (document.visibilityState !== "visible" || Date.now() - frameState.heard < SILENCE_LIMIT) return
+    frameState.heard = Date.now()
+    recover()
+  }, 2_000)
+
+  const visible = () => (frameState.heard = Date.now())
+
+  document.addEventListener("visibilitychange", visible)
+  onCleanup(() => {
+    clearInterval(silence)
+    document.removeEventListener("visibilitychange", visible)
+  })
 
   // Each time the preview runs (and after a recovery), the frame enters it again, but only once the preview itself
   // answers: until a VM's port is up, the load balancer in front of it answers with an error page that would stay in the
@@ -181,6 +219,7 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
 
     if (signal.aborted) return
     frameState.reported = false
+    frameState.heard = Date.now()
     setState("src", enterURL(current, { parent: window.location.origin, to: state.path, ticket }))
   }
 
@@ -205,20 +244,29 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     if (!current || state.status.state !== "running") return
     frameState.check = setTimeout(() => {
       if (frameState.reported || origin() !== current || state.status.state !== "running") return
-      const now = Date.now()
-      frameState.recoveries = frameState.recoveries.filter((at) => now - at < 60_000)
-
-      // Reloading keeps landing on a page that isn't the preview's: show it as unreachable, never that page.
-      if (frameState.recoveries.length >= RECOVER_LIMIT) return void setState({ src: undefined, unreachable: true })
-      frameState.recoveries.push(now)
-      setEntry((value) => value + 1)
+      recover()
     }, REPORT_GRACE)
+  }
+
+  // Enters the preview again in a fresh frame, once it answers.
+  const recover = () => {
+    const now = Date.now()
+    frameState.recoveries = frameState.recoveries.filter((at) => now - at < 60_000)
+
+    // Reloading keeps landing on a page that isn't the preview's: show it as unreachable, never that page.
+    if (frameState.recoveries.length >= RECOVER_LIMIT) return void setState({ src: undefined, unreachable: true })
+    frameState.recoveries.push(now)
+    setEntry((value) => value + 1)
   }
 
   const onMessage = (event: MessageEvent) => {
     const current = origin()
 
     if (!current || event.source !== frame()?.contentWindow) return
+
+    if (event.origin === current) frameState.heard = Date.now()
+
+    if (aliveFrom(event, current)) frameState.beats = true
 
     if (leftFrom(event, current)) frameState.reported = false
     const location = locationFrom(event, current)
@@ -246,9 +294,15 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
       if (current) frame()?.contentWindow?.postMessage(message, current)
     },
     running: () => state.status.state === "running",
-    prompt: (text) => session().server.data.session.prompt({ sessionID: session().id, text }).then(() => undefined),
+    prompt: (text) =>
+      session()
+        .server.data.session.prompt({ sessionID: session().id, text })
+        .then(() => undefined),
     agentBusy,
-    interrupt: () => session().server.client.session.interrupt({ sessionID: session().id }).then(() => undefined),
+    interrupt: () =>
+      session()
+        .server.client.session.interrupt({ sessionID: session().id })
+        .then(() => undefined),
     ask: (element) => hooks.ask(session(), element),
     image: (element) => hooks.image(view, element),
     page: () => state.path,
@@ -306,8 +360,8 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     restart: () => void call(rpc().restart({}, scope())).then(apply),
     setRecipe: (recipe: Preview.Recipe | null) => void call(rpc().setRecipe({ recipe }, scope())).then(apply),
     /** Reloads the page; an unreachable preview is restarted instead, and shown again once it answers. */
+    /** Restarts the preview and enters it again in a fresh frame: whatever the frame shows, reload brings it back. */
     reload: () => {
-      if (!state.unreachable) return navigate("reload")
       frameState.recoveries = []
       setState("unreachable", false)
       void call(rpc().restart({}, scope())).then((status) => {

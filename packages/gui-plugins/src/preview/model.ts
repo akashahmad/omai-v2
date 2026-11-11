@@ -88,3 +88,10 @@ const decodeLeave = Schema.decodeUnknownOption(Schema.Struct({ type: Schema.Lite
 export function leftFrom(event: { origin: string; data: unknown }, origin: string) {
   return event.origin === origin && Option.isSome(decodeLeave(event.data))
 }
+
+const decodeAlive = Schema.decodeUnknownOption(Schema.Struct({ type: Schema.Literal("omai:alive") }))
+
+/** Whether a message from the frame is a page of the preview saying it is alive. */
+export function aliveFrom(event: { origin: string; data: unknown }, origin: string) {
+  return event.origin === origin && Option.isSome(decodeAlive(event.data))
+}

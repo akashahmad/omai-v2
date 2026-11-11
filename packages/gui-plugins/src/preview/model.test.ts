@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { appendLog, enterURL, leftFrom, locationFrom, pagesFrom, previewHealth, previewOrigin } from "./model"
+import {
+  aliveFrom,
+  appendLog,
+  enterURL,
+  leftFrom,
+  locationFrom,
+  pagesFrom,
+  previewHealth,
+  previewOrigin,
+} from "./model"
 
 describe("previewOrigin", () => {
   test("uses the server's host with the preview port", () => {
@@ -84,7 +93,12 @@ describe("pagesFrom", () => {
 
 describe("previewHealth", () => {
   const origin = "https://preview--vm.code.run"
-  const answer = (body: string, init: ResponseInit = {}) => async () => new Response(body, init)
+
+  const answer =
+    (body: string, init: ResponseInit = {}) =>
+    async () =>
+      new Response(body, init)
+
   const health = (up: boolean) => answer(JSON.stringify({ preview: "omai", up }))
 
   test("reads the preview's own answer", async () => {
@@ -122,5 +136,15 @@ describe("leftFrom", () => {
     expect(leftFrom({ origin, data: { type: "omai:leave" } }, origin)).toBe(true)
     expect(leftFrom({ origin: "https://evil.example", data: { type: "omai:leave" } }, origin)).toBe(false)
     expect(leftFrom({ origin, data: { type: "omai:location" } }, origin)).toBe(false)
+  })
+})
+
+describe("aliveFrom", () => {
+  const origin = "http://127.0.0.1:5000"
+
+  test("reads a page's beat, from the preview only", () => {
+    expect(aliveFrom({ origin, data: { type: "omai:alive" } }, origin)).toBe(true)
+    expect(aliveFrom({ origin: "https://evil.example", data: { type: "omai:alive" } }, origin)).toBe(false)
+    expect(aliveFrom({ origin, data: { type: "omai:leave" } }, origin)).toBe(false)
   })
 })

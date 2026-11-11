@@ -44,6 +44,8 @@ function page() {
     observe() {}
   }
   const dispatch = (name: string, event: unknown) => listeners.get(name)?.forEach((listener) => listener(event))
+  const timers: Array<{ fn: () => void; ms: number }> = []
+  const setInterval = (fn: () => void, ms: number) => timers.push({ fn, ms })
   new Function(
     "window",
     "history",
@@ -52,9 +54,10 @@ function page() {
     "console",
     "EventSource",
     "MutationObserver",
+    "setInterval",
     bridgeScript(PARENT),
-  )(window, history, location, document, console, EventSource, MutationObserver)
-  return { posted, calls, history, console, parent, dispatch, appended }
+  )(window, history, location, document, console, EventSource, MutationObserver, setInterval)
+  return { posted, calls, history, console, parent, dispatch, appended, timers }
 }
 
 describe("bridge", () => {
@@ -74,6 +77,17 @@ describe("bridge", () => {
     view.dispatch("pagehide", {})
 
     expect(view.posted.at(-1)).toEqual({ message: { type: "omai:leave" }, origin: PARENT })
+  })
+
+  // The window tells a live page of the preview from anything that replaced it by this beat, whatever the order of
+  // the events in between (a page leaving, an error page loading).
+  test("says it is alive every 2 seconds", () => {
+    const view = page()
+    const beat = view.timers.find((item) => item.ms === 2_000)
+
+    expect(beat).toBeDefined()
+    beat!.fn()
+    expect(view.posted.at(-1)).toEqual({ message: { type: "omai:alive" }, origin: PARENT })
   })
 
   test("reports the location after pushState", () => {
