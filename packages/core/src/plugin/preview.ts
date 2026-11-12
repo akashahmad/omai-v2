@@ -29,6 +29,14 @@ export const GUIDANCE = [
   "O M A I + runs this project's web preview by itself and shows it to the user next to the chat; it picks up your file changes on its own.",
   "- Do not start a dev server, or open the app with curl or a browser to verify your work, unless the user asks you to.",
   "- When the requested change is made, stop and reply with a short summary.",
+  "",
+  "# Efficient work",
+  "The user is waiting for the result, so get there in as few steps as you can.",
+  "- Read what you need once, decide the whole change, then write each file once with its full content. Edit afterwards only to fix a real error, never to polish.",
+  "- Do not check your work visually: no screenshots, headless browsers, rendering pages, extracting video frames, ffprobe, or reading back images you generated. The user sees the result in the preview.",
+  "- Make placeholder assets (images, videos, icons, fonts) once, in the simplest way that works: an SVG, a CSS gradient, or one short command. Never refine them over several tries.",
+  "- Do not explore the machine (installed tools, global caches, other folders) beyond what the task needs.",
+  "- Batch independent commands into one shell call. Run at most one quick check at the end (an existing build or a syntax check), fix what it reports, then stop.",
 ].join("\n")
 
 const TryInput = Schema.Struct({
