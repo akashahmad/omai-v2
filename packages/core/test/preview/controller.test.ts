@@ -138,21 +138,18 @@ describe("controller", () => {
     expect(status.framework).toBe("unknown")
   }, 30_000)
 
-  test("asks when two apps are equally likely, and remembers the pick", async () => {
+  test("starts the first of two equally likely apps without asking", async () => {
     const script = `node ${JSON.stringify(fakeServer)} || true`
     const dir = await project({
       "package.json": JSON.stringify({ name: "root", private: true }),
       "apps/a/package.json": JSON.stringify({ name: "a", scripts: { dev: script } }),
       "apps/b/package.json": JSON.stringify({ name: "b", scripts: { dev: script } }),
     })
-    const { controller, store } = start(dir)
-    const asked = await controller.start()
+    const { controller, states } = start(dir)
+    const status = await controller.start()
 
-    expect(asked.state).toBe("choosing")
-    expect(asked.candidates?.length).toBe(2)
-    const picked = await controller.start({ candidate: 1 })
-    expect(picked.state).toBe("running")
-    expect(store.values.get("recipe")).toMatchObject({ root: "apps/b", source: "picked" })
+    expect(status.state).toBe("running")
+    expect(states).not.toContain("choosing")
   }, 30_000)
 
   test("uses the saved recipe without detecting", async () => {

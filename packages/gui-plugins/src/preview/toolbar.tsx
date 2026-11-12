@@ -116,7 +116,7 @@ export function PreviewToolbar(props: {
               variant="ghost-muted"
               size="small"
               class="hover:bg-transparent"
-              disabled={!view.running()}
+              disabled={view.busy()}
               onClick={() => view.reload()}
               aria-label={ctx.t("reload.preview")}
             />

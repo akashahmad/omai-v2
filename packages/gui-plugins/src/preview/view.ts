@@ -399,7 +399,6 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     },
     start,
     stop: () => void call(rpc().stop({}, scope())).then(apply),
-    setRecipe: (recipe: Preview.Recipe | null) => void call(rpc().setRecipe({ recipe }, scope())).then(apply),
     restart,
     /** The same as Restart: whatever the frame shows, reload brings the preview back. */
     reload: restart,

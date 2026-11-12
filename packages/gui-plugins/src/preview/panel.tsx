@@ -1,9 +1,6 @@
-import { createMemo, createSignal, For, Match, onCleanup, Show, Switch, type Accessor, type JSX } from "solid-js"
+import { createMemo, createSignal, Match, onCleanup, Show, Switch, type Accessor, type JSX } from "solid-js"
 import { createKeyed, usePlugin } from "@opencode/plugin/gui"
 import type { Preview } from "@opencode/schema/preview"
-import { Button } from "@opencode/ui/button"
-import { useDialog } from "@opencode/ui/context/dialog"
-import { RecipeDialog } from "./recipe-dialog"
 import { DEVICE_WIDTH, type PreviewView } from "./view"
 
 const ANSI = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07/g
@@ -27,7 +24,6 @@ const STEPS: Partial<
 /** The Preview section's body: the running app in its device frame, or the step it is on, or why it failed. */
 export default function PreviewPanel(props: { view: PreviewView; visible: Accessor<boolean> }) {
   const ctx = usePlugin()
-  const dialog = useDialog()
   const view = props.view
   const [size, setSize] = createSignal({ width: 0, height: 0 })
 
@@ -76,9 +72,6 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
       onCleanup(() => clearTimeout(timer))
     },
   )
-
-  const editRecipe = () =>
-    dialog.show(() => <RecipeDialog recipe={view.state.status.recipe} onSave={(recipe) => view.setRecipe(recipe)} />)
 
   const plainLog = () => view.state.log.replace(ANSI, "")
 
@@ -168,64 +161,10 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
                   {(fixing) => <> · {ctx.t("state.fixing.tries", { tries: String(fixing().tries) })}</>}
                 </Show>
               </div>
-              <Show when={view.state.status.state === "fixing"}>
-                <Button size="small" variant="outline" onClick={() => view.stop()}>
-                  {ctx.t("stop")}
-                </Button>
-              </Show>
             </Centered>
           </Match>
-          <Match when={view.state.status.state === "choosing"}>
-            <Centered>
-              <img src={LOGO} alt="" draggable={false} class="size-12 rounded-[11px]" />
-              <div class="text-14-medium text-v2-text-text-base">{ctx.t("state.choosing")}</div>
-              <div class="flex w-full max-w-[360px] flex-col gap-1">
-                <For each={view.state.status.candidates ?? []}>
-                  {(candidate, index) => (
-                    <button
-                      type="button"
-                      class="flex items-center justify-between gap-3 rounded-[6px] px-3 py-2 text-start text-[13px] text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover"
-                      onClick={() => view.start({ candidate: index() })}
-                    >
-                      <span class="truncate font-mono">
-                        {candidate.recipe.root === "." ? ctx.t("candidate.root") : candidate.recipe.root}
-                      </span>
-                      <span class="shrink-0 text-12-regular text-v2-text-text-muted">{candidate.framework}</span>
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Centered>
-          </Match>
-          <Match when={view.state.status.state === "failed"}>
-            <Centered>
-              <img src={LOGO} alt="" draggable={false} class="size-16 rounded-[14px]" />
-              <div class="text-14-medium text-v2-text-text-base">{ctx.t("state.failed")}</div>
-              <Show when={view.state.status.reason}>
-                {(reason) => (
-                  <div class="max-w-[420px] text-center text-[13px] text-v2-text-text-muted">{reason()}</div>
-                )}
-              </Show>
-              <div class="flex gap-2">
-                <Button size="small" variant="contrast" onClick={() => view.start({ retry: true })}>
-                  {ctx.t("try.again")}
-                </Button>
-                <Button size="small" variant="outline" onClick={editRecipe}>
-                  {ctx.t("edit.command")}
-                </Button>
-              </div>
-              <LogTail text={plainLog()} />
-            </Centered>
-          </Match>
-          <Match when={view.state.status.state === "stopped"}>
-            <Centered>
-              <img src={LOGO} alt="" draggable={false} class="size-16 rounded-[14px] opacity-60" />
-              <div class="text-[13px] text-v2-text-text-muted">{ctx.t("state.stopped")}</div>
-              <Button size="small" variant="contrast" onClick={() => view.start({ retry: true })}>
-                {ctx.t("start")}
-              </Button>
-            </Centered>
-          </Match>
+          {/* Not available (it couldn't start, it was stopped, or it isn't running): the brand icon only. Reload
+              starts it again. */}
           <Match when={true}>
             <Centered>
               <img src={LOGO} alt="" draggable={false} class="size-14 rounded-[12px]" />
@@ -260,18 +199,5 @@ function Centered(props: { children: JSX.Element }) {
     <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden p-6 text-center">
       {props.children}
     </div>
-  )
-}
-
-// The last lines of the log under a failure.
-function LogTail(props: { text: string }) {
-  const tail = () => props.text.split("\n").slice(-12).join("\n").trim()
-
-  return (
-    <Show when={tail()}>
-      <pre class="max-h-[40%] w-full max-w-[560px] overflow-auto whitespace-pre-wrap break-all rounded-[6px] bg-v2-background-bg-layer-02 p-3 text-start font-mono text-[11px] text-v2-text-text-muted">
-        {tail()}
-      </pre>
-    </Show>
   )
 }

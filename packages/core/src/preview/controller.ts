@@ -422,7 +422,7 @@ export function createController(input: ControllerInput): Controller {
     set({ state: "detecting" })
     const candidates = await detect(tree)
     state.candidates = candidates
-    const [first, second] = candidates
+    const [first] = candidates
 
     if (!first && (await blank(input.directory))) return wait()
 
@@ -438,8 +438,7 @@ export function createController(input: ControllerInput): Controller {
         !!choice.retry,
       )
 
-    if (second && second.confidence === first.confidence && first.confidence !== "low")
-      return set({ state: "choosing", candidates })
+    // Several apps that look equally likely: the first one starts, never a question to the user.
     state.framework = first.framework
 
     return launch(first.recipe, choice.sessionID, choice.retry)
