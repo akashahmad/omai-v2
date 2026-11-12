@@ -1,9 +1,7 @@
 import { sentryVitePlugin } from "@sentry/vite-plugin"
-import { fileURLToPath } from "node:url"
 import { defineConfig } from "vite"
 import desktopPlugin, { channel } from "./vite.js"
 import { icons } from "./vite.icons.ts"
-import { serviceWorker } from "./vite.pwa.ts"
 
 const sentry =
   process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
@@ -26,7 +24,6 @@ export default defineConfig({
   plugins: [
     desktopPlugin,
     icons(channel),
-    serviceWorker(fileURLToPath(new URL("./dist", import.meta.url))),
     sentry,
   ] as any,
   server: {

@@ -30,7 +30,7 @@ O M A I + builds, previews and publishes apps with AI. This monorepo started fro
 - Server: `bun dev serve --port 4096` from the repository root (loads `.env.local`). `bun dev:prod serve --port 4096` loads `.env.prod` instead.
 - Web app: `bun dev -- --port 4444` from `packages/app`.
 - Never restart or kill a developer's running servers. Test against your own instance on another port.
-- Built CLI: `bun run build --single --skip-install` in `packages/cli`. After a build, unregister the service worker in the browser, or it serves the old bundle.
+- Built CLI: `bun run build --single --skip-install` in `packages/cli`.
 
 ## Publishing (Cloudflare)
 

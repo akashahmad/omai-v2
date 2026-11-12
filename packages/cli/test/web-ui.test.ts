@@ -143,7 +143,6 @@ describe("web UI", () => {
       "index.html": await Bun.file(index).text(),
       "_assets/app.js": await Bun.file(asset).text(),
       "sw.js": "service worker",
-      "registerSW.js": "registration",
       "font.woff2": new Uint8Array([0, 1, 2, 255]),
     }
 
@@ -200,11 +199,9 @@ describe("web UI", () => {
           expect(script.headers.get("content-type")).toContain("javascript")
           expect(script.headers.get("cache-control")).toBe("public, max-age=31536000, immutable")
 
+          // Browsers with the old worker must always fetch the current sw.js, which removes it.
           const worker = yield* Effect.promise(() => fetch(`${origin}/sw.js`))
           expect(worker.headers.get("cache-control")).toBe("no-cache")
-
-          const registration = yield* Effect.promise(() => fetch(`${origin}/registerSW.js`))
-          expect(registration.headers.get("cache-control")).toBe("no-cache")
 
           const font = yield* Effect.promise(() => fetch(`${origin}/font.woff2`))
           expect(font.headers.get("content-type")).toBe("font/woff2")

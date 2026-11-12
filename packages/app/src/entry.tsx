@@ -52,8 +52,12 @@ const clearAuthToken = () => {
 
 const web = createWebPlatform(version)
 
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => void navigator.serviceWorker.register("/sw.js"), { once: true })
+// Earlier builds installed a service worker that served stale files and replayed requests; remove any left behind.
+if ("serviceWorker" in navigator) {
+  void navigator.serviceWorker
+    .getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch(() => undefined)
 }
 
 if (import.meta.env.VITE_SENTRY_DSN) {
