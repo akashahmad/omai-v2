@@ -152,16 +152,15 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
         ),
       )
       void call(rpc().logs({}, { ...scope(), signal })).then((logs) => logs && setState("log", logs.text))
-      // A frame on screen from before the connection dropped may hold a page the preview no longer accepts (the VM
-      // paused and started again): it is entered again, with a fresh ticket.
-      const shown = state.src !== undefined || state.unreachable
       void call(rpc().status({}, { ...scope(), signal })).then((status) => {
         if (!status || signal.aborted) return
         setState("status", reconcile(status))
 
         if (status.state === "idle" && watchers > 0) start()
 
-        if (status.state === "running" && shown) setEntry((value) => value + 1)
+        // A frame showing the app is left alone: the stream reconnects on its own (a hidden tab, a network blip), and
+        // reloading would restart the page. Only a frame known not to show the app (an error page) is entered again.
+        if (status.state === "running" && (state.covered || state.unreachable)) setEntry((value) => value + 1)
       })
     },
   )
@@ -197,11 +196,16 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
 
   // A page of the preview beats every 2 seconds. Silence means something else took its place, such as the browser's
   // own error page after a reload while the connection dropped, whatever order the events around it came in. A hidden
-  // tab throttles the beat, so silence counts only while the tab is visible, from when it became visible.
+  // tab, or a frame hidden behind another panel tab, throttles the beat, so silence counts only while the frame is on
+  // screen, from when it came back.
   const silence = setInterval(() => {
     if (!frameState.beats || !state.src || state.status.state !== "running") return
 
-    if (document.visibilityState !== "visible" || Date.now() - frameState.heard < SILENCE_LIMIT) return
+    const shown = document.visibilityState === "visible" && (frame()?.getClientRects().length ?? 0) > 0
+
+    if (!shown) return void (frameState.heard = Date.now())
+
+    if (Date.now() - frameState.heard < SILENCE_LIMIT) return
     frameState.heard = Date.now()
     setState("covered", true)
     recover()
@@ -265,6 +269,10 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     if (!current || state.status.state !== "running") return
     frameState.check = setTimeout(() => {
       if (frameState.reported || origin() !== current || state.status.state !== "running") return
+
+      // Only when pages of the preview are known to report themselves: a page that can't (no bridge) is left as it is,
+      // never reloaded over and over.
+      if (!frameState.beats) return
       setState("covered", true)
       recover()
     }, REPORT_GRACE)
