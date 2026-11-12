@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import type { ServerConnection } from "@/runtime/server/registry"
 import { openProject, type OpenDeps } from "./open"
 
-function harness(ready = true) {
+function harness(ready = true, prepared: Promise<void> = Promise.resolve()) {
   const calls: string[] = []
   const servers = new Map<string, ServerConnection.Http>()
 
@@ -26,8 +26,12 @@ function harness(ready = true) {
     },
     init: async (conn) => {
       calls.push(`init ${conn.http.url}`)
+      await prepared
+      calls.push(`prepared ${conn.http.url}`)
     },
-    openDirectory: async (conn, directory) => {
+    openDirectory: async (conn, directory, ready) => {
+      calls.push(`look up ${directory}`)
+      await ready
       calls.push(`navigate ${conn.http.url} ${directory}`)
     },
   }
@@ -53,15 +57,28 @@ describe("openProject", () => {
     expect([...h.servers.keys()]).toEqual(["http://router.test/vm/p1", "http://router.test/vm/p2"])
   })
 
-  test("init is called before navigating", async () => {
-    const h = harness()
-    await openProject({ id: "p1", name: "Shop" }, h.deps)
+  test("the latest session is looked up while the folder is prepared, and opens once it is", async () => {
+    const gate = Promise.withResolvers<void>()
+    const h = harness(true, gate.promise)
+    const opening = openProject({ id: "p1", name: "Shop" }, h.deps)
+    await new Promise((resolve) => setTimeout(resolve, 0))
     expect(h.calls).toEqual([
       "open p1",
       "add http://router.test/vm/p1",
       "init http://router.test/vm/p1",
+      "look up /home/omai/p1-dir",
+    ])
+    gate.resolve()
+    await opening
+    expect(h.calls.slice(4)).toEqual([
+      "prepared http://router.test/vm/p1",
       "navigate http://router.test/vm/p1 /home/omai/p1-dir",
     ])
+  })
+
+  test("a folder that can't be prepared fails the open", async () => {
+    const h = harness(true, Promise.reject(new Error("no disk")))
+    await expect(openProject({ id: "p1", name: "Shop" }, h.deps)).rejects.toThrow("no disk")
   })
 
   test("a project that is not ready adds nothing", async () => {

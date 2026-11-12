@@ -76,39 +76,50 @@ export function createControlPlaneProjectsController() {
   async function open(project: LocalProject) {
     const found = project.id ? byID().get(project.id) : undefined
 
-    if (!found || opening()) return
-    setOpening(project.worktree)
+    if (found) await openView(found)
+  }
+
+  // Takes the project itself, not its list entry: a project just created can open before the list shows it.
+  async function openView(found: ProjectView) {
+    if (opening()) return
+    setOpening(toLocal(found).worktree)
+    warmRouter()
     await untilRunning(session.client, found)
       .then(() =>
         openProject(found, {
           client: session.client,
           addServer: (conn) => servers.add(conn),
           init: (conn) => global.ensureServerCtx(conn).sdk.api.experimental["project-vm"].init(),
-          // Same as opening a local project: its latest session, or a new one.
-          openDirectory: async (conn, directory) => {
+          // Same as opening a local project: its latest session, or a new one. Each call is a round trip to the VM,
+          // so the lookups run while the folder is prepared; only creating a session waits for it.
+          openDirectory: async (conn, directory, ready) => {
             const ctx = global.ensureServerCtx(conn)
-            // Checked alongside the session lookup, so it adds no wait: a project with files opens with its preview.
+            // A folder still being prepared fails the listing, which asks again, so this adds no wait either.
             const preview = checkProjectFiles(ctx, directory)
-            const added = await addProjects(ctx, [directory])
 
-            const page = await ctx.sdk.api.session.list({
-              ...(added?.id ? { project: added.id } : { directory }),
-              parentID: null,
-              archived: false,
-              order: "desc",
-              limit: 1,
-            })
+            const [page] = await Promise.all([
+              ctx.sdk.api.session.list({ directory, parentID: null, archived: false, order: "desc", limit: 1 }),
+              ready,
+            ])
+
+            const added = addProjects(ctx, [directory])
 
             const latest =
-              page.data[0] ?? (await ctx.data.session.create({ location: { directory }, projectID: added?.id }).request)
+              page.data[0] ??
+              (await ctx.data.session.create({ location: { directory }, projectID: (await added)?.id }).request)
 
-            home.project.openProjectSession(conn, added?.worktree ?? directory, latest, {
+            home.project.openProjectSession(conn, directory, latest, {
               preview: await preview.now,
               later: preview.later,
             })
+            // Lists the project in the app; opening doesn't wait for it.
+            await added
           },
         }),
       )
+      .then((result) => {
+        if (result === "not-ready") showToast({ title: language.t("cp.projects.starting") })
+      })
       .catch((cause: unknown) =>
         showToast({
           title: language.t("common.requestFailed"),
@@ -116,6 +127,23 @@ export function createControlPlaneProjectsController() {
         }),
       )
       .finally(() => setOpening(undefined))
+  }
+
+  // The connection to the router (TLS) is made while the control plane answers, instead of after it. Its address is
+  // known once any project was opened in this browser.
+  function warmRouter() {
+    const known = servers.list.find((conn) => conn.type === "http" && projectOfConnection(conn.http.url))
+    const origin = known?.type === "http" ? new URL(known.http.url).origin : undefined
+
+    if (!origin) return
+    // A browser drops an unused warm connection after a few seconds and warms only when the link is added.
+    document.head.querySelector(`link[rel="preconnect"][href="${origin}"]`)?.remove()
+    const link = document.createElement("link")
+    link.rel = "preconnect"
+    link.href = origin
+    // The app calls the router without cookies, so the warmed connection must be the anonymous one.
+    link.crossOrigin = "anonymous"
+    document.head.append(link)
   }
 
   return {
@@ -135,7 +163,7 @@ export function createControlPlaneProjectsController() {
         <CreateProjectDialog
           client={session.client}
           onCreated={() => void refetch()}
-          onReady={(created) => void open(toLocal(created))}
+          onReady={(created) => void openView(created)}
         />
       )),
     // Edit opens the project's settings, as for a local project. They live on its VM, so a project this browser has
