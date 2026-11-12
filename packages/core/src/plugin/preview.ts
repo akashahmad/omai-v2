@@ -175,8 +175,11 @@ export const Plugin = define({
 
     // The events need the registration, which needs the handlers; the controller reads it once it publishes.
     const publish: { current?: (name: "changed" | "log", value: unknown) => void } = {}
-    // On a project's VM: the preview listens on the port the VM publishes, under the address the control plane knows.
-    const remote = PublishRemote.target(process.env)
+    // On a hosted project VM: the preview listens on the port the VM publishes, under the address the control plane
+    // knows. A local VM publishes no port and has no public address; its preview is reached on its own port.
+    const fixedPort = Number(process.env.OMAI_PREVIEW_PORT)
+    const published = Number.isInteger(fixedPort) && fixedPort > 0
+    const remote = published ? PublishRemote.target(process.env) : undefined
     // The panel only hears status changes, so the status goes out again once the address is known.
     const origin = remote
       ? PreviewOrigin.poll(remote, {
@@ -184,13 +187,12 @@ export const Plugin = define({
         })
       : undefined
     if (origin) yield* Effect.addFinalizer(() => Effect.sync(() => origin.close()))
-    const fixedPort = Number(process.env.OMAI_PREVIEW_PORT)
     const controller = createController({
       directory: ctx.location.directory,
       // The server publishes where it listens and whether it has a password when it starts (see ServerProcess).
       hostname: process.env.OMAI_PREVIEW_HOSTNAME || "127.0.0.1",
       auth: process.env.OMAI_PREVIEW_AUTH === "1",
-      port: Number.isInteger(fixedPort) && fixedPort > 0 ? fixedPort : undefined,
+      port: published ? fixedPort : undefined,
       origin: origin?.get,
       store,
       config: () => undefined,
