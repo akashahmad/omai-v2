@@ -113,8 +113,9 @@ export default function PreviewPanel(props: { view: PreviewView; visible: Access
                       view.frameLoaded()
                     }}
                   />
-                  {/* Until the app's first page arrives the frame is blank white; the brand loader covers it. */}
-                  <Show when={loaded() !== src() && !gaveUp()}>
+                  {/* Until the app's first page arrives the frame is blank white, and a page that isn't the preview's
+                      (an error page after a pause or a dropped connection) is never shown: the brand loader covers both. */}
+                  <Show when={(loaded() !== src() && !gaveUp()) || view.state.covered}>
                     <div class="absolute inset-0 flex items-center justify-center bg-v2-background-bg-base">
                       <div
                         data-component="brand-loader"

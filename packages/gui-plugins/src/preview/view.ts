@@ -40,6 +40,9 @@ const RECOVER_LIMIT = 3
 /** How long a page that has been beating may stay silent, in a visible tab, before the frame is entered again. */
 const SILENCE_LIMIT = 8_000
 
+/** How long after a page of the preview leaves the next one has to report itself before the frame is covered. */
+const COVER_GRACE = 1_000
+
 type State = {
   status: Preview.Status
   log: string
@@ -48,6 +51,11 @@ type State = {
   src?: string
   /** The preview didn't answer: the panel shows the brand icon, and reload restarts the preview. */
   unreachable: boolean
+  /**
+   * The frame may show a page that isn't the preview's (an error page after the VM paused or the connection dropped):
+   * the panel covers it with the brand loader until a page of the preview reports itself.
+   */
+  covered: boolean
   device: Device
   zoom: number
   logs: boolean
@@ -88,12 +96,15 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     path: "/",
     pages: ["/"],
     unreachable: false,
+    covered: false,
     device: "desktop",
     zoom: 100,
     logs: false,
   })
 
   const [frame, setFrame] = createSignal<HTMLIFrameElement>()
+  // Bumped to enter the preview again in a fresh frame.
+  const [entry, setEntry] = createSignal(0)
   // How many renders have the preview on screen; the first one starts an idle preview.
   let watchers = 0
 
@@ -141,11 +152,16 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
         ),
       )
       void call(rpc().logs({}, { ...scope(), signal })).then((logs) => logs && setState("log", logs.text))
+      // A frame on screen from before the connection dropped may hold a page the preview no longer accepts (the VM
+      // paused and started again): it is entered again, with a fresh ticket.
+      const shown = state.src !== undefined || state.unreachable
       void call(rpc().status({}, { ...scope(), signal })).then((status) => {
         if (!status || signal.aborted) return
         setState("status", reconcile(status))
 
         if (status.state === "idle" && watchers > 0) start()
+
+        if (status.state === "running" && shown) setEntry((value) => value + 1)
       })
     },
   )
@@ -169,11 +185,15 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     reported: false,
     recoveries: new Array<number>(),
     check: setTimeout(() => {}, 0),
+    cover: setTimeout(() => {}, 0),
     heard: Date.now(),
     beats: false,
   }
 
-  onCleanup(() => clearTimeout(frameState.check))
+  onCleanup(() => {
+    clearTimeout(frameState.check)
+    clearTimeout(frameState.cover)
+  })
 
   // A page of the preview beats every 2 seconds. Silence means something else took its place, such as the browser's
   // own error page after a reload while the connection dropped, whatever order the events around it came in. A hidden
@@ -183,6 +203,7 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
 
     if (document.visibilityState !== "visible" || Date.now() - frameState.heard < SILENCE_LIMIT) return
     frameState.heard = Date.now()
+    setState("covered", true)
     recover()
   }, 2_000)
 
@@ -197,14 +218,14 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
   // Each time the preview runs (and after a recovery), the frame enters it again, but only once the preview itself
   // answers: until a VM's port is up, the load balancer in front of it answers with an error page that would stay in the
   // frame. A preview that doesn't answer in time is shown as unreachable instead.
-  const [entry, setEntry] = createSignal(0)
   createKeyed(
     () => (state.status.state === "running" && origin() ? `${origin()}\u0000${entry()}` : undefined),
     () => {
       const current = origin()!
       const controller = new AbortController()
       onCleanup(() => controller.abort())
-      setState({ src: undefined, unreachable: false })
+      clearTimeout(frameState.cover)
+      setState({ src: undefined, unreachable: false, covered: false })
       void enter(current, controller.signal)
     },
   )
@@ -244,6 +265,7 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     if (!current || state.status.state !== "running") return
     frameState.check = setTimeout(() => {
       if (frameState.reported || origin() !== current || state.status.state !== "running") return
+      setState("covered", true)
       recover()
     }, REPORT_GRACE)
   }
@@ -268,11 +290,21 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
 
     if (aliveFrom(event, current)) frameState.beats = true
 
-    if (leftFrom(event, current)) frameState.reported = false
+    if (leftFrom(event, current)) {
+      frameState.reported = false
+      // Another page of the preview usually reports itself at once (a reload, a link); anything else is covered.
+      clearTimeout(frameState.cover)
+      frameState.cover = setTimeout(() => {
+        if (!frameState.reported) setState("covered", true)
+      }, COVER_GRACE)
+    }
+
     const location = locationFrom(event, current)
 
     if (location) {
       frameState.reported = true
+      clearTimeout(frameState.cover)
+      setState("covered", false)
       setState("path", location.path)
       visual.pageLoaded()
     }
@@ -359,11 +391,15 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     stop: () => void call(rpc().stop({}, scope())).then(apply),
     restart: () => void call(rpc().restart({}, scope())).then(apply),
     setRecipe: (recipe: Preview.Recipe | null) => void call(rpc().setRecipe({ recipe }, scope())).then(apply),
-    /** Reloads the page; an unreachable preview is restarted instead, and shown again once it answers. */
-    /** Restarts the preview and enters it again in a fresh frame: whatever the frame shows, reload brings it back. */
+    /**
+     * Restarts the preview and enters it again in a fresh frame: whatever the frame shows, reload brings it back. The
+     * brand loader shows at once; without a connection, the frame is entered again once the server is back.
+     */
     reload: () => {
       frameState.recoveries = []
-      setState("unreachable", false)
+      setState({ src: undefined, unreachable: false, covered: false })
+
+      if (!session().server.connected) return void setEntry((value) => value + 1)
       void call(rpc().restart({}, scope())).then((status) => {
         apply(status)
         setEntry((value) => value + 1)
