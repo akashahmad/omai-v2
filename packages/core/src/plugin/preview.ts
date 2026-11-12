@@ -34,7 +34,9 @@ export const GUIDANCE = [
   "The user is waiting for the result, so get there in as few steps as you can.",
   "- Read what you need once, decide the whole change, then write each file once with its full content. Edit afterwards only to fix a real error, never to polish.",
   "- Do not check your work visually: no screenshots, headless browsers, rendering pages, extracting video frames, ffprobe, or reading back images you generated. The user sees the result in the preview.",
-  "- Make placeholder assets (images, videos, icons, fonts) once, in the simplest way that works: an SVG, a CSS gradient, or one short command. Never refine them over several tries.",
+  "- A file the task or an attached file gives in full (code, SVG logos and icons) is written exactly as given: copy it, never redraw or simplify it.",
+  "- Use the real assets the task points to: the logo, icons, images, fonts and texts of a source website, a link or an attached file. Download each one once and use it as it is.",
+  "- Only for an asset that can't be found, make a placeholder once, in the simplest way that works (an SVG, a CSS gradient, or one short command). Never refine placeholders over several tries.",
   "- Do not explore the machine (installed tools, global caches, other folders) beyond what the task needs.",
   "- Batch independent commands into one shell call. Run at most one quick check at the end (an existing build or a syntax check), fix what it reports, then stop.",
 ].join("\n")
