@@ -362,6 +362,16 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     if (current) frame()?.contentWindow?.postMessage({ type: "omai:navigate", action, href }, current)
   }
 
+  // Restarts the preview and enters it again in a fresh frame once it answers, whatever the frame showed before.
+  const restart = () => {
+    frameState.recoveries = []
+    setState({ unreachable: false, covered: false })
+    void call(rpc().restart({}, scope())).then((status) => {
+      apply(status)
+      setEntry((value) => value + 1)
+    })
+  }
+
   const view = {
     visual,
     /** Saves an uploaded image into the app's public folder; resolves to its address on the site. */
@@ -389,22 +399,10 @@ function createView(session: Accessor<MountedSession>, hooks: ViewHooks) {
     },
     start,
     stop: () => void call(rpc().stop({}, scope())).then(apply),
-    restart: () => void call(rpc().restart({}, scope())).then(apply),
     setRecipe: (recipe: Preview.Recipe | null) => void call(rpc().setRecipe({ recipe }, scope())).then(apply),
-    /**
-     * Restarts the preview and enters it again in a fresh frame: whatever the frame shows, reload brings it back. The
-     * brand loader shows at once; without a connection, the frame is entered again once the server is back.
-     */
-    reload: () => {
-      frameState.recoveries = []
-      setState({ src: undefined, unreachable: false, covered: false })
-
-      if (!session().server.connected) return void setEntry((value) => value + 1)
-      void call(rpc().restart({}, scope())).then((status) => {
-        apply(status)
-        setEntry((value) => value + 1)
-      })
-    },
+    restart,
+    /** The same as Restart: whatever the frame shows, reload brings the preview back. */
+    reload: restart,
     back: () => navigate("back"),
     forward: () => navigate("forward"),
     go: (path: string) => {
