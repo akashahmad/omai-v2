@@ -6,13 +6,15 @@ import { useGlobal, type ServerCtx } from "./runtime"
 const context = createSimpleContext({
   name: "Server",
   init: (props: { conn: ServerConnection.Any; ctx: ServerCtx }) => {
-    const conn = props.conn
-    const key = ServerConnection.key(conn)
+    const key = ServerConnection.key(props.conn)
 
     const global = useGlobal()
 
     return {
-      conn,
+      /** The listed connection, so a renewed project token reaches uploads and plugins without a remount. */
+      get conn() {
+        return global.servers.list().find((item) => ServerConnection.key(item) === key) ?? props.conn
+      },
       key,
       get isLocal() {
         return props.ctx.isLocal

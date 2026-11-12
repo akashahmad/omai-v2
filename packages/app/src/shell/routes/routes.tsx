@@ -131,7 +131,13 @@ function TargetServerRoute(props: ParentProps) {
 
   const key = createMemo(() => serverKeyOf(params.serverKey))
 
-  const connection = createMemo(() => global.servers.list().find((item) => ServerConnection.key(item) === key()))
+  // The same project with a renewed token is the same connection: the route keeps its screen, and the server context
+  // reads the new token from the list.
+  const connection = createMemo(
+    () => global.servers.list().find((item) => ServerConnection.key(item) === key()),
+    undefined,
+    { equals: (a, b) => !!a && !!b && ServerConnection.key(a) === ServerConnection.key(b) },
+  )
 
   // A link to a project this browser hasn't opened (a new window, cleared storage, someone else's link): the control
   // plane opens it when it is the user's, and says no otherwise. Anything else ends on a page that says so.

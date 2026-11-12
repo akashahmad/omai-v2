@@ -65,6 +65,15 @@ export const { use: useGlobal, provider: GlobalProvider } = createSimpleContext(
 
       if (existing && serverCtxCredentials.get(key) === credentials(conn)) return existing
 
+      // A project VM's token renewed (its event stream reconnected after a drop): the same controller moves to the new
+      // token. Rebuilding it would reload the whole session screen, loader and all, in the middle of the agent's work.
+      if (existing && multiUser() && conn.type === "http" && existing.sdk.http.url === conn.http.url) {
+        existing.sdk.update(conn.http)
+        serverCtxCredentials.set(key, credentials(conn))
+
+        return existing
+      }
+
       // A controller keeps the credentials it started with, so a server signed in again under the same address needs
       // a new one.
       if (existing) disposeServerCtx(key)

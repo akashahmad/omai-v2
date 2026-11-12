@@ -68,6 +68,8 @@ type ServerSDKBase = {
   url: string
   /** The connection the API currently uses, which a managed server's reconnect may replace. */
   http: ServerConnection.HttpBase
+  /** Moves requests to a new token for the same address; the event stream takes it on its next reconnect. */
+  update(http: ServerConnection.HttpBase): void
   api: ServerApi
   media: MediaCache
   connection: {
@@ -139,6 +141,9 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
     },
     get http() {
       return transport.http
+    },
+    update(http: ServerConnection.HttpBase) {
+      transport.update(http)
     },
     get api() {
       return transport.api
