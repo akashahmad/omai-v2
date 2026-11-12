@@ -15,19 +15,7 @@ describe("PlatformProviders", () => {
     expect(PlatformProviders.shareable(undefined)).toBe(false)
   })
 
-  test("a provider's API base falls back to its package's built-in address", () => {
-    expect(PlatformProviders.base({ package: "@ai-sdk/openai" })).toBe("https://api.openai.com/v1")
-    expect(PlatformProviders.base({ package: "@ai-sdk/anthropic" })).toBe("https://api.anthropic.com/v1")
-    expect(PlatformProviders.base({ package: "@ai-sdk/google" })).toBe(
-      "https://generativelanguage.googleapis.com/v1beta",
-    )
-    expect(PlatformProviders.base({ package: "@ai-sdk/openai", settings: { baseURL: "https://x.test/v1" } })).toBe(
-      "https://x.test/v1",
-    )
-    expect(PlatformProviders.base({ package: "@ai-sdk/openai-compatible" })).toBeUndefined()
-  })
-
-  test("select shares key and sign-in providers with the hosts their models use", () => {
+  test("select shares key and sign-in providers that can be shared, with their models", () => {
     const providers = [
       { id: "openai", integrationID: "openai", package: "@ai-sdk/openai" },
       { id: "groq", package: "@ai-sdk/openai-compatible", settings: { baseURL: "https://api.groq.com/openai/v1" } },
@@ -64,7 +52,6 @@ describe("PlatformProviders", () => {
         id: "openai",
         integrationID: "openai",
         value: { type: "key", key: "sk-1" },
-        hosts: ["api.openai.com", "eu.api.openai.com", "chatgpt.com"],
         models: [
           { id: "gpt-eu", api: "gpt-5" },
           { id: "gpt-5", api: "gpt-5" },
@@ -74,38 +61,14 @@ describe("PlatformProviders", () => {
         id: "groq",
         integrationID: "groq",
         value: { type: "key", key: "gsk-2" },
-        hosts: ["api.groq.com"],
         models: [{ id: "llama", api: "llama" }],
       },
       {
         id: "copilot",
         integrationID: "github-copilot",
         value: signIn,
-        hosts: [
-          "api.githubcopilot.com",
-          "api.github.com",
-          "api.individual.githubcopilot.com",
-          "api.business.githubcopilot.com",
-          "api.enterprise.githubcopilot.com",
-        ],
         models: [{ id: "c", api: "c" }],
       },
     ])
-  })
-
-  test("hosts by integration cover every shareable provider, merged per integration", () => {
-    const providers = [
-      { id: "openai", package: "@ai-sdk/openai" },
-      {
-        id: "openai-eu",
-        integrationID: "openai",
-        package: "@ai-sdk/openai",
-        settings: { baseURL: "https://eu.api.openai.com/v1" },
-      },
-      { id: "vertex", package: "@opencode/ai/providers/google-vertex" },
-    ]
-    expect(PlatformProviders.hostsByIntegration({ providers, models: [], credentials: new Map() })).toEqual({
-      openai: ["api.openai.com", "chatgpt.com", "eu.api.openai.com"],
-    })
   })
 })

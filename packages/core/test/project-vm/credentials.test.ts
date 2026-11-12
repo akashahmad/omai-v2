@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { ProjectVmCredentials } from "@opencode/core/project-vm/credentials"
+import { ProjectVmManaged } from "@opencode/core/project-vm/managed"
 
 type Local = { id: string; integrationID: string; label: string; value: unknown }
 type Remote = { id: string; integrationID: string; label: string; value: unknown; updatedAt: number; deleted: boolean }
@@ -119,7 +120,7 @@ describe("ProjectVmCredentials", () => {
     expect(f.state.deletes).toEqual(["c1"])
   })
 
-  test("a sign-in made here is sent to the control plane once, then only its stand-in stays here", async () => {
+  test("a sign-in made here is sent to the control plane once, then keeps its access token and the managed refresh", async () => {
     const real = {
       type: "oauth",
       methodID: "chatgpt",
@@ -136,35 +137,35 @@ describe("ProjectVmCredentials", () => {
         id: "c2",
         integrationID: "openai",
         label: "ChatGPT",
-        value: { ...real, access: "omai-gw.u~c2", refresh: "omai-gw.u~c2", expires: 253_402_300_799_000 },
+        value: { ...real, refresh: ProjectVmManaged.MANAGED_REFRESH },
       },
     ])
-    // The stand-in is not a change to send back.
+    // Swapping the refresh token is not a change to send back.
     await f.sync.push()
     expect(f.state.puts).toEqual(["c2"])
   })
 
-  test("a sign-in from another project arrives as its stand-in and is not pushed back", async () => {
-    const standIn = {
+  test("a sign-in from another project arrives with its access token and is not pushed back", async () => {
+    const managed = {
       type: "oauth",
       methodID: "chatgpt",
-      access: "omai-gw.u~c1",
-      refresh: "omai-gw.u~c1",
-      expires: 253_402_300_799_000,
+      access: "at-real",
+      refresh: ProjectVmManaged.MANAGED_REFRESH,
+      expires: 9e12,
     }
     const f = fakes([
-      { id: "c1", integrationID: "openai", label: "ChatGPT", value: standIn, updatedAt: 5, deleted: false },
+      { id: "c1", integrationID: "openai", label: "ChatGPT", value: managed, updatedAt: 5, deleted: false },
     ])
     await f.sync.pull()
     await f.sync.push()
-    expect(f.state.local).toEqual([{ id: "c1", integrationID: "openai", label: "ChatGPT", value: standIn }])
+    expect(f.state.local).toEqual([{ id: "c1", integrationID: "openai", label: "ChatGPT", value: managed }])
     expect(f.state.puts).toEqual([])
   })
 
-  test("shared stand-ins are never sent as the user's own", async () => {
+  test("shared credentials are never sent as the user's own", async () => {
     const f = fakes(
       [],
-      [{ id: "cred_shared_openai", integrationID: "openai", label: "Shared", value: key("omai-gw.s~openai") }],
+      [{ id: "cred_shared_openai", integrationID: "openai", label: "Shared", value: key("sk-shared") }],
     )
     await f.sync.push()
     expect(f.state.puts).toEqual([])

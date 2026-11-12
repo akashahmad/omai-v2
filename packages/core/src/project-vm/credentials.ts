@@ -5,7 +5,7 @@ import { Bus } from "../bus.js"
 import { Credential } from "../credential.js"
 import { Integration } from "../integration.js"
 import { SHARED_PREFIX } from "../plugin/provider/platform-keys.js"
-import { ProjectVmGateway } from "./gateway.js"
+import { ProjectVmManaged } from "./managed.js"
 
 type Local = { id: string; integrationID: string; label: string; value: unknown }
 type Remote = Local & { updatedAt: number; deleted: boolean }
@@ -23,13 +23,16 @@ const Personal = Schema.Array(
 )
 const decodeAnswer = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Struct({ personal: Personal })))
 const decodeValue = Schema.decodeUnknownOption(Credential.Value)
+const decodeRefreshed = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Struct({ access: Schema.String, expires: Schema.Number })),
+)
 
 const REFRESH = Duration.seconds(60)
 
 /**
  * Keeps a VM's credentials in step with its user's on the control plane, so a provider the user connects on one of
- * their projects works on all of them. A sign-in lives on the control plane, which refreshes it; projects hold its
- * stand-in. `pull` applies the control plane's state, `push` sends only
+ * their projects works on all of them. A sign-in's refresh token lives on the control plane, which refreshes it;
+ * projects hold its access token. `pull` applies the control plane's state, `push` sends only
  * what changed here since the last sync: what was just pulled is never sent back.
  */
 export function create(input: {
@@ -91,7 +94,7 @@ export function create(input: {
           const print = fingerprint(item)
           if (synced.get(item.id) === print) continue
           if ((await input.server.put({ ...item, updatedAt: now() })) !== "ok") continue
-          // The control plane keeps a sign-in and refreshes it from now on; this project keeps only its stand-in.
+          // The control plane keeps the sign-in's refresh token and refreshes it from now on.
           const kept = replaced(item)
           if (kept !== item && !(await input.store.update(item.id, { label: kept.label, value: kept.value }))) continue
           synced.set(item.id, fingerprint(kept))
@@ -117,6 +120,23 @@ export const start = (target: { url: string; projectID: string; token: string })
       if (res.status === 409) return "stale"
       return res.status === 404 ? "forbidden" : "failed"
     }
+    // Sign-ins with the managed refresh token are refreshed here, once for all the user's VMs.
+    ProjectVmManaged.register((credential) =>
+      fetch(`${base}/credentials/refresh`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          ref: credential.id.startsWith(SHARED_PREFIX) ? `s~${credential.integrationID}` : `u~${credential.id}`,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      })
+        .then(async (res) => {
+          if (!res.ok) return undefined
+          const decoded = decodeRefreshed(await res.text())
+          return decoded._tag === "Some" ? decoded.value : undefined
+        })
+        .catch(() => undefined),
+    )
     const sync = create({
       store: {
         all: () =>
@@ -188,23 +208,22 @@ export const start = (target: { url: string; projectID: string; token: string })
   })
 
 /**
- * The user's API keys and sign-ins follow them to all their projects. A shared provider's stand-in is the admin's,
+ * The user's API keys and sign-ins follow them to all their projects. A shared provider's credential is the admin's,
  * not theirs, and never syncs; an external credential (a cloud login on this machine) can't.
  */
 function syncable(item: { id?: string; value: unknown }) {
   if (item.id?.startsWith(SHARED_PREFIX)) return false
-  const type = typeof item.value === "object" && item.value !== null && "type" in item.value ? item.value.type : undefined
+  const type =
+    typeof item.value === "object" && item.value !== null && "type" in item.value ? item.value.type : undefined
   return type === "key" || type === "oauth"
 }
 
-/** A real sign-in as its stand-in, the same one the control plane sends every project; anything else as it is. */
+/** A sign-in as projects hold it once the control plane has it: its refresh token swapped for the managed one. */
 function replaced(item: Local): Local {
   const value = item.value
   if (typeof value !== "object" || value === null || !("type" in value) || value.type !== "oauth") return item
-  if ("access" in value && typeof value.access === "string" && value.access.startsWith(ProjectVmGateway.STAND_IN))
-    return item
-  const placeholder = ProjectVmGateway.standIn(`u~${item.id}`)
-  return { ...item, value: { ...value, access: placeholder, refresh: placeholder, expires: ProjectVmGateway.NEVER } }
+  if ("refresh" in value && value.refresh === ProjectVmManaged.MANAGED_REFRESH) return item
+  return { ...item, value: { ...value, refresh: ProjectVmManaged.MANAGED_REFRESH } }
 }
 
 /** A stable text for comparing credentials: object keys sorted, so the same value always reads the same. */

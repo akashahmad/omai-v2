@@ -22,11 +22,13 @@ export type Credential = {
 
 export type Step = { providerID: string; modelID: string; inputTokens: number; outputTokens: number; at: number }
 
-/** What a VM holds in place of a secret: requests carrying it go through the gateway, which swaps in the real one. */
-export const STAND_IN = "omai-gw."
-export const standIn = (ref: string) => `${STAND_IN}${ref}`
-// A stand-in sign-in never expires on the VM, so the VM never tries to refresh it; the control plane does.
-const NEVER = 253_402_300_799_000
+/**
+ * The refresh token a VM holds for a sign-in: the real one stays here, so a sign-in is refreshed in one place. Several
+ * VMs refreshing one sign-in themselves would rotate its refresh token out from under each other.
+ */
+export const MANAGED_REFRESH = "omai-managed"
+// What VMs on images before direct calls held in place of a secret; never stored over a real one.
+const LEGACY_STAND_IN = "omai-gw."
 
 const Metadata = Schema.optional(Schema.Record(Schema.String, Schema.Unknown))
 const KeyValue = Schema.Struct({ type: Schema.Literal("key"), key: Schema.String, metadata: Metadata })
@@ -39,34 +41,30 @@ const OAuthValue = Schema.Struct({
   metadata: Metadata,
 })
 type OAuthValue = typeof OAuthValue.Type
+type KeyValue = typeof KeyValue.Type
 const Exported = Schema.Array(
   Schema.Struct({
     id: Schema.String,
     integrationID: Schema.String,
     value: Schema.Union([KeyValue, OAuthValue]),
-    hosts: Schema.Array(Schema.String),
     models: Schema.Array(Schema.Struct({ id: Schema.String })),
   }),
 )
 const decodeExported = Schema.decodeUnknownOption(Schema.fromJsonString(Exported))
-const decodeHosts = Schema.decodeUnknownOption(
-  Schema.fromJsonString(Schema.Record(Schema.String, Schema.Array(Schema.String))),
-)
 const decodeOAuth = Schema.decodeUnknownOption(Schema.fromJsonString(OAuthValue))
 const decodeValue = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown))
 const decodeStored = Schema.decodeUnknownOption(Schema.Union([KeyValue, OAuthValue]))
 
-// The admin's providers change rarely; VMs ask every minute. Hosts change only with the catalog.
+// The admin's providers change rarely; VMs ask every minute.
 const CACHE_MS = 30_000
-const HOSTS_CACHE_MS = 10 * 60_000
 // A sign-in is refreshed when it has less than this left, like the integrations themselves do.
 const REFRESH_MARGIN_MS = 5 * 60_000
 
 /**
  * The model credentials of every VM: the admin's shared providers (from the platform server, only switched-on models)
- * and each owner's own credentials, which only that user's VMs can read or change. VMs get API keys of their owner, and
- * stand-ins for everything else; the gateway swaps a stand-in for the real secret, refreshing sign-ins here, in one
- * place. Usage reports from VMs land here too.
+ * and each owner's own credentials, which only that user's VMs can read or change. VMs get the real keys and access
+ * tokens and call providers directly; refresh tokens stay here, and sign-ins are refreshed here, in one place. Usage
+ * reports from VMs land here too.
  */
 export function make(deps: {
   db: Db
@@ -77,27 +75,17 @@ export function make(deps: {
 }) {
   const now = deps.now ?? (() => Date.now())
   const cache = { value: undefined as { at: number; value: typeof Exported.Type } | undefined }
-  const hostsCache = { value: undefined as { at: number; value: Record<string, readonly string[]> } | undefined }
   const refreshing = new Map<string, Promise<OAuthValue | undefined>>()
 
   /** The platform server's providers; the last good list when it can't be asked, undefined before any. */
-  async function exported() {
-    if (cache.value && now() - cache.value.at < CACHE_MS) return cache.value.value
+  async function exported(force = false) {
+    if (!force && cache.value && now() - cache.value.at < CACHE_MS) return cache.value.value
     const text = await platform("/api/experimental/platform/providers").catch(() => undefined)
     const decoded = text === undefined ? undefined : decodeExported(text)
     // Only a real answer is cached: a failure is tried again next time, and never mistaken for "no providers".
     if (decoded?._tag !== "Some") return cache.value?.value
     cache.value = { at: now(), value: decoded.value }
     return decoded.value
-  }
-
-  async function hosts(integrationID: string) {
-    if (!hostsCache.value || now() - hostsCache.value.at >= HOSTS_CACHE_MS) {
-      const text = await platform("/api/experimental/platform/hosts").catch(() => undefined)
-      const decoded = text === undefined ? undefined : decodeHosts(text)
-      if (decoded?._tag === "Some") hostsCache.value = { at: now(), value: decoded.value }
-    }
-    return hostsCache.value?.value[integrationID] ?? []
   }
 
   /** Calls the platform server with its secret; the text of a 2xx answer, else an error. */
@@ -169,10 +157,15 @@ export function make(deps: {
     return run
   }
 
+  /** A credential as a VM gets it: a sign-in carries the managed refresh token, never the real one. */
+  function managed<T extends KeyValue | OAuthValue>(value: T): T {
+    return value.type === "oauth" ? { ...value, refresh: MANAGED_REFRESH } : value
+  }
+
   return {
     /**
-     * Each shared provider with its switched-on models, and how it is connected, never the secret: a VM makes a
-     * stand-in from it. Undefined while that isn't known yet.
+     * Each shared provider with its switched-on models and its credential, a sign-in with the managed refresh token.
+     * Undefined while that isn't known yet.
      */
     async shared() {
       const providers = await exported()
@@ -184,51 +177,55 @@ export function make(deps: {
           .filter((item) => item.providerID === provider.id && known.has(item.modelID))
           .map((item) => item.modelID)
         if (models.length === 0) return []
-        const value = provider.value
-        return [
-          {
-            id: provider.id,
-            integrationID: provider.integrationID,
-            type: value.type,
-            ...(value.type === "oauth" ? { methodID: value.methodID } : {}),
-            ...(value.metadata ? { metadata: value.metadata } : {}),
-            models,
-          },
-        ]
+        return [{ id: provider.id, integrationID: provider.integrationID, value: managed(provider.value), models }]
       })
     },
 
     /**
-     * A user's credentials, deleted ones as tombstones so every VM removes its copy. API keys are sent as they are;
-     * a sign-in is sent as a stand-in, so its tokens never leave the control plane.
+     * A user's credentials, deleted ones as tombstones so every VM removes its copy. API keys are sent as they are; a
+     * sign-in with time left (refreshed here when needed) and the managed refresh token.
      */
     async personal(userID: string) {
       const rows = await deps.db.select().from(UserCredentialTable).where(eq(UserCredentialTable.user_id, userID))
-      return rows.flatMap((row) => {
-        const base = { id: row.id, integrationID: row.integration_id, updatedAt: row.updated_at.getTime() }
-        if (row.deleted_at || !row.value) return [{ ...base, label: "", value: null, deleted: true }]
-        // One that can't be decrypted (another secrets key) is left out: sent empty, VMs would drop the real key.
-        const value = open(row)
-        if (value === undefined) return []
-        const stored = decodeStored(value)
-        const sent =
-          stored._tag === "Some" && stored.value.type === "oauth"
-            ? { ...stored.value, access: standIn(`u~${row.id}`), refresh: standIn(`u~${row.id}`), expires: NEVER }
-            : value
-        return [{ ...base, label: row.label, value: sent, deleted: false }]
-      })
+      const items = await Promise.all(
+        rows.map(async (row) => {
+          const base = { id: row.id, integrationID: row.integration_id, updatedAt: row.updated_at.getTime() }
+          if (row.deleted_at || !row.value) return [{ ...base, label: "", value: null as unknown, deleted: true }]
+          // One that can't be decrypted (another secrets key) is left out: sent empty, VMs would drop the real key.
+          const value = open(row)
+          if (value === undefined) return []
+          const stored = decodeStored(value)
+          if (stored._tag === "None" || stored.value.type !== "oauth")
+            return [{ ...base, label: row.label, value, deleted: false }]
+          // One that can't be refreshed now is left out too: VMs keep their copy and get it on a later pull.
+          const current = await fresh(row, stored.value)
+          if (!current) return []
+          return [{ ...base, label: row.label, value: managed(current) as unknown, deleted: false }]
+        }),
+      )
+      return items.flat()
     },
 
-    /** Stores a user's credential when it is newer than the stored one. A stand-in never replaces a real secret. */
+    /**
+     * Stores a user's credential when it is newer than the stored one. A sign-in sent with the managed refresh token
+     * keeps the stored refresh token, and is refused when there is none to keep.
+     */
     async put(userID: string, input: Credential): Promise<"ok" | "stale" | "forbidden"> {
       const existing = await owned(input.id)
       if (existing && existing.user_id !== userID) return "forbidden"
-      if (JSON.stringify(input.value).includes(STAND_IN)) return "stale"
+      if (JSON.stringify(input.value).includes(LEGACY_STAND_IN)) return "stale"
       if (existing && existing.updated_at.getTime() >= input.updatedAt) return "stale"
+      const sent = decodeStored(input.value)
+      const managedSignIn =
+        sent._tag === "Some" && sent.value.type === "oauth" && sent.value.refresh === MANAGED_REFRESH
+      const kept = managedSignIn && existing && !existing.deleted_at ? decodeStored(open(existing)) : undefined
+      const refresh = kept?._tag === "Some" && kept.value.type === "oauth" ? kept.value.refresh : undefined
+      if (managedSignIn && !refresh) return "stale"
+      const value = sent._tag === "Some" && refresh ? { ...sent.value, refresh } : input.value
       const row = {
         integration_id: input.integrationID,
         label: input.label,
-        value: deps.secrets.seal(JSON.stringify(input.value)),
+        value: deps.secrets.seal(JSON.stringify(value)),
         updated_at: new Date(input.updatedAt),
         deleted_at: null,
       }
@@ -241,30 +238,30 @@ export function make(deps: {
     },
 
     /**
-     * The real secret behind a stand-in, for the gateway, with the hosts it may be sent to. `s~<integration>` is a
+     * A sign-in with time left for one of `userID`'s VMs, refreshed here once for every caller. `s~<integration>` is a
      * shared provider (only while some of its models are switched on); `u~<credential>` is one of `userID`'s own.
+     * Undefined when it is unknown, not theirs, or can't be refreshed now.
      */
-    async secret(userID: string, ref: string): Promise<{ secret: string; hosts: readonly string[] } | undefined> {
+    async refresh(userID: string, ref: string): Promise<{ access: string; expires: number } | undefined> {
       if (ref.startsWith("s~")) {
         const integrationID = ref.slice(2)
-        const shared = (await this.shared()) ?? []
-        if (!shared.some((item) => item.integrationID === integrationID)) return undefined
-        const matching = ((await exported()) ?? []).filter((item) => item.integrationID === integrationID)
-        const value = matching[0]?.value
-        if (!value) return undefined
-        return {
-          secret: value.type === "key" ? value.key : value.access,
-          hosts: [...new Set(matching.flatMap((item) => item.hosts))],
-        }
+        const find = async () =>
+          ((await this.shared()) ?? []).find((item) => item.integrationID === integrationID)?.value
+        const cached = await find()
+        if (cached?.type !== "oauth") return undefined
+        if (cached.expires > now() + REFRESH_MARGIN_MS) return { access: cached.access, expires: cached.expires }
+        // The platform server refreshes its sign-ins as it exports them, so asking it again gives a fresh one.
+        await exported(true)
+        const value = await find()
+        return value?.type === "oauth" ? { access: value.access, expires: value.expires } : undefined
       }
       if (!ref.startsWith("u~")) return undefined
       const row = await owned(ref.slice(2))
       if (!row || row.user_id !== userID || row.deleted_at) return undefined
       const stored = decodeStored(open(row))
-      if (stored._tag !== "Some") return undefined
-      const value = stored.value.type === "oauth" ? await fresh(row, stored.value) : stored.value
-      if (!value) return undefined
-      return { secret: value.type === "key" ? value.key : value.access, hosts: await hosts(row.integration_id) }
+      if (stored._tag !== "Some" || stored.value.type !== "oauth") return undefined
+      const value = await fresh(row, stored.value)
+      return value ? { access: value.access, expires: value.expires } : undefined
     },
 
     /** Deletes a user's credential, keeping a tombstone with the time it happened. */

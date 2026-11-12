@@ -5,6 +5,7 @@ import { Node } from "@opencode/util/effect/app-node"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { Credential } from "@opencode/core/credential"
 import { Integration } from "@opencode/core/integration"
+import { ProjectVmManaged } from "@opencode/core/project-vm/managed"
 import { testEffect } from "./lib/effect"
 
 const it = testEffect(Layer.empty)
@@ -114,5 +115,60 @@ it.effect("bounds a stuck integration refresh and allows a later attempt", () =>
       }),
     )
     expect(yield* services.a.connection.resolve(connection)).toMatchObject({ access: "new" })
+  }),
+)
+
+const managedSignIn = (integrationID: Integration.ID, methodID: Integration.MethodID) =>
+  Credential.OAuth.make({
+    type: "oauth",
+    methodID,
+    access: "old",
+    refresh: ProjectVmManaged.MANAGED_REFRESH,
+    expires: 1,
+  })
+
+it.effect("a managed sign-in about to expire is refreshed through the control plane, never the provider", () =>
+  Effect.gen(function* () {
+    const services = yield* locations
+    const integrationID = Integration.ID.make("openai")
+    const methodID = Integration.MethodID.make("oauth")
+    yield* services.a.transform((editor) =>
+      editor.method.update({
+        integrationID,
+        method: { id: methodID, type: "oauth", label: "OAuth" },
+        authorize: () => Effect.die("unused sign-in"),
+        refresh: () => Effect.die("refreshed at the provider"),
+      }),
+    )
+    const asked: { id: string; integrationID: string }[] = []
+    ProjectVmManaged.register(async (credential) => {
+      asked.push(credential)
+      return { access: "new", expires: Number.MAX_SAFE_INTEGER }
+    })
+    yield* Effect.addFinalizer(() => Effect.sync(() => ProjectVmManaged.register(undefined)))
+    const stored = yield* services.credentials.create({ integrationID, value: managedSignIn(integrationID, methodID) })
+    const connection = { type: "credential" as const, id: stored.id, label: stored.label, method: "oauth" as const }
+    const value = yield* services.a.connection.resolve(connection)
+    expect(value).toMatchObject({ access: "new", refresh: ProjectVmManaged.MANAGED_REFRESH })
+    expect((yield* services.credentials.get(stored.id))?.value).toEqual(value)
+    expect(asked).toEqual([{ id: stored.id, integrationID: "openai" }])
+    // Stored with time left, so the next call asks nothing.
+    yield* services.a.connection.resolve(connection)
+    expect(asked).toHaveLength(1)
+  }),
+)
+
+it.effect("a managed sign-in is kept as it is while the control plane can't refresh it", () =>
+  Effect.gen(function* () {
+    const services = yield* locations
+    const integrationID = Integration.ID.make("openai")
+    const methodID = Integration.MethodID.make("oauth")
+    ProjectVmManaged.register(async () => {
+      throw new Error("unreachable")
+    })
+    yield* Effect.addFinalizer(() => Effect.sync(() => ProjectVmManaged.register(undefined)))
+    const stored = yield* services.credentials.create({ integrationID, value: managedSignIn(integrationID, methodID) })
+    const connection = { type: "credential" as const, id: stored.id, label: stored.label, method: "oauth" as const }
+    expect(yield* services.a.connection.resolve(connection)).toMatchObject({ access: "old", expires: 1 })
   }),
 )

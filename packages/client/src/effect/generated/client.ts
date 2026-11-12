@@ -272,7 +272,6 @@ import type {
   ExperimentalProjectVmUploadOutput,
   ExperimentalProjectVmBusyOutput,
   ExperimentalPlatformProvidersOutput,
-  ExperimentalPlatformHostsOutput,
   ExperimentalPlatformRefreshInput,
   ExperimentalPlatformRefreshOutput,
   ShellListInput,
@@ -1763,9 +1762,6 @@ const EndpointExperimentalPlatformProviders = (raw: RawClient["server.platform"]
     raw["platform.providers"]({}).pipe(Effect.mapError(mapClientError)),
   )
 
-const EndpointExperimentalPlatformHosts = (raw: RawClient["server.platform"]) => () =>
-  preserveEffect<ExperimentalPlatformHostsOutput>()(raw["platform.hosts"]({}).pipe(Effect.mapError(mapClientError)))
-
 const EndpointExperimentalPlatformRefresh =
   (raw: RawClient["server.platform"]) => (input: ExperimentalPlatformRefreshInput) =>
     preserveEffect<ExperimentalPlatformRefreshOutput>()(
@@ -1776,7 +1772,6 @@ const EndpointExperimentalPlatformRefresh =
 
 const adaptGroupExperimentalPlatform = (raw: RawClient["server.platform"]) => ({
   providers: EndpointExperimentalPlatformProviders(raw),
-  hosts: EndpointExperimentalPlatformHosts(raw),
   refresh: EndpointExperimentalPlatformRefresh(raw),
 })
 
@@ -2107,8 +2102,6 @@ const adaptClient = (raw: RawClient) => {
     platform: {
       /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
       providers: client.experimental.platform.providers,
-      /** @deprecated Use `client.experimental.platform.hosts`. Removed in the next minor. */
-      hosts: client.experimental.platform.hosts,
       /** @deprecated Use `client.experimental.platform.refresh`. Removed in the next minor. */
       refresh: client.experimental.platform.refresh,
     },

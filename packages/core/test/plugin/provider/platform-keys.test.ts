@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test"
-import { mkdtemp, readFile, stat } from "node:fs/promises"
+import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { Credential } from "@opencode/core/credential"
 import { Integration } from "@opencode/core/integration"
+import { ProjectVmManaged } from "@opencode/core/project-vm/managed"
 import { PlatformKeys } from "@opencode/core/plugin/provider/platform-keys"
 
 const providers = [
@@ -10,16 +12,17 @@ const providers = [
   { id: "groq", integrationID: "groq", models: [{ id: "llama" }] },
   { id: "local", models: [{ id: "m" }] },
 ]
+const signIn = Credential.OAuth.make({
+  type: "oauth",
+  methodID: Integration.MethodID.make("chatgpt"),
+  access: "at-shared",
+  refresh: ProjectVmManaged.MANAGED_REFRESH,
+  expires: 9e12,
+  metadata: { clientID: "c" },
+})
 const shared = [
-  {
-    id: "openai",
-    integrationID: "openai",
-    type: "oauth" as const,
-    methodID: "chatgpt",
-    metadata: { clientID: "c" },
-    models: ["gpt-5"],
-  },
-  { id: "groq", integrationID: "groq", type: "key" as const, models: ["llama"] },
+  { id: "openai", integrationID: "openai", value: signIn, models: ["gpt-5"] },
+  { id: "groq", integrationID: "groq", value: Credential.Key.make({ type: "key", key: "gsk" }), models: ["llama"] },
 ]
 
 describe("PlatformKeys", () => {
@@ -47,25 +50,20 @@ describe("PlatformKeys", () => {
     expect(PlatformKeys.plan(providers, off, new Set())).toEqual([{ id: "openai", remove: ["gpt-5", "gpt-4"] }])
   })
 
-  test("each shared integration the user hasn't connected gets a stand-in credential, never the secret", () => {
-    expect(PlatformKeys.standIns(shared, new Set(["groq"]))).toEqual([
-      {
-        id: "cred_shared_openai",
-        integrationID: "openai",
-        label: "Shared",
-        value: {
-          type: "oauth",
-          methodID: Integration.MethodID.make("chatgpt"),
-          access: "omai-gw.s~openai",
-          refresh: "omai-gw.s~openai",
-          expires: 253_402_300_799_000,
-          metadata: { clientID: "c" },
-        },
-      },
+  test("each shared integration the user hasn't connected gets its credential, a sign-in without its refresh token", () => {
+    expect(PlatformKeys.sharedCredentials(shared, new Set(["groq"]))).toEqual([
+      { id: "cred_shared_openai", integrationID: "openai", label: "Shared", value: signIn },
     ])
-    expect(PlatformKeys.standIns(shared, new Set(["openai"]))).toEqual([
-      { id: "cred_shared_groq", integrationID: "groq", label: "Shared", value: { type: "key", key: "omai-gw.s~groq" } },
+    expect(PlatformKeys.sharedCredentials(shared, new Set(["openai"]))).toEqual([
+      { id: "cred_shared_groq", integrationID: "groq", label: "Shared", value: { type: "key", key: "gsk" } },
     ])
+  })
+
+  test("a list saved by an older image (no credentials) is not read back", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "omai-keys-"))
+    const file = path.join(dir, "platform-keys.json")
+    await writeFile(file, JSON.stringify([{ id: "groq", integrationID: "groq", type: "key", models: ["llama"] }]))
+    expect(await PlatformKeys.restore(file)).toEqual([])
   })
 
   test("the last list is kept on disk, owner-only, and read back when the control plane is down", async () => {

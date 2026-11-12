@@ -2126,7 +2126,6 @@ export type PlatformProvider = {
   id: string
   integrationID: string
   value: CredentialKey | CredentialOAuth
-  hosts: Array<string>
   models: Array<{ id: string; api: string }>
 }
 
@@ -4661,8 +4660,6 @@ export type ExperimentalProjectVmBusyOutput = ProjectVmBusy
 
 export type ExperimentalPlatformProvidersOutput = Array<PlatformProvider>
 
-export type ExperimentalPlatformHostsOutput = { [x: string]: Array<string> }
-
 export type ExperimentalPlatformRefreshInput = {
   readonly integrationID: string
   readonly value: {
@@ -4961,9 +4958,6 @@ export type FileUnwatchOutput = ExperimentalFileUnwatchOutput
 
 /** @deprecated Use `ExperimentalPlatformProvidersOutput`. Removed in the next minor. */
 export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
-
-/** @deprecated Use `ExperimentalPlatformHostsOutput`. Removed in the next minor. */
-export type PlatformHostsOutput = ExperimentalPlatformHostsOutput
 
 /** @deprecated Use `ExperimentalPlatformRefreshInput`. Removed in the next minor. */
 export type PlatformRefreshInput = ExperimentalPlatformRefreshInput

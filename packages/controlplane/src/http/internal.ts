@@ -5,7 +5,6 @@ import { Schema } from "effect"
 import type { Auth } from "../auth.js"
 import type { Domains } from "../domains.js"
 import { Refusal, type Publishing } from "../publishing.js"
-import { Gateway } from "../gateway.js"
 import type { Keys } from "../keys.js"
 import type { Projects } from "../projects.js"
 import { bearer, body, bytes, jsonDecoder, send } from "./http.js"
@@ -34,6 +33,7 @@ const Usage = jsonDecoder(
     ).check(Schema.isMaxLength(200)),
   }),
 )
+const RefreshBody = jsonDecoder(Schema.Struct({ ref: Schema.String }))
 const Name = jsonDecoder(Schema.Struct({ name: Schema.String }))
 const Confirm = jsonDecoder(Schema.Struct({ confirm: Schema.String }))
 const AddDomain = jsonDecoder(Schema.Struct({ hostname: Schema.String, primary: Schema.optional(Schema.Boolean) }))
@@ -72,18 +72,9 @@ export function make(deps: {
 
   const status = { ok: 204, stale: 409, forbidden: 404 } as const
 
-  const gateway = Gateway.make({
-    owner: async (projectID, token) =>
-      (await deps.projects.verifyProjectToken(projectID, token)) ? deps.projects.owner(projectID) : undefined,
-    secret: (userID, ref) => deps.keys.secret(userID, ref),
-  })
-
   return async function handle(req: IncomingMessage, res: ServerResponse) {
     const requested = new URL(req.url ?? "/", "http://internal")
     const pathname = requested.pathname
-    // A VM's model call holding a stand-in: the real secret is swapped in here and the call goes on to the provider.
-    const call = Gateway.match(pathname)
-    if (call) return gateway(req, res, call)
     // A VM's model keys: the admin's shared providers and its owner's own credentials.
     const keys = /^\/internal\/projects\/([^/]+)\/keys$/.exec(pathname)
     if (keys && req.method === "GET") {
@@ -92,6 +83,16 @@ export function make(deps: {
       const [shared, personal] = await Promise.all([deps.keys.shared(), deps.keys.personal(userID)])
       // Without a known shared list the field is left out, so VMs keep the one they have.
       return send(res, 200, { ...(shared ? { shared } : {}), personal })
+    }
+    // A VM's sign-in is about to expire: it is refreshed here, once for all the VMs holding it.
+    const refresh = /^\/internal\/projects\/([^/]+)\/credentials\/refresh$/.exec(pathname)
+    if (refresh && req.method === "POST") {
+      const userID = await ownerOf(req, decodeURIComponent(refresh[1]!))
+      if (!userID) return send(res, 401)
+      const input = await body(req, RefreshBody)
+      if (!input) return send(res, 400)
+      const value = await deps.keys.refresh(userID, input.ref)
+      return value ? send(res, 200, value) : send(res, 404)
     }
     // A user's own credential changed on one of their VMs; the others pick it up from `keys`.
     const credential = /^\/internal\/projects\/([^/]+)\/credentials\/([^/]+)$/.exec(pathname)

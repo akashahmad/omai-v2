@@ -7,7 +7,6 @@ import { Bus } from "../../bus.js"
 import { Credential } from "../../credential.js"
 import { Model } from "../../model.js"
 import { Integration } from "../../integration.js"
-import { ProjectVmGateway } from "../../project-vm/gateway.js"
 import { Provider } from "../../provider.js"
 
 export * as PlatformKeys from "./platform-keys.js"
@@ -15,28 +14,24 @@ export * as PlatformKeys from "./platform-keys.js"
 export type Target = { url: string; projectID: string; token: string }
 
 /**
- * An admin-shared provider: how it is connected (never the secret) and the models switched on for everyone. The VM
- * holds a stand-in for it; the control plane's gateway puts the real key or sign-in into each call.
+ * An admin-shared provider: its credential and the models switched on for everyone. The VM calls the provider with it
+ * directly; a sign-in carries the managed refresh token, so it is refreshed through the control plane.
  */
 export type Shared = {
   id: string
   integrationID: string
-  type: "key" | "oauth"
-  methodID?: string
-  metadata?: Readonly<Record<string, unknown>>
+  value: Credential.Key | Credential.OAuth
   models: readonly string[]
 }
 
-/** Stand-in credentials for shared providers have this ID prefix; they are never synced as the user's own. */
+/** Credentials for shared providers have this ID prefix; they are never synced as the user's own. */
 export const SHARED_PREFIX = "cred_shared_"
 
 const SharedList = Schema.Array(
   Schema.Struct({
     id: Schema.String,
     integrationID: Schema.String,
-    type: Schema.Literals(["key", "oauth"]),
-    methodID: Schema.optional(Schema.String),
-    metadata: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+    value: Schema.Union([Credential.Key, Credential.OAuth]),
     models: Schema.Array(Schema.String),
   }),
 )
@@ -81,28 +76,27 @@ export function plan(
   })
 }
 
-/** The stand-in credential each shared integration needs, unless the user connected it themselves. */
-export function standIns(shared: readonly Shared[], personal: ReadonlySet<string>) {
+/** The credential each shared integration needs, unless the user connected it themselves. */
+export function sharedCredentials(shared: readonly Shared[], personal: ReadonlySet<string>) {
   const integrations = new Map(shared.map((item) => [item.integrationID, item]))
-  return [...integrations.values()].flatMap((item) => {
-    if (personal.has(item.integrationID)) return []
-    const placeholder = ProjectVmGateway.standIn(`s~${item.integrationID}`)
-    const value =
-      item.type === "oauth"
-        ? {
-            type: "oauth" as const,
-            methodID: Integration.MethodID.make(item.methodID ?? ""),
-            access: placeholder,
-            refresh: placeholder,
-            expires: ProjectVmGateway.NEVER,
-            ...(item.metadata ? { metadata: item.metadata } : {}),
-          }
-        : { type: "key" as const, key: placeholder }
-    return [{ id: `${SHARED_PREFIX}${item.integrationID}`, integrationID: item.integrationID, label: "Shared", value }]
-  })
+  return [...integrations.values()].flatMap((item) =>
+    personal.has(item.integrationID)
+      ? []
+      : [
+          {
+            id: `${SHARED_PREFIX}${item.integrationID}`,
+            integrationID: item.integrationID,
+            label: "Shared",
+            value: item.value,
+          },
+        ],
+  )
 }
 
-/** Keeps the last list, readable only by this VM's own user, for starts while the control plane is unreachable. */
+/**
+ * Keeps the last list, readable only by this VM's own user, for starts while the control plane is unreachable. It holds
+ * the shared keys, like the credentials this VM already stores.
+ */
 export async function save(file: string, shared: readonly Shared[]) {
   await mkdir(path.dirname(file), { recursive: true })
   await writeFile(file, JSON.stringify(shared), { mode: 0o600 })
@@ -114,8 +108,8 @@ export async function restore(file: string): Promise<Shared[]> {
 }
 
 /**
- * On a project's MicroVM: offers the admin's shared providers (only switched-on models) through stand-in credentials,
- * unless the user connected that provider themselves. Their calls go through the control plane's gateway.
+ * On a project's MicroVM: offers the admin's shared providers (only switched-on models) with their credentials, unless
+ * the user connected that provider themselves. Calls go straight to the provider.
  */
 export const Plugin = define({
   id: "omai.platform-keys",
@@ -139,15 +133,15 @@ export const Plugin = define({
             new Set(all.filter((item) => !item.id.startsWith(SHARED_PREFIX)).map((item) => String(item.integrationID))),
         ),
       )
-    // Keeps the stand-in credentials in step with the shared list and the user's own credentials.
+    // Keeps the shared credentials in step with the shared list and the user's own credentials.
     const place = Effect.gen(function* () {
-      const wanted = new Map(standIns(state.shared, state.personal).map((item) => [item.id, item]))
+      const wanted = new Map(sharedCredentials(state.shared, state.personal).map((item) => [item.id, item]))
       const present = (yield* credentials.all()).filter((item) => item.id.startsWith(SHARED_PREFIX))
       for (const item of present) if (!wanted.has(item.id)) yield* credentials.remove(item.id).pipe(Effect.ignore)
       for (const item of wanted.values()) {
         const here = present.find((entry) => entry.id === item.id)
         if (here && JSON.stringify(here.value) === JSON.stringify(item.value)) continue
-                if (here) yield* credentials.update(here.id, { label: item.label, value: item.value }).pipe(Effect.ignore)
+        if (here) yield* credentials.update(here.id, { label: item.label, value: item.value }).pipe(Effect.ignore)
         else
           yield* credentials
             .create({
@@ -188,11 +182,6 @@ export const Plugin = define({
         integrationID: definition.provider.integrationID,
         models: [...definition.models.values()].map((model) => ({ id: model.id })),
       }))
-      // Model calls carrying a stand-in go through the gateway by way of fetch; a WebSocket would bypass it.
-      for (const definition of providers.list())
-        providers.update(definition.provider.id, (provider) => {
-          provider.settings = { ...provider.settings, transport: "http" }
-        })
       for (const item of plan(defs, state.shared, state.personal))
         for (const modelID of item.remove) providers.models.remove(Provider.ID.make(item.id), Model.ID.make(modelID))
     })

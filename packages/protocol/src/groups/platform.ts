@@ -10,8 +10,6 @@ export const PlatformProvider = Schema.Struct({
   integrationID: Schema.String,
   /** The real credential: an API key, or a sign-in already refreshed. */
   value: Shared,
-  /** Every host the provider's code sends requests to; the gateway forwards nowhere else. */
-  hosts: Schema.Array(Schema.String),
   /** Each catalog model ID with the model name its API takes in requests. */
   models: Schema.Array(Schema.Struct({ id: Schema.String, api: Schema.String })),
 }).annotate({ identifier: "PlatformProvider" })
@@ -35,21 +33,7 @@ export const PlatformGroup = HttpApiGroup.make("server.platform")
         identifier: "experimental.platform.providers",
         summary: "List the platform's providers and credentials",
         description:
-          "The providers connected on this platform server with an API key or a sign-in, with their current credentials and hosts, for the control plane's model gateway. Experimental: may change without compatibility guarantees.",
-        transform: (operation) => ({ ...operation, tags: ["experimental"] }),
-      }),
-    ),
-  )
-  .add(
-    HttpApiEndpoint.get("platform.hosts", "/api/experimental/platform/hosts", {
-      success: Schema.Record(Schema.String, Schema.Array(Schema.String)),
-      error: [FileNotFoundError],
-    }).annotateMerge(
-      OpenApi.annotations({
-        identifier: "experimental.platform.hosts",
-        summary: "List each integration's hosts",
-        description:
-          "Every host each shareable integration's requests go to, connected or not, so the control plane's model gateway can check where a credential is sent. Experimental: may change without compatibility guarantees.",
+          "The providers connected on this platform server with an API key or a sign-in, with their current credentials, which the control plane hands to project VMs. Experimental: may change without compatibility guarantees.",
         transform: (operation) => ({ ...operation, tags: ["experimental"] }),
       }),
     ),

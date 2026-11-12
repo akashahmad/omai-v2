@@ -26,6 +26,7 @@ import { IntegrationConnection } from "./integration/connection.js"
 import { AppProcess } from "@opencode/util/process"
 import { ChildProcess } from "effect/process"
 import { Form } from "./form.js"
+import { ProjectVmManaged } from "./project-vm/managed.js"
 
 export const ID = Integration.ID
 export type ID = Integration.ID
@@ -709,14 +710,37 @@ const layer = Layer.effect(
           const credential = yield* credentials.get(connection.id)
           if (!credential) return undefined
           if (credential.value.type !== "oauth") return credential.value
-          const refresh = state
-            .get()
-            .integrations.get(credential.integrationID)
-            ?.implementations.get(credential.value.methodID)?.refresh
           const expiring = (value: Credential.OAuth) =>
             Clock.currentTimeMillis.pipe(
               Effect.map((now) => value.expires <= now + Duration.toMillis(Duration.minutes(5))),
             )
+          // On a project's VM the control plane holds the refresh token and refreshes the sign-in for every VM.
+          const managed = ProjectVmManaged.refresher()
+          if (credential.value.refresh === ProjectVmManaged.MANAGED_REFRESH) {
+            if (!managed || !(yield* expiring(credential.value))) return credential.value
+            return yield* authorize(
+              credentials.lock(
+                credential.id,
+                Effect.gen(function* () {
+                  const current = yield* credentials.get(credential.id)
+                  if (!current || current.value.type !== "oauth") return undefined
+                  if (!(yield* expiring(current.value))) return current.value
+                  const next = yield* Effect.promise(() =>
+                    managed({ id: current.id, integrationID: current.integrationID }).catch(() => undefined),
+                  )
+                  // Unreachable: keep the current one; the next call tries again.
+                  if (!next) return current.value
+                  const value = Credential.OAuth.make({ ...current.value, access: next.access, expires: next.expires })
+                  yield* credentials.update(current.id, { value })
+                  return value
+                }),
+              ),
+            )
+          }
+          const refresh = state
+            .get()
+            .integrations.get(credential.integrationID)
+            ?.implementations.get(credential.value.methodID)?.refresh
           if (!refresh || !(yield* expiring(credential.value))) return credential.value
           return yield* authorize(
             credentials.lock(

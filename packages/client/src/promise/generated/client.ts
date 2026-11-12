@@ -276,7 +276,6 @@ import type {
   ExperimentalProjectVmUploadOutput,
   ExperimentalProjectVmBusyOutput,
   ExperimentalPlatformProvidersOutput,
-  ExperimentalPlatformHostsOutput,
   ExperimentalPlatformRefreshInput,
   ExperimentalPlatformRefreshOutput,
   ShellListInput,
@@ -1761,17 +1760,6 @@ export function make(options: ClientOptions) {
             },
             requestOptions,
           ),
-        hosts: (requestOptions?: RequestOptions) =>
-          request<ExperimentalPlatformHostsOutput>(
-            {
-              method: "GET",
-              path: `/api/experimental/platform/hosts`,
-              successStatus: 200,
-              declaredStatuses: [400, 401, 404],
-              empty: false,
-            },
-            requestOptions,
-          ),
         refresh: (input: ExperimentalPlatformRefreshInput, requestOptions?: RequestOptions) =>
           request<ExperimentalPlatformRefreshOutput>(
             {
@@ -2840,8 +2828,6 @@ export function make(options: ClientOptions) {
     platform: {
       /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
       providers: client.experimental.platform.providers,
-      /** @deprecated Use `client.experimental.platform.hosts`. Removed in the next minor. */
-      hosts: client.experimental.platform.hosts,
       /** @deprecated Use `client.experimental.platform.refresh`. Removed in the next minor. */
       refresh: client.experimental.platform.refresh,
     },

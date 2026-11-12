@@ -13707,73 +13707,8 @@
             }
           }
         },
-        "description": "The providers connected on this platform server with an API key or a sign-in, with their current credentials and hosts, for the control plane's model gateway. Experimental: may change without compatibility guarantees.",
+        "description": "The providers connected on this platform server with an API key or a sign-in, with their current credentials, which the control plane hands to project VMs. Experimental: may change without compatibility guarantees.",
         "summary": "List the platform's providers and credentials"
-      }
-    },
-    "/api/experimental/platform/hosts": {
-      "get": {
-        "tags": ["experimental"],
-        "operationId": "experimental.platform.hosts",
-        "parameters": [],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "InvalidRequestError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UnauthorizedError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "FileNotFoundError | LocationNotFoundError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/FileNotFoundErrorEncoded"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "description": "Every host each shareable integration's requests go to, connected or not, so the control plane's model gateway can check where a credential is sent. Experimental: may change without compatibility guarantees.",
-        "summary": "List each integration's hosts"
       }
     },
     "/api/experimental/platform/refresh": {
@@ -21471,12 +21406,6 @@
               }
             ]
           },
-          "hosts": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "models": {
             "type": "array",
             "items": {
@@ -21494,7 +21423,7 @@
             }
           }
         },
-        "required": ["id", "integrationID", "value", "hosts", "models"],
+        "required": ["id", "integrationID", "value", "models"],
         "additionalProperties": false
       },
       "PlatformRefreshInput": {

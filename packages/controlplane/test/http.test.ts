@@ -517,6 +517,16 @@ describe("control plane http", () => {
       headers: { authorization: `Bearer ${pa.projectToken}` },
     })
     expect(removed.status).toBe(204)
+    // Refreshing a sign-in: only with the project's own token, and only one the owner has.
+    const refresh = (project: { id: string; projectToken: string }, body: unknown) =>
+      fetch(`${s.internal}/internal/projects/${project.id}/credentials/refresh`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${project.projectToken}`, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }).then((r) => r.status)
+    expect(await refresh(pa, { ref: "u~c1" })).toBe(404)
+    expect(await refresh(pa, {})).toBe(400)
+    expect(await refresh({ id: pa.id, projectToken: pb.projectToken }, { ref: "u~c1" })).toBe(401)
     const usage = await fetch(`${s.internal}/internal/projects/${pa.id}/usage`, {
       method: "POST",
       headers: { authorization: `Bearer ${pa.projectToken}`, "content-type": "application/json" },

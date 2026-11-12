@@ -2563,16 +2563,12 @@ export type ExperimentalPlatformProvidersOutput = ReadonlyArray<{
   readonly id: string
   readonly integrationID: string
   readonly value: Credential.Key | Credential.OAuth
-  readonly hosts: ReadonlyArray<string>
   readonly models: ReadonlyArray<{ readonly id: string; readonly api: string }>
 }>
 export type ExperimentalPlatformProvidersOperation<E = never> = () => Effect.Effect<
   ExperimentalPlatformProvidersOutput,
   E
 >
-
-export type ExperimentalPlatformHostsOutput = { readonly [x: string]: ReadonlyArray<string> }
-export type ExperimentalPlatformHostsOperation<E = never> = () => Effect.Effect<ExperimentalPlatformHostsOutput, E>
 
 export type ExperimentalPlatformRefreshInput = { readonly integrationID: string; readonly value: Credential.OAuth }
 export type ExperimentalPlatformRefreshOutput = Credential.OAuth
@@ -2582,7 +2578,6 @@ export type ExperimentalPlatformRefreshOperation<E = never> = (
 
 export interface ExperimentalPlatformApi<E = never> {
   readonly providers: ExperimentalPlatformProvidersOperation<E>
-  readonly hosts: ExperimentalPlatformHostsOperation<E>
   readonly refresh: ExperimentalPlatformRefreshOperation<E>
 }
 
@@ -3031,12 +3026,6 @@ export type PlatformProvidersOutput = ExperimentalPlatformProvidersOutput
 /** @deprecated Use `ExperimentalPlatformProvidersOperation`. Removed in the next minor. */
 export type PlatformProvidersOperation<E = never> = ExperimentalPlatformProvidersOperation<E>
 
-/** @deprecated Use `ExperimentalPlatformHostsOutput`. Removed in the next minor. */
-export type PlatformHostsOutput = ExperimentalPlatformHostsOutput
-
-/** @deprecated Use `ExperimentalPlatformHostsOperation`. Removed in the next minor. */
-export type PlatformHostsOperation<E = never> = ExperimentalPlatformHostsOperation<E>
-
 /** @deprecated Use `ExperimentalPlatformRefreshInput`. Removed in the next minor. */
 export type PlatformRefreshInput = ExperimentalPlatformRefreshInput
 
@@ -3138,9 +3127,6 @@ export interface AppApi<E = never> {
   readonly platform: {
     /** @deprecated Use `client.experimental.platform.providers`. Removed in the next minor. */
     readonly providers: ExperimentalPlatformProvidersOperation<E>
-
-    /** @deprecated Use `client.experimental.platform.hosts`. Removed in the next minor. */
-    readonly hosts: ExperimentalPlatformHostsOperation<E>
 
     /** @deprecated Use `client.experimental.platform.refresh`. Removed in the next minor. */
     readonly refresh: ExperimentalPlatformRefreshOperation<E>
