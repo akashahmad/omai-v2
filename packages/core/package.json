@@ -92,7 +92,7 @@
     "@types/yauzl": "2.10.3",
     "drizzle-kit": "catalog:",
     "fast-check": "catalog:",
-    "happy-dom": "20.0.11"
+    "happy-dom": "21.0.4"
   },
   "dependencies": {
     "@ai-sdk/provider": "3.0.19",
